@@ -3,6 +3,7 @@
 .sass-cache
 .gist-cache
 .pygments-cache
+.themes/myslash
 _deploy
 public
 sass.old

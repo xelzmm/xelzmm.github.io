@@ -7,7 +7,7 @@
 			var href = this.href,
 				link = href.replace(/https?:\/\/([^\/]+)(.*)/, '$1');
 
-			if (link != '' && link != host){
+			if (link != '' && link != host && !$(this).hasClass('fancybox')){
 				window.open(href);
 				e.preventDefault();
 			}

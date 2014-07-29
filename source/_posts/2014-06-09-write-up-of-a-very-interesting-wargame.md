@@ -3,6 +3,7 @@ layout: post
 title: "Write Up of a Very Interesting Wargame"
 date: 2014-06-09 18:00:00
 categories: ctf wargame
+comments: true
 ---
 
 Recently I'm playing a wargame named [shhhh... edited].

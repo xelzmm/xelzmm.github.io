@@ -3,6 +3,7 @@ layout: post
 title: "Solution for Google banning Linodes"
 date: 2014-07-28 18:00:00
 categories: tricks
+comments: true
 ---
 
 ### Google banned Linodes

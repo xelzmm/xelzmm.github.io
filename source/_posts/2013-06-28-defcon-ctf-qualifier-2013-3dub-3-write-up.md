@@ -3,6 +3,7 @@ layout: post
 title: "DefCon CTF Qualifier 2013 3dub 3 Write Up"
 date: 2013-06-28 12:00:00
 categroies: ctf web
+comments: true
 ---
 
 mirror of [http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/](http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/)
