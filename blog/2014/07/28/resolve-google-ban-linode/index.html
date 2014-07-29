@@ -3,11 +3,11 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>For Our One Year Anniversary - xelz's blog</title>
+	<title>Solution for Google banning Linodes - xelz's blog</title>
 	<meta name="author" content="xelz">
 
 	
-	<meta name="description" content="I make this page to remember our love. GitHub: https://github.com/xelzmm/Love View: http://iloveyamei.aliapp.com 2014-04-21 Comments ">
+	<meta name="description" content="Google banned Linodes I usually use linode to visit Google services via ssh tunnel. but recently I always got captchas even Sorry... page. Finally I &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -76,14 +76,29 @@
 		
 	
 	<div id="content" class="inner"><article class="post">
-	<h2 class="title">For Our One Year Anniversary</h2>
-	<div class="entry-content"><p>I make this page to remember our love.</p>
+	<h2 class="title">Solution for Google Banning Linodes</h2>
+	<div class="entry-content"><h3>Google banned Linodes</h3>
 
-<p>GitHub: <a href="https://github.com/xelzmm/Love">https://github.com/xelzmm/Love</a></p>
+<p>I usually use linode to visit Google services via ssh tunnel. but recently I always got captchas even <code>Sorry...</code> page.</p>
 
-<p>View: <a href="http://iloveyamei.aliapp.com">http://iloveyamei.aliapp.com</a></p>
+<p>Finally I knows that google banned ipv6 traffics from linode which they treated as robots.</p>
 
-<p><img src="/assets/2014/one-year.jpg" alt="" /></p>
+<h3>Solution</h3>
+
+<p>disable ipv6 of linode</p>
+
+<h4>for Ubuntu</h4>
+
+<p>append lines below to <code>/etc/sysctl.conf</code></p>
+
+<ul>
+<li><p>net.ipv6.conf.all.disable_ipv6=1</p></li>
+<li><p>net.ipv6.conf.default.disable_ipv6=1</p></li>
+<li><p>net.ipv6.conf.lo.disable_ipv6=1</p></li>
+</ul>
+
+
+<p>then restart network <code>/etc/init.d/networking restart</code> or <code>reboot</code></p>
 </div>
 
 
@@ -100,8 +115,14 @@
   
 
 
-<time datetime="2014-04-21T04:00:00+08:00" pubdate data-updated="true">2014-04-21</time></div>
+<time datetime="2014-07-28T18:00:00+00:00" pubdate data-updated="true">2014-07-28</time></div>
 	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/tricks/'>tricks</a>
+
+</div>
 
 
 	
@@ -143,8 +164,8 @@
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://xelz.info/blog/2014/04/21/for-our-one-year-anniversary/';
-        var disqus_url = 'http://xelz.info/blog/2014/04/21/for-our-one-year-anniversary/';
+        var disqus_identifier = 'http://xelz.info/blog/2014/07/28/resolve-google-ban-linode/';
+        var disqus_url = 'http://xelz.info/blog/2014/07/28/resolve-google-ban-linode/';
         var disqus_script = 'embed.js';
       
     (function () {

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: crypto | xelz's blog]]></title>
   <link href="http://xelz.info/blog/categories/crypto/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2014-07-29T13:30:04+08:00</updated>
+  <updated>2014-07-29T05:45:16+00:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[BkP-CTF 2013 MITM]]></title>
-    <link href="http://xelz.info/blog/2013/06/13/bkp-ctf-2013-mitm/"/>
-    <updated>2013-06-13T03:27:34+08:00</updated>
-    <id>http://xelz.info/blog/2013/06/13/bkp-ctf-2013-mitm</id>
+    <link href="http://xelz.info/blog/2013/06/12/bkp-ctf-2013-mitm/"/>
+    <updated>2013-06-12T19:27:34+00:00</updated>
+    <id>http://xelz.info/blog/2013/06/12/bkp-ctf-2013-mitm</id>
     <content type="html"><![CDATA[<p>前两天BkP的CTF练习赛中的一道题，crypto 200，题目如下</p>
 
 <blockquote><p>message 1: QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM=</p>
