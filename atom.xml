@@ -4,7 +4,7 @@
   <title><![CDATA[xelz's blog]]></title>
   <link href="http://xelz.info/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2014-07-29T13:00:00+08:00</updated>
+  <updated>2014-07-29T13:26:40+08:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -397,9 +397,9 @@ Open it in Firefox and then successfully we can get the CCTV admin page.</p>
     <id>http://xelz.info/blog/2014/04/21/for-our-one-year-anniversary</id>
     <content type="html"><![CDATA[<p>I make this page to remember our love.</p>
 
-<p>GitHub: <a href="">https://github.com/xelzmm/Love</a></p>
+<p>GitHub: <a href="https://github.com/xelzmm/Love]">https://github.com/xelzmm/Love</a></p>
 
-<p>View: <a href="">http://iloveyamei.aliapp.com</a></p>
+<p>View: <a href="http://iloveyamei.aliapp.com">http://iloveyamei.aliapp.com</a></p>
 
 <p><img src="http://xelz.info/assets/2014/one-year.jpg" alt="" /></p>
 ]]></content>
