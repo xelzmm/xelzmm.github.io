@@ -1,0 +1,331 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>BkP-CTF 2013 MITM - xelz's blog</title>
+	<meta name="author" content="xelz">
+
+	
+	<meta name="description" content="前两天BkP的CTF练习赛中的一道题，crypto 200，题目如下 message 1: QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM= encrypted: THbpB4bE82Rq35khemTQ10ntxZ8sf7s2WK8ErwcdDEc= &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="xelz's blog" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script src="/javascripts/jquery.min.js"></script>
+    
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">xelz's blog</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="https://www.google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:xelz.info">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/xelzmm" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="https://www.google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:xelz.info">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">BkP-CTF 2013 MITM</h2>
+	<div class="entry-content"><p>前两天BkP的CTF练习赛中的一道题，crypto 200，题目如下</p>
+
+<blockquote><p>message 1: QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM=</p>
+
+<p>encrypted: THbpB4bE82Rq35khemTQ10ntxZ8sf7s2WK8ErwcdDEc=</p>
+
+<p>message 2: RWFjaCBrZXkgemVybyB1bnRpbCBsYXN0IDI0IGJpdHM=</p>
+
+<p>encrypted: 01YZbSrta2N+1pOeQppmPETzoT/Yqb816yGlyceuEOE=</p>
+
+<p>ciphertext: s5hd0ThTkv1U44r9aRyUhaX5qJe561MZ16071nlvM9U=</p></blockquote>
+
+<p>看到最后的等号首先就想到了base64编码，decode之后得到</p>
+
+<blockquote><p>message1: AES-256 ECB mode twice, two keys</p>
+
+<p>message2: Each key zero until last 24 bits</p>
+
+<p>两轮AES-256加密，padding=ECB，key不一样，但是前面都是0x00，只有最后24位需要破解</p>
+
+<p>密文都是2进制不可读，不贴了</p></blockquote>
+
+<p>题目提示了是256位(32字节的key)，前29个字节都是0，需要破解两个key的后3个字节，纯暴力方式需要尝试2<sup>24</sup> * 2<sup>24</sup> = 2<sup>48</sup> ≈ 2.81e14种可能，这么大的计算量，显然是不现实的。</p>
+
+<!-- more -->
+
+
+<p>暴力破解，估计要用到hadoop集群了。</p>
+
+<p>其实，当时忽略了一个细节，就是题目：MITM，google一下出来的都是Man-in-the-middle Attack（中间人攻击），似乎跟这个题目半毛钱关系都没有，换用wikipedia得到了我们想要的东西：</p>
+
+<ul>
+<li>Man-in-the-middle attack, a computer networking attack method</li>
+<li>Meet-in-the-middle attack, a cryptographic attack method</li>
+</ul>
+
+
+<p>很显然，Meet-in-the-middle attack应该就是我们想找的东西了</p>
+
+<blockquote><p>Assume the attacker knows a set of plaintext P and ciphertext C that satisfies the following:</p>
+
+<ul>
+<li>C=ENCk2(ENCk1(P))</li>
+<li>P=DECk1(DECk2&copy;</li>
+</ul>
+
+
+<p>where ENC is the encryption function, DEC the decryption function defined as ENC-1 (inverse mapping) and k1 and k2 are two keys.</p>
+
+<p>The attacker can then compute ENCk1(P) for all possible keys k1. Afterwards he can decrypt the ciphertext by computing DECk2&copy; for each k2. Any matches between these two resulting sets are likely to reveal the correct keys. (To speed up the comparison, the ENCk1(P) set can be stored in an in-memory lookup table, then each DECk2&copy; can be matched against the values in the lookup table to find the candidate keys)</p></blockquote>
+
+<p>这个模型跟题目所设的是完全一样的，思路给的很清楚了，先穷举key1，计算出明文经过所有可能的key1加密后的结果，将结果存于内存中，然后穷举key2，计算密文经过key2解密后的结果，与内存中的结果集进行比对（因为AES是对称加密，加密跟解密是用的相同的key），如果有一致的，就表明破解成功了，这样算起来，时间复杂度只有2<sup>24</sup> + 2<sup>24</sup> = 2<sup>25</sup></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c">#!/usr/bin/env python</span>
+</span><span class='line'><span class="c">#! -*- coding: utf-8 -*-</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">AES</span>
+</span><span class='line'><span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">aes_encrypt</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">AES</span><span class="o">.</span><span class="n">MODE_ECB</span><span class="p">):</span>
+</span><span class='line'>    <span class="n">encryptor</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">ciphertext</span> <span class="o">=</span> <span class="n">encryptor</span><span class="o">.</span><span class="n">encrypt</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">ciphertext</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">aes_decrypt</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">AES</span><span class="o">.</span><span class="n">MODE_ECB</span><span class="p">):</span>
+</span><span class='line'>    <span class="n">decryptor</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">plaintext</span> <span class="o">=</span> <span class="n">decryptor</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">plaintext</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">message1</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="s">&#39;QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM=&#39;</span><span class="p">)</span>     <span class="c"># &#39;AES-256 ECB mode twice, two keys&#39;</span>
+</span><span class='line'>    <span class="n">ciphertext1</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="s">&#39;THbpB4bE82Rq35khemTQ10ntxZ8sf7s2WK8ErwcdDEc=&#39;</span><span class="p">)</span>  <span class="c"># &#39;\x4c\x76\xe9\x07\x86\xc4\xf3\x64\x6a\xdf\x99\x21\x7a\x64\xd0\xd7\x49\xed\xc5\x9f\x2c\x7f\xbb\x36\x58\xaf\x04\xaf\x07\x1d\x0c\x47&#39;</span>
+</span><span class='line'>    <span class="c"># message2 = b64decode(&#39;RWFjaCBrZXkgemVybyB1bnRpbCBsYXN0IDI0IGJpdHM=&#39;)     # &#39;Each key zero until last 24 bits&#39;</span>
+</span><span class='line'>    <span class="c"># ciphertext2 = b64decode(&#39;01YZbSrta2N+1pOeQppmPETzoT/Yqb816yGlyceuEOE=&#39;)  # &#39;\xd3\x56\x19\x6d\x2a\xed\x6b\x63\x7e\xd6\x93\x9e\x42\x9a\x66\x3c\x44\xf3\xa1\x3f\xd8\xa9\xbf\x35\xeb\x21\xa5\xc9\xc7\xae\x10\xe1&#39;</span>
+</span><span class='line'>    <span class="n">ciphertext</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="s">&#39;s5hd0ThTkv1U44r9aRyUhaX5qJe561MZ16071nlvM9U=&#39;</span><span class="p">)</span>   <span class="c"># &#39;\xb3\x98\x5d\xd1\x38\x53\x92\xfd\x54\xe3\x8a\xfd\x69\x1c\x94\x85\xa5\xf9\xa8\x97\xb9\xeb\x53\x19\xd7\xad\x3b\xd6\x79\x6f\x33\xd5&#39;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">prefix</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\0</span><span class="s">&#39;</span> <span class="o">*</span> <span class="mi">29</span>
+</span><span class='line'>    <span class="n">clist</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">mitms</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span class='line'>    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>                <span class="n">key1</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+</span><span class='line'>                <span class="n">mitm1</span> <span class="o">=</span> <span class="n">aes_encrypt</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">message1</span><span class="p">)</span>
+</span><span class='line'>                <span class="n">mitms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mitm1</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">mitms_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">mitms</span><span class="p">)</span>  <span class="c"># convert to set for faster index</span>
+</span><span class='line'>    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>                <span class="n">key2</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+</span><span class='line'>                <span class="n">anmitm1</span> <span class="o">=</span> <span class="n">aes_decrypt</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">ciphertext1</span><span class="p">)</span>
+</span><span class='line'>                <span class="k">if</span> <span class="n">anmitm1</span> <span class="ow">in</span> <span class="n">mitms_set</span><span class="p">:</span>
+</span><span class='line'>                    <span class="n">key1_suffix</span> <span class="o">=</span> <span class="n">mitms</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">anmitm1</span><span class="p">)</span>
+</span><span class='line'>                    <span class="k">print</span> <span class="s">&#39;key1: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span>
+</span><span class='line'>                    <span class="k">print</span> <span class="s">&#39;key2: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">key2</span><span class="p">)</span>
+</span><span class='line'>                    <span class="n">msg</span> <span class="o">=</span> <span class="n">aes_decrypt</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">aes_decrypt</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">ciphertext</span><span class="p">))</span>
+</span><span class='line'>                    <span class="k">print</span> <span class="s">&#39;message is: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">msg</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>大概5分钟左右就跑完了，缓存key1的加密结果用了1.65G内存，如果内存不够，可以对key1分段跑，不过时间就要相应变长。</p>
+
+<p>key1:</p>
+
+<blockquote><p>\x9a\xe8\x07</p></blockquote>
+
+<p>key2:</p>
+
+<blockquote><p>\xff?E</p></blockquote>
+
+<p>message is:</p>
+
+<blockquote><p>This time I didn&rsquo;t include sol&#8217;n</p></blockquote>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-13T03:27:34+08:00" pubdate data-updated="true">2013-06-13</time></div>
+	
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/crypto/'>crypto</a>, <a class='category' href='/blog/categories/ctf/'>ctf</a>
+
+</div>
+
+
+	
+	<div class="comments"><a href="#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    xelz
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'xelz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://xelz.info/blog/2013/06/13/bkp-ctf-2013-mitm/';
+        var disqus_url = 'http://xelz.info/blog/2013/06/13/bkp-ctf-2013-mitm/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-41665464-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+</body>
+</html>

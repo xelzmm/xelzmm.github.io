@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ctf | xelz's blog]]></title>
+  <link href="http://xelz.info/blog/categories/ctf/atom.xml" rel="self"/>
+  <link href="http://xelz.info/"/>
+  <updated>2014-07-29T13:00:00+08:00</updated>
+  <id>http://xelz.info/</id>
+  <author>
+    <name><![CDATA[xelz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Write Up of a Very Interesting Wargame]]></title>
+    <link href="http://xelz.info/blog/2014/06/10/write-up-of-a-very-interesting-wargame/"/>
+    <updated>2014-06-10T02:00:00+08:00</updated>
+    <id>http://xelz.info/blog/2014/06/10/write-up-of-a-very-interesting-wargame</id>
+    <content type="html"><![CDATA[<p>Recently I&rsquo;m playing a wargame named [shhhh&hellip; edited].</p>
+
+<p>I&rsquo;ve hidden the game name so that challengers could not find here by some searching work.</p>
+
+<p>If you guys are about to cheat by this, get lost now.</p>
+
+<p>You can find the game at [url]<code>c-a-n-y-o-u-h-a-c-k.i-t</code>(replace the dash with nothing)</p>
+
+<p>Try to figure out by yourself, if you are really really really stucked, have a sight for some hints.</p>
+
+<!-- more -->
+
+
+<h2>Logic</h2>
+
+<h4>Logic 1</h4>
+
+<p>password is just <code>password</code></p>
+
+<h4>Logic 2</h4>
+
+<p>It&rsquo;s a kind of pun. If you cannot guess the riddle, just answer <code>no</code>.</p>
+
+<p>Acturually the answer is Nitric Oxide, as known as <code>NO</code></p>
+
+<h4>Logic 3</h4>
+
+<p>Inspect the source code, you will find the password in comment.</p>
+
+<h4>Logic 4</h4>
+
+<p><strong>Fibonacci Prime</strong></p>
+
+<p>prime(n) = 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271 &hellip;</p>
+
+<p>fibonacci(n) = 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 &hellip;</p>
+
+<ul>
+<li>prime(fibonacci(1)) = prime(1) = 2</li>
+<li>prime(fibonacci(2)) = prime(2) = 3</li>
+<li>prime(fibonacci(3)) = prime(3) = 5</li>
+<li>prime(fibonacci(4)) = prime(5) = 11</li>
+<li>&hellip;</li>
+<li>prime(fibonacci(8)) = prime(55) = 139</li>
+<li>prime(fibonacci(9)) = prime(55) = 257</li>
+</ul>
+
+
+<h2>Script</h2>
+
+<h4>Script 1</h4>
+
+<p><code>javascript
+if($('#password').val() == "javascript")
+</code></p>
+
+<p>password is <code>javascript</code></p>
+
+<h4>Script 2</h4>
+
+<p>Run this code in javasript console, then check the value of variable <code>password</code>.</p>
+
+<p>``` javascript</p>
+
+<pre><code>var a = "de9f8caa7ea6fe56830925a124d605d4";
+
+var password = "";
+
+for(var i = 0; i &lt; 20; i++)
+    password += a.substring((i%3),(i%5)+(i%3));
+</code></pre>
+
+<p>```</p>
+
+<h4>Script 3</h4>
+
+<p>Run this code in javasript console, then check the value of variable <code>password</code>.</p>
+
+<p>``` javascript</p>
+
+<pre><code>keys = new Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z","a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z");
+password = "";
+k = "17 4 59 0 53 28".split(" ");
+for (i in k) {
+    password += keys[parseInt(k[i])];
+}
+</code></pre>
+
+<p>```</p>
+
+<h2>Cryptography</h2>
+
+<h4>Cryptography 1</h4>
+
+<p>The <strong>Salad Cipher</strong>, aka <strong>ROT13</strong></p>
+
+<p>Decryption Key</p>
+
+<pre><code>A|B|C|D|E|F|G|H|I|J|K|L|M
+-------------------------
+N|O|P|Q|R|S|T|U|V|W|X|Y|Z
+</code></pre>
+
+<p>letter above equals below, and vice versa</p>
+
+<h4>Cryptography 2</h4>
+
+<p>Try to combine some words using the numbers with T9 IME on a mobile phone.</p>
+
+<table style="text-align: center;">
+<tr><td><p>1</p>'</td><td><p>2</p>ABC</td><td><p>3</p>DEF</td></tr>
+<tr><td><p>4</p>GHI</td><td><p>5</p>JKL</td><td><p>6</p>MNO</td></tr>
+<tr><td><p>7</p>PQRS</td><td><p>8</p>TUV</td><td><p>9</p>WXYZ</td></tr>
+</table>
+
+
+<h4>Cryptography 3</h4>
+
+<p><strong>Base64</strong> decode it.</p>
+
+<h4>Cryptography 4</h4>
+
+<p><strong>Caesar&rsquo;s Square</strong></p>
+
+<pre><code>TSDLN ILHSY OGSRE WOOFR OPOUK OAAAR RIRID
+</code></pre>
+
+<p>Count the number of letters, here we have 35
+We can put 35 into 5 rows of 7</p>
+
+<pre><code>TSDLNIL
+HSYOGSR
+EWOOFRO
+POUKOAA
+ARRIRID
+</code></pre>
+
+<p>Read it, downwards from the top left, then the next column.</p>
+
+<h4>Cryptography 6</h4>
+
+<p><strong>Morse Alphabet</strong></p>
+
+<h4>Cryptography 7</h4>
+
+<p><strong>ASCII</strong></p>
+
+<p>``` python</p>
+
+<pre><code>#python
+text = ''.join([chr(int(i)) for i in '84 104 101 32 115 101 99 114 101 116 32 119 111 114 100 32 121 111 117 39 114 101 32 115 101 97 114 99 104 105 110 103 32 102 111 114 32 105 115 32 115 101 99 114 101 116'.split(' ')])
+</code></pre>
+
+<p>```</p>
+
+<h4>Cryptography 8</h4>
+
+<p><strong>Atbash</strong> (similar with the Salad Cipher)</p>
+
+<pre><code>A|B|C|D|E|F|G|H|I|J|K|L|M
+-------------------------
+Z|Y|X|W|V|U|T|S|R|Q|P|O|N
+</code></pre>
+
+<p>letter above equals below, and vice versa</p>
+
+<p>in another way</p>
+
+<pre><code>Plain:  ABCDEFGHIJKLMNOPQRSTUVWXYZ
+Cipher: ZYXWVUTSRQPONMLKJIHGFEDCBA
+</code></pre>
+
+<h4>Cryptography 9</h4>
+
+<p><strong>Polybius Square</strong></p>
+
+<table>
+<thead>
+    <tr><td>\</td><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+</thead>
+<tbody>
+    <tr><th>1</th><td>A</td><td>B</td><td>C</td><td>D</td><td>E</td></tr>
+    <tr><th>2</th><td>F</td><td>G</td><td>H</td><td>I</td><td>K</td></tr>
+    <tr><th>3</th><td>L</td><td>M</td><td>N</td><td>O</td><td>P</td></tr>
+    <tr><th>4</th><td>Q</td><td>R</td><td>S</td><td>T</td><td>U</td></tr>
+    <tr><th>5</th><td>V</td><td>W</td><td>X</td><td>Y</td><td>Z</td></tr>
+</tbody>
+</table>
+
+
+<p>Each letter is then represented by its coordinates in the grid. For example, <code>BAT</code> becomes <code>12 11 44</code>. Because 26 characters do not quite fit in a square, it is rounded down to the next lowest square number by combining two letters (usually I and J).</p>
+
+<h4>Cryptography 11</h4>
+
+<p>The index of a letter in the <code>alphabt</code>. 0 indicates a blank.</p>
+
+<h4>Cryptography 13</h4>
+
+<p>A programming language named <strong>BrainFuck</strong>.</p>
+
+<h4>Cryptography 16</h4>
+
+<p>Read it in a human readable way. Starting with the top left <code>T</code>, then <code>H</code> under it, and then <code>E</code> on the right side. Hints in the title <code>clues</code>.</p>
+
+<h4>Cryptography 17</h4>
+
+<p><strong>MD5</strong> ，brute force it with the hint <code>a-z*6</code>, or try cmd5.org.</p>
+
+<h4>Cryptography 22</h4>
+
+<p>Static crypto table with a reverse. the crypto table can be easily dumped.</p>
+
+<pre><code>e7 a4 90 71 36 49 aa e6 5b 3a ef 64 a0 be eb 09 f2 8c 57 ec 8f 74 1f 01 51 98 
+Z  Y  X  W  V  U  T  S  R  Q  P  O  N  M  L  K  J  I  H  G  F  E  D  C  B  A
+
+91 72 61 3f 69 fe 4b fa 85 fd 14 68 73 26 0f ac cc a1 4d db ab 43 46 11 08 b7
+z  y  x  w  v  u  t  s  r  q  p  o  n  m  l  k  j  i  h  g  f  e  d  c  b  a
+
+d8 b0 31 07 cf 8e 45 24 0b 5a
+0  9  8  7  6  5  4  3  2  1
+
+92 35 00 c6 3d 55 96 54 7d f6 e9
+)  (  *  &amp;  ^  %  $  #  @  !   
+
+cb d9 21 3e af 38 8b 4e 9e ea 0a 4c 04 58 6d b6 67 29 13 c5
+?  &gt;  &lt;  "  :  |  }  {  +  _  /  .  ,  '  ;  \  ]  [  =  -
+</code></pre>
+
+<h4>Cryptography 25</h4>
+
+<p><strong>Braille Alphabet</strong></p>
+
+<h2>WEB Based</h2>
+
+<h4>Web 1</h4>
+
+<pre><code>Page=Admin
+</code></pre>
+
+<h4>Web 2</h4>
+
+<p>``` javascript</p>
+
+<pre><code>// javascript
+document.cookie='isAdmin=1';
+</code></pre>
+
+<p>```</p>
+
+<h4>Web 3</h4>
+
+<pre><code>/robots.txt
+</code></pre>
+
+<h4>Web 4</h4>
+
+<p>``` bash</p>
+
+<pre><code>curl -H 'Referer: www.google.com' 'http://theurl/Content/Challenges/Web/Web4.php'
+</code></pre>
+
+<p>```</p>
+
+<h4>Web 5</h4>
+
+<p>Do not waste time on the form because nothing happend when you click the button.</p>
+
+<pre><code>SESSION=abf3e2d32ec32' or '1'='1' --
+</code></pre>
+
+<h4>Web 6</h4>
+
+<p>look around <a href="http://theurl/Content/Challenges/Web/Files6/">http://theurl/Content/Challenges/Web/Files6/</a></p>
+
+<h4>Web 7</h4>
+
+<pre><code>curl -d 'Type=admin' 'http://theurl/Content/Challenges/Web/Web7.php'
+</code></pre>
+
+<h4>Web 8</h4>
+
+<pre><code>Page[]=Home 
+</code></pre>
+
+<p>will trigger a php <code>fatal error</code>, which will display the error stack including the full path of the file in the page.</p>
+
+<h4>Web 9</h4>
+
+<pre><code>File=Files9/passconfigs.php%00
+</code></pre>
+
+<h4>Web 10</h4>
+
+<p>``` bash</p>
+
+<pre><code>curl 'http://theurl/Content/Challenges/Web/Web10.php'
+</code></pre>
+
+<p>```</p>
+
+<h2>Microhard</h2>
+
+<h4>CCTV</h4>
+
+<p>Try to find something in the terminal</p>
+
+<p>``` bash</p>
+
+<pre><code>help
+echo learninglog.txt
+apt-get install ***
+ifconfig
+*** 192.***
+</code></pre>
+
+<p>```</p>
+
+<p>Then an open port of a alive host which may be the remote camera.
+Open it in Firefox and then successfully we can get the CCTV admin page.</p>
+
+<p>Try to login with someone&rsquo;s name as the password.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[BkP-CTF 2013 MITM]]></title>
+    <link href="http://xelz.info/blog/2013/06/13/bkp-ctf-2013-mitm/"/>
+    <updated>2013-06-13T03:27:34+08:00</updated>
+    <id>http://xelz.info/blog/2013/06/13/bkp-ctf-2013-mitm</id>
+    <content type="html"><![CDATA[<p>前两天BkP的CTF练习赛中的一道题，crypto 200，题目如下</p>
+
+<blockquote><p>message 1: QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM=</p>
+
+<p>encrypted: THbpB4bE82Rq35khemTQ10ntxZ8sf7s2WK8ErwcdDEc=</p>
+
+<p>message 2: RWFjaCBrZXkgemVybyB1bnRpbCBsYXN0IDI0IGJpdHM=</p>
+
+<p>encrypted: 01YZbSrta2N+1pOeQppmPETzoT/Yqb816yGlyceuEOE=</p>
+
+<p>ciphertext: s5hd0ThTkv1U44r9aRyUhaX5qJe561MZ16071nlvM9U=</p></blockquote>
+
+<p>看到最后的等号首先就想到了base64编码，decode之后得到</p>
+
+<blockquote><p>message1: AES-256 ECB mode twice, two keys</p>
+
+<p>message2: Each key zero until last 24 bits</p>
+
+<p>两轮AES-256加密，padding=ECB，key不一样，但是前面都是0x00，只有最后24位需要破解</p>
+
+<p>密文都是2进制不可读，不贴了</p></blockquote>
+
+<p>题目提示了是256位(32字节的key)，前29个字节都是0，需要破解两个key的后3个字节，纯暴力方式需要尝试2<sup>24</sup> * 2<sup>24</sup> = 2<sup>48</sup> ≈ 2.81e14种可能，这么大的计算量，显然是不现实的。</p>
+
+<!-- more -->
+
+
+<p>暴力破解，估计要用到hadoop集群了。</p>
+
+<p>其实，当时忽略了一个细节，就是题目：MITM，google一下出来的都是Man-in-the-middle Attack（中间人攻击），似乎跟这个题目半毛钱关系都没有，换用wikipedia得到了我们想要的东西：</p>
+
+<ul>
+<li>Man-in-the-middle attack, a computer networking attack method</li>
+<li>Meet-in-the-middle attack, a cryptographic attack method</li>
+</ul>
+
+
+<p>很显然，Meet-in-the-middle attack应该就是我们想找的东西了</p>
+
+<blockquote><p>Assume the attacker knows a set of plaintext P and ciphertext C that satisfies the following:</p>
+
+<ul>
+<li>C=ENCk2(ENCk1(P))</li>
+<li>P=DECk1(DECk2&copy;</li>
+</ul>
+
+
+<p>where ENC is the encryption function, DEC the decryption function defined as ENC-1 (inverse mapping) and k1 and k2 are two keys.</p>
+
+<p>The attacker can then compute ENCk1(P) for all possible keys k1. Afterwards he can decrypt the ciphertext by computing DECk2&copy; for each k2. Any matches between these two resulting sets are likely to reveal the correct keys. (To speed up the comparison, the ENCk1(P) set can be stored in an in-memory lookup table, then each DECk2&copy; can be matched against the values in the lookup table to find the candidate keys)</p></blockquote>
+
+<p>这个模型跟题目所设的是完全一样的，思路给的很清楚了，先穷举key1，计算出明文经过所有可能的key1加密后的结果，将结果存于内存中，然后穷举key2，计算密文经过key2解密后的结果，与内存中的结果集进行比对（因为AES是对称加密，加密跟解密是用的相同的key），如果有一致的，就表明破解成功了，这样算起来，时间复杂度只有2<sup>24</sup> + 2<sup>24</sup> = 2<sup>25</sup></p>
+
+<p>``` python</p>
+
+<h1>!/usr/bin/env python</h1>
+
+<h1>! &ndash;<em>&ndash; coding: utf-8 &ndash;</em>&ndash;</h1>
+
+<p>from Crypto.Cipher import AES
+from base64 import b64decode</p>
+
+<p>def aes_encrypt(key, text, mode=AES.MODE_ECB):</p>
+
+<pre><code>encryptor = AES.new(key, mode)
+ciphertext = encryptor.encrypt(text)
+return ciphertext
+</code></pre>
+
+<p>def aes_decrypt(key, text, mode=AES.MODE_ECB):</p>
+
+<pre><code>decryptor = AES.new(key, mode)
+plaintext = decryptor.decrypt(text)
+return plaintext
+</code></pre>
+
+<p>if <strong>name</strong> == &lsquo;<strong>main</strong>&rsquo;:</p>
+
+<pre><code>message1 = b64decode('QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM=')     # 'AES-256 ECB mode twice, two keys'
+ciphertext1 = b64decode('THbpB4bE82Rq35khemTQ10ntxZ8sf7s2WK8ErwcdDEc=')  # '\x4c\x76\xe9\x07\x86\xc4\xf3\x64\x6a\xdf\x99\x21\x7a\x64\xd0\xd7\x49\xed\xc5\x9f\x2c\x7f\xbb\x36\x58\xaf\x04\xaf\x07\x1d\x0c\x47'
+# message2 = b64decode('RWFjaCBrZXkgemVybyB1bnRpbCBsYXN0IDI0IGJpdHM=')     # 'Each key zero until last 24 bits'
+# ciphertext2 = b64decode('01YZbSrta2N+1pOeQppmPETzoT/Yqb816yGlyceuEOE=')  # '\xd3\x56\x19\x6d\x2a\xed\x6b\x63\x7e\xd6\x93\x9e\x42\x9a\x66\x3c\x44\xf3\xa1\x3f\xd8\xa9\xbf\x35\xeb\x21\xa5\xc9\xc7\xae\x10\xe1'
+ciphertext = b64decode('s5hd0ThTkv1U44r9aRyUhaX5qJe561MZ16071nlvM9U=')   # '\xb3\x98\x5d\xd1\x38\x53\x92\xfd\x54\xe3\x8a\xfd\x69\x1c\x94\x85\xa5\xf9\xa8\x97\xb9\xeb\x53\x19\xd7\xad\x3b\xd6\x79\x6f\x33\xd5'
+
+prefix = '\0' * 29
+clist = range(256)
+mitms = []
+for a in clist:
+    for b in clist:
+        for c in clist:
+            key1 = prefix + chr(a) + chr(b) + chr(c)
+            mitm1 = aes_encrypt(key1, message1)
+            mitms.append(mitm1)
+mitms_set = set(mitms)  # convert to set for faster index
+for a in clist:
+    for b in clist:
+        for c in clist:
+            key2 = prefix + chr(a) + chr(b) + chr(c)
+            anmitm1 = aes_decrypt(key2, ciphertext1)
+            if anmitm1 in mitms_set:
+                key1_suffix = mitms.index(anmitm1)
+                print 'key1: %s' % repr(key1)
+                print 'key2: %s' % repr(key2)
+                msg = aes_decrypt(key1, aes_decrypt(key2, ciphertext))
+                print 'message is: %s' % msg
+</code></pre>
+
+<p>```</p>
+
+<p>大概5分钟左右就跑完了，缓存key1的加密结果用了1.65G内存，如果内存不够，可以对key1分段跑，不过时间就要相应变长。</p>
+
+<p>key1:</p>
+
+<blockquote><p>\x9a\xe8\x07</p></blockquote>
+
+<p>key2:</p>
+
+<blockquote><p>\xff?E</p></blockquote>
+
+<p>message is:</p>
+
+<blockquote><p>This time I didn&rsquo;t include sol'n</p></blockquote>
+]]></content>
+  </entry>
+  
+</feed>

