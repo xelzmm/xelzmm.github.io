@@ -19,8 +19,16 @@
 
 <div class="meta">
 	<div class="date">{% include post/date.html %}{{ time }}</div>
-	{% include post/categories.html %}
-	{% if site.disqus_short_name and site.disqus_show_comment_count == true %}
-	<div class="comments"><a href="{{ root_url }}{% if index %}{{ post.url }}{% endif %}#disqus_thread">Comments</a></div>
-	{% endif %}
+    {% include post/categories.html %}
+    {% if site.disqus_short_name and site.disqus_show_comment_count == true %}
+        {% if index %}
+            {% if post.comments == true %}
+    <div class="comments"><a href="{{ root_url }}{% if index %}{{ post.url }}{% endif %}#disqus_thread">Comments</a></div>
+            {% endif %}
+        {% else %}
+            {% if page.comments == true %}
+    <div class="comments"><a href="{{ root_url }}{% if index %}{{ post.url }}{% endif %}#disqus_thread">Comments</a></div>
+            {% endif %}
+        {% endif %}
+    {% endif %}
 </div>
