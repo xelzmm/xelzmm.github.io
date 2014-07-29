@@ -3,7 +3,6 @@ layout: post
 title: "Write Up of a Very Interesting Wargame"
 date: 2014-06-09 18:00:00
 categories: ctf wargame
-comments: true
 ---
 
 Recently I'm playing a wargame named [shhhh... edited].
@@ -15,6 +14,8 @@ If you guys are about to cheat by this, get lost now.
 You can find the game at [url]`c-a-n-y-o-u-h-a-c-k.i-t`(replace the dash with nothing)
 
 Try to figure out by yourself, if you are really really really stucked, have a sight for some hints.
+
+<!-- more -->
 
 ## Logic
 
