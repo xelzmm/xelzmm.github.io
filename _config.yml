@@ -8,6 +8,7 @@ subtitle: "You never live safely."
 author: xelz
 simple_search: https://www.google.com/search
 description: "You never live safely."
+timezone: Aisa/Shanghai
 
 # Default date format is "ordinal" (resulting in "July 22nd 2007")
 # You can customize the format as defined in
