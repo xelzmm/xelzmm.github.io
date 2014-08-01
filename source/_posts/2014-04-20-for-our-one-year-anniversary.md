@@ -10,6 +10,6 @@ I make this page to remember our love.
 
 GitHub: [https://github.com/xelzmm/Love](https://github.com/xelzmm/Love)
 
-View: [http://iloveyamei.aliapp.com](http://iloveyamei.aliapp.com)
+View: [http://iloveyamei.aliapp.com](http://iloveyamei.aliapp.com) | [http://love.xelz.info/](http://love.xelz.info/)
 
 ![](/assets/2014/one-year.jpg)
