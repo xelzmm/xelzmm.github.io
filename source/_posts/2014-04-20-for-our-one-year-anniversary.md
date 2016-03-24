@@ -2,7 +2,7 @@
 layout: post
 title: "For Our One Year Anniversary"
 date: 2014-04-20 20:00:00
-categroies: live
+categories: live
 comments: true
 ---
 

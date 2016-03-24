@@ -2,7 +2,7 @@
 layout: post
 title: "DefCon CTF Qualifier 2013 3dub 3 Write Up"
 date: 2013-06-28 12:00:00
-categroies: ctf web
+categories: ctf web
 comments: true
 ---
 
