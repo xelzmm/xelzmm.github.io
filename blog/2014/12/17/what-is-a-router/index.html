@@ -1,0 +1,269 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>什么是路由器(译)？ - xelz's blog</title>
+	<meta name="author" content="xelz">
+
+	
+	<meta name="description" content="Origin：http://www.inetdaemon.com/tutorials/internet/ip/routing/define_router.shtml 路由器(包括无线路由器)，是一种连接两个以上不同的网络、具备网络间数据包转发功能的专用网络设备。它基于IP协议，工作在网络层( &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="xelz's blog" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script src="/javascripts/jquery.min.js"></script>
+    
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">xelz's blog</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="https://www.google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:xelz.info">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/xelzmm" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="https://www.google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:xelz.info">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">什么是路由器(译)？</h2>
+	<div class="entry-content"><p>Origin：<a href="http://www.inetdaemon.com/tutorials/internet/ip/routing/define_router.shtml">http://www.inetdaemon.com/tutorials/internet/ip/routing/define_router.shtml</a></p>
+
+<p>路由器(包括无线路由器)，是一种连接两个以上不同的网络、具备网络间数据包转发功能的专用网络设备。它基于IP协议，工作在网络层(OSI七层模型的第3层)。路由器的主要功能是将不同的网络连接起来，让它们相互间能够进行数据交换，并将局域网内不必要的广播流量精确地发送到目标主机。有很多制造路由器的厂商，简单列举一些：Cisco(思科)，Linksys，Juniper，Netgear(网件)，Nortel (北电)，Redback，Lucent(朗讯)，3Com，HP(惠普)，Dlink，Belkin(贝尔金)等。</p>
+
+<p>有一些网络技能认证考试(如CCNA，CCNP，JNCIA，JNCIE)会考你区分网络设备的能力。这篇关于路由器的文章主要会解释如何辨别路由器，路由器有哪些功能(当然不包含某些厂商特有的技术)。</p>
+
+<!-- more-->
+
+
+<h3>路由器如何工作？</h3>
+
+<p>我们用普通家用无线宽带路由器举一个非常简单的例子</p>
+
+<ol>
+<li>接通电源并开机，从闪存中加载操作系统启动</li>
+<li>载入NVRAM中的配置，启动所有的网络接口并设置好路由协议</li>
+<li>在路由表中为每个网络接口添加地址和子网掩码</li>
+<li>家用路由器中有一条简单的静态路由：所有非本地流量全部路由到WAN口</li>
+<li>每当路由器收到一个网页的访问请求，都会在路由表中检索要访问的目标IP地址</li>
+<li>数据包中的目的地址就是路由表中的索引，根据索引找到对应的路由，这条路由会表明这个请求需要从哪个网络接口转发出去</li>
+<li>把数据包通过正确的网络接口发给下一跳路由，下一跳路由重复同样的路由转发操作直到数据包到达目的主机。</li>
+</ol>
+
+
+<p>这个过程对于<em>大部分</em>路由器都适用。</p>
+
+<p>PS: 稍微解释下，家用宽带路由器以及无线路由器同样肩负着“代理”的任务，它们会把IP数据包中的源IP改成路由器自己的IP，这一点跟运营商级别的路由器是不同的。</p>
+
+<h3>我为什么需要路由器？</h3>
+
+<p>路由器可以把不同的网络连接起来，并且实现以下功能，希望你看过之后能在网络认证考试中正确地描述路由器：</p>
+
+<h5>路由器的功能</h5>
+
+<ol>
+<li>限制局域网的广播流量</li>
+<li>作为默认网关</li>
+<li>进行协议转换(比如从有线的以太网到无线网络，或者以太网到有线电视)</li>
+<li>在不同网络间路由数据包</li>
+<li>学习并公布路由路径</li>
+<li>计算到每一个网络的最佳路由途径</li>
+</ol>
+
+
+<h3>限制局域网的广播流量</h3>
+
+<p>网络(尤其是以太网)在物理层、数据链路层和网络层是通过广播方式进行通信的。网络层的广播是指通过网络层协议(一般是IP或者IPX协议)将数据流量发送到网络上所有的主机。网络广播是用来传输特定的数据包(如ARP, RARP, DHCP, IPX-SAP等)从而使网络能够正常运转。因为有部分网络设备会尝试同时传输数据因而产生冲突，所以最好能通过交换机或者路由器把一个超大集群划分成不同的广播域。</p>
+
+<p>随着网络中主机数量的不断增长，广播数量也会随之增多。如果网络上涌现了足够多的广播流量，网络上的正常通信将会变得非常困难。</p>
+
+<p>为了减少广播的数量，网络管理员可以将一个包含大量主机的网络集群划分成两个小的网络。广播流量将被限制在各自的网络内部，而此时路由器则承担了连接互通两个网络的『默认网关』的作用。</p>
+
+<h3>作为默认网关</h3>
+
+<p>现如今的网络环境下，人们需要将电脑接入互联网。当你的电脑想跟另一个网络下的某一台电脑通信时，你的数据就会被发送给你的默认网关。默认网关是一台连接了和你的电脑同样网络的路由器。这台路由器作为默认网关，接收你的数据，寻找远端主机的地址并作出路由选择。根据路由的选择，默认网关会把你的数据转发给理远端主机更近的另一个网络设备。这中间可能会经过很多路由器，所以会有很多路由器参与处理你的数据包，就像消防队员救火时的水桶接力。</p>
+
+<h3>在不同网络间路由数据包</h3>
+
+<p>路由器具有将数据包从一个网络传送到另一个网络的能力。这使两个不同组织管理的不同网络之间的数据交换成为可能。他们可以在路由器之间创建一个中间网络并在这个网络上交换数据。因为路由器可以从任意接入的网络接收数据，并将其转发到其他网络，因此它也可以让不能正常通信的两个网络交换数据。技术角度来说，有了路由器，一个令牌环网络可以通过一个串行网络跟一个以太网进行通信。</p>
+
+<h3>学习并公布路由路径</h3>
+
+<p>路由器只有在使用诸如RIP,OSPF,EIGRP,IS-IS或者BGP等路由协议时，才会动态地学习路由并公布。否则路由器只能被手动设定，这种路由方式也被称作静态路由。</p>
+
+<p>路由器是『逐跳』传送数据的，就像『烫手的山芋』一跳接一跳。如果经过一系列路由器，数据还是没有到达目标主机，而是转了一圈回到某一跳路由节点，这杯称作路由环路。数据包在路由环路中一直传递直到生命周期结束：到达TTL上限。TTL是IP数据报文头部中的一个计数器。TTL的值会随着数据包在每一跳路由传递而递减，最终如果变成0就会被丢弃。</p>
+
+<h3>路由器的组成部分</h3>
+
+<p>路由器其实是特殊的计算机，因此和其他计算器有着相同的组成：</p>
+
+<ul>
+<li>中央处理器(CPU)</li>
+<li>闪存</li>
+<li>非易失性内存</li>
+<li>内存</li>
+<li>网络接口(网卡)</li>
+<li>控制台</li>
+</ul>
+
+
+<p><strong>中央处理器</strong>：运行路由器操作系统，例如Juniper路由器运行着JunOS，Cisco路由器运行着Cisco IOS(Nexus OS)。操作系统管理者路由器的各个组件，并提供路由器运行所必须的功能逻辑。</p>
+
+<p><strong>闪存</strong>：存储着操作系统，类似你电脑里的硬盘。如果你的电脑使用了SSD，那么它就用了闪存。(译注：SSD是闪存组成的)</p>
+
+<p><strong>非易失性内存</strong>：这是一块额外的空间，用来存储系统的备份或者原始操作系统。路由器会从这里开始引导，并加载所有的程序。</p>
+
+<p><strong>内存</strong>：当路由器启动时，操作系统已经被加载进了内存。一旦路由器完成了启动，就开始计算自身的路由，如果配置了RIP(v1及v2)，OSPF, EIGRP, IS-IS或者BGP等路由协议，也会从其他路由器学习路由。内存也用于缓存ARP表，路由表，路由距离以及其他可以加快路由转发的数据。</p>
+
+<p><strong>网络接口</strong>：路由器总是拥有许多网络接口(网卡)。操作系统中包含了可以控制这些网络接口的驱动程序。路由器会在启动的时候获知每个接口配置了什么样的网络。之后它们会从自身连接的其他路由器那里学习路由，并学习将数据包传送到某个远端网络需要通过哪个接口。</p>
+
+<p><strong>控制台</strong>：最后，很重要的一点，就是控制台。在以往的时间里，管理和配置路由器都是在每个设备上的控制台里进行，比如问题排查和错误诊断。网络认证考试中会包含非常多关于配置和排查问题的控制台命令。然而路由器的生产厂商正在迅速地淘汰设备上的独立控制台，转而建立中心化的管理系统用以管理大量的网络设备。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-12-17T03:36:53+00:00" pubdate data-updated="true">2014-12-17</time></div>
+    
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/network/'>network</a>
+
+</div>
+
+
+    
+        
+            
+    <div class="comments"><a href="#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2017
+
+    xelz
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'xelz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://xelz.info/blog/2014/12/17/what-is-a-router/';
+        var disqus_url = 'http://xelz.info/blog/2014/12/17/what-is-a-router/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-41665464-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+</body>
+</html>
