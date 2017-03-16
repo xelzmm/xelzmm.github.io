@@ -7,7 +7,14 @@
 	<meta name="author" content="xelz">
 
 	
-	<meta name="description" content="Origin：http://www.inetdaemon.com/tutorials/internet/ip/routing/define_router.shtml 路由器(包括无线路由器)，是一种连接两个以上不同的网络、具备网络间数据包转发功能的专用网络设备。它基于IP协议，工作在网络层( &hellip;">
+	<meta name="description" content="Description 2D Life 470 points 1
+2
+3
+4
+http://110.10.212.135:24135
+http://110.10.212.135:24136
+http://110.10.212.147:24135
+http://110.10.212.147: &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -76,6 +83,127 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2017/02/20/codegate-2017-2d-life-writeup/">
+		
+			Codegate 2017 2D Life Writeup</a>
+	</h2>
+	<div class="entry-content">
+		<h3>Description</h3>
+
+<h4>2D Life</h4>
+
+<p>470 points</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>http://110.10.212.135:24135
+</span><span class='line'>http://110.10.212.135:24136
+</span><span class='line'>http://110.10.212.147:24135
+</span><span class='line'>http://110.10.212.147:24136</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I didn&rsquo;t have enough time to solve this challenge since I&rsquo;m busy at work. It&rsquo;s a pity that my team didn&rsquo;t, neither. But I have to say it&rsquo;s a very challenging one. Combination of crypto and SQL injection.</p>
+
+<h3>First Sight</h3>
+
+<p>It seemed to be a web challenge because the entrance was a website. So let&rsquo;s start with HTTP requests and responses. In the source code of the page, a path to secret login page was commented.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;navbar&quot;</span> <span class="na">class=</span><span class="s">&quot;navbar-collapse collapse&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;nav navbar-nav&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;/&quot;</span><span class="nt">&gt;</span>Home<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;?p=pic&quot;</span><span class="nt">&gt;</span>Pictures<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;?p=music&quot;</span><span class="nt">&gt;</span>Music<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;?p=contact&quot;</span><span class="nt">&gt;</span>Contact<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>  <span class="c">&lt;!--&lt;li&gt;&lt;a href=&quot;?p=secret_login&quot;&gt;Login&lt;/a&gt;&lt;li&gt;--&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The login page set a cookie like this(using <a href="https://httpie.org/">httpie</a>)</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>$ http http://110.10.212.135:24135/\?p\=secret_login
+</span><span class='line'>HTTP/1.1 200 OK
+</span><span class='line'>Connection: Keep-Alive
+</span><span class='line'>Content-Encoding: gzip
+</span><span class='line'>Content-Length: 579
+</span><span class='line'>Content-Type: text/html; charset=UTF-8
+</span><span class='line'>Date: Fri, 10 Feb 2017 05:57:50 GMT
+</span><span class='line'>Keep-Alive: timeout=5, max=100
+</span><span class='line'>Server: Apache/2.4.18 (Ubuntu)
+</span><span class='line'>Set-Cookie: identify=t93ZpEcFoz4%3D%7C6uDGkD5VtEk0H9kAOzOrQECDzRdVuuDYn4h8ISoWSUuetH5Cb%2BBgSfxSd9WfX9RxHGC7cnAZdnmxqneZrLkQ%2Bw%3D%3D
+</span><span class='line'>Vary: Accept-Encoding
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s easy to say that the cookie is two parts of base64 encoded string concatenated by a <code>|</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>t93ZpEcFoz4=|6uDGkD5VtEk0H9kAOzOrQECDzRdVuuDYn4h8ISoWSUuetH5Cb+BgSfxSd9WfX9RxHGC7cnAZdnmxqneZrLkQ+w==
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Different cookies was returned when repeating the same request. Modify the tail of the cookie will got a message <code>Error has occur from decrypt..</code>, but the head won&rsquo;t.</p>
+
+
+		
+		<a href="/blog/2017/02/20/codegate-2017-2d-life-writeup/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-02-20T20:00:00+00:00" pubdate data-updated="true">2017-02-20</time></div>
+    
+
+
+    
+        
+            
+    <div class="comments"><a href="/blog/2017/02/20/codegate-2017-2d-life-writeup/#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
 
 
     <article class="post">

@@ -1,0 +1,503 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Codegate 2017 2D Life writeup - xelz's blog</title>
+	<meta name="author" content="xelz">
+
+	
+	<meta name="description" content="Description 2D Life 470 points 1
+2
+3
+4
+http://110.10.212.135:24135
+http://110.10.212.135:24136
+http://110.10.212.147:24135
+http://110.10.212.147: &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="xelz's blog" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script src="/javascripts/jquery.min.js"></script>
+    
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">xelz's blog</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="https://www.google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:xelz.info">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/xelzmm" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="https://www.google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:xelz.info">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Codegate 2017 2D Life Writeup</h2>
+	<div class="entry-content"><h3>Description</h3>
+
+<h4>2D Life</h4>
+
+<p>470 points</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>http://110.10.212.135:24135
+</span><span class='line'>http://110.10.212.135:24136
+</span><span class='line'>http://110.10.212.147:24135
+</span><span class='line'>http://110.10.212.147:24136</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I didn&rsquo;t have enough time to solve this challenge since I&rsquo;m busy at work. It&rsquo;s a pity that my team didn&rsquo;t, neither. But I have to say it&rsquo;s a very challenging one. Combination of crypto and SQL injection.</p>
+
+<h3>First Sight</h3>
+
+<p>It seemed to be a web challenge because the entrance was a website. So let&rsquo;s start with HTTP requests and responses. In the source code of the page, a path to secret login page was commented.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;navbar&quot;</span> <span class="na">class=</span><span class="s">&quot;navbar-collapse collapse&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;nav navbar-nav&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;/&quot;</span><span class="nt">&gt;</span>Home<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;?p=pic&quot;</span><span class="nt">&gt;</span>Pictures<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;?p=music&quot;</span><span class="nt">&gt;</span>Music<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;?p=contact&quot;</span><span class="nt">&gt;</span>Contact<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>  <span class="c">&lt;!--&lt;li&gt;&lt;a href=&quot;?p=secret_login&quot;&gt;Login&lt;/a&gt;&lt;li&gt;--&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The login page set a cookie like this(using <a href="https://httpie.org/">httpie</a>)</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>$ http http://110.10.212.135:24135/\?p\=secret_login
+</span><span class='line'>HTTP/1.1 200 OK
+</span><span class='line'>Connection: Keep-Alive
+</span><span class='line'>Content-Encoding: gzip
+</span><span class='line'>Content-Length: 579
+</span><span class='line'>Content-Type: text/html; charset=UTF-8
+</span><span class='line'>Date: Fri, 10 Feb 2017 05:57:50 GMT
+</span><span class='line'>Keep-Alive: timeout=5, max=100
+</span><span class='line'>Server: Apache/2.4.18 (Ubuntu)
+</span><span class='line'>Set-Cookie: identify=t93ZpEcFoz4%3D%7C6uDGkD5VtEk0H9kAOzOrQECDzRdVuuDYn4h8ISoWSUuetH5Cb%2BBgSfxSd9WfX9RxHGC7cnAZdnmxqneZrLkQ%2Bw%3D%3D
+</span><span class='line'>Vary: Accept-Encoding
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s easy to say that the cookie is two parts of base64 encoded string concatenated by a <code>|</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>t93ZpEcFoz4=|6uDGkD5VtEk0H9kAOzOrQECDzRdVuuDYn4h8ISoWSUuetH5Cb+BgSfxSd9WfX9RxHGC7cnAZdnmxqneZrLkQ+w==
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Different cookies was returned when repeating the same request. Modify the tail of the cookie will got a message <code>Error has occur from decrypt..</code>, but the head won&rsquo;t.</p>
+
+<!-- more -->
+
+
+<h3>Cryptography</h3>
+
+<p>Look at the two parts of cookie:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>part 1: t93ZpEcFoz4=
+</span><span class='line'>decode: b7 dd d9 a4 47 05 a3 3e
+</span><span class='line'>length: 8
+</span><span class='line'>
+</span><span class='line'>part 2: 6uDGkD5VtEk0H9kAOzOrQECDzRdVuuDYn4h8ISoWSUuetH5Cb+BgSfxSd9WfX9RxHGC7cnAZdnmxqneZrLkQ+w==
+</span><span class='line'>decode: ea e0 c6 90 3e 55 b4 49 34 1f d9 00 3b 33 ab 40 40 83 cd 17 55 ba e0 d8 9f 88 7c 21 2a 16 49 4b 9e b4 7e 42 6f e0 60 49 fc 52 77 d5 9f 5f d4 71 1c 60 bb 72 70 19 76 79 b1 aa 77 99 ac b9 10 fb
+</span><span class='line'>length: 64
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now I believe it&rsquo;s a <code>Padding Oracle</code> Problem. I&rsquo;ve read about it in <em>Web Security by White Hats</em> (刺总的《白帽子讲Web安全》). <code>Part 1</code> is the 8 bytes <code>iv</code> of encryption, and <code>Part 2</code>, obviously is 8 blocks of encrypted data, with 8 bytes in each block.</p>
+
+<h4>CBC Mode</h4>
+
+<p>Every Block cipher can only deal with a message with fixed length (usually the same length as the key), so plain message is divided into several blocks and each block will be encrypted separately. To avoid data pattern sniffing, a vector is added befor encryption in CBC mode.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>             XOR
+</span><span class='line'>plain block ---&gt; |+| ---&gt; intermediate value ---&gt; encrypted block
+</span><span class='line'>              ^                           ^
+</span><span class='line'>            Vector                    encryption
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Vector of each plain data block is the encrypted data of previous block. The Initial Vector for the first data block is provided additionally.</p>
+
+<h4>PKCS#5 Padding</h4>
+
+<p>Length of every block must be exactly the same with the key. In this case, the length is 8 bytes. If there is less than 8 bytes(or just equal to 8 bytes) in the last block, a padding is introduced.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>xx xx xx xx xx xx xx    -&gt; xx xx xx xx xx xx xx 01
+</span><span class='line'>xx xx xx xx xx xx       -&gt; xx xx xx xx xx xx 02 02
+</span><span class='line'>xx xx xx xx xx          -&gt; xx xx xx xx xx 03 03 03
+</span><span class='line'>xx xx xx xx             -&gt; xx xx xx xx 04 04 04 04
+</span><span class='line'>xx xx xx                -&gt; xx xx xx 05 05 05 05 05
+</span><span class='line'>xx xx                   -&gt; xx xx 06 06 06 06 06 06
+</span><span class='line'>xx                      -&gt; xx 07 07 07 07 07 07 07
+</span><span class='line'>xx xx xx xx xx xx xx xx -&gt; xx xx xx xx xx xx xx xx
+</span><span class='line'>                           08 08 08 08 08 08 08 08
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>While decrypting, cipher will check the value of the last byte in the decrypted message. Assume that value is 0x04, then check the value of the last 4 bytes. It will be fine if they all equal to 0x04 and the 4 bytes will be directly removed to recover the original length of plain message. Otherwise a decryption exception occured as I tried above.</p>
+
+<h4>Padding Oracle Attack</h4>
+
+<p>We know a bad padding format of the last block will cause exception, so if we craft a fake data which can make the padding match the right format, the data will be accepted by the server without throwing a decryption exception(This does not means it will be completely accepted by server without any other excpetions because the data is totally a mess). At this moment we know the last few bytes in the decrypted message,  is one of the padding format.</p>
+
+<p>We&rsquo;ve got last bytes of plain block and the vector(we craft it), so we can get the last bytes of intermediate value of the corresponding encrypted block by</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>intermediate value  =  plain block with padding  (xor)  craft vector
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>and then, the real plain block</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>plain block = intermediate value  (xor)  actual vector
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To make it clear, we can brute force every byte in a block, from the last byte to the first one.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>|            iv: b7 dd d9 a4 47 05 a3 3e
+</span><span class='line'>|encrypted data: ea e0 c6 90 3e 55 b4 49
+</span><span class='line'>|                34 1f d9 00 3b 33 ab 40
+</span><span class='line'>|                40 83 cd 17 55 ba e0 d8
+</span><span class='line'>|                9f 88 7c 21 2a 16 49 4b
+</span><span class='line'>|                9e b4 7e 42 6f e0 60 49
+</span><span class='line'>|                fc 52 77 d5 9f 5f d4 71
+</span><span class='line'>|                1c 60 bb 72 70 19 76 79
+</span><span class='line'>|                b1 aa 77 99 ac b9 10 fb
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Start with the first block <code>ea e0 c6 90 3e 55 b4 49</code>, enumerate the last byte of iv, from 0x00 to 0xFF.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>|               iv : ff ff ff ff ff ff ff 00
+</span><span class='line'>|       iv encoded : /////////wA=
+</span><span class='line'>|encrypted message : ea e0 c6 90 3e 55 b4 49
+</span><span class='line'>|  message encoded : 6uDGkD5VtEk=
+</span><span class='line'>|           cookie : /////////wA=|6uDGkD5VtEk=
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>visit secure login page with the fake cookie:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>$ http &#39;110.10.212.135:24135/?p=secret_login&#39; cookie:&#39;identity=/////////wA=|6uDGkD5VtEk=&#39;
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>got the message <code>Error has occur from decrypt..</code></p>
+
+<p>continue trying with different iv(this can be done with a piece of script)</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>ff ff ff ff ff ff ff 01
+</span><span class='line'>ff ff ff ff ff ff ff 02
+</span><span class='line'>...
+</span><span class='line'>ff ff ff ff ff ff ff 1f
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>a different message showed up when trying <code>0x1f</code> as the last byte in iv.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>Is that all? HACKER?
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>BINGO!  It means the padding is 0x01 now(not quite), more clearly, the last byte of the plain message is 0x01.</p>
+
+<p>PS: If the second to last byte in the plain message just happen to be 0x02, then the last byte may be 0x02, too. Both 0x01 and 0x02 are valid at this situation. Just change the last 0xff in iv to any other value and try again, which will break the combination of  <code>0x02 0x02</code> padding (into <code>0x?? 0x02</code>). If nothing different with 0xff(no decrypt error occuring), 0x01 is the right answer.</p>
+
+<p>the last byte of intermediate value can be calculated by</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>intermediate value = iv   (xor)   plain message
+</span><span class='line'>        1e         = 1f    (+)         01
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>and then calculate the last byte of original plain message by the original iv</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>plain message = iv   (xor)   intermediate value
+</span><span class='line'>      20      = 3e    (+)           1e
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The last byte of the first plain block is <code>0x20</code>!</p>
+
+<p>Next byte, we need to make the plain message have a value of 0x02 in the last byte, to test the <code>0x02 0x02</code> padding. So last byte of iv must be <code>0x02 (+) 0x1e = 0x1c</code></p>
+
+<p>Trying like this</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>ff ff ff ff ff ff 00 1c
+</span><span class='line'>ff ff ff ff ff ff 01 1c
+</span><span class='line'>ff ff ff ff ff ff 02 1c
+</span><span class='line'>...
+</span><span class='line'>ff ff ff ff ff ff ff 1c
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>ff ff ff ff ff ff e4 1c</code> will make the sense.  <code>0xe4 (+) 0x02 (+) 0xa3 = 0x45</code></p>
+
+<p>Finally we can get the first block:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>|                iv : b7 dd d9 a4 47 05 a3 3e
+</span><span class='line'>|intermediate value : fa 98 8a f7 06 42 e6 1e
+</span><span class='line'>|     plain message : 4d 45 53 53 41 47 45 20
+</span><span class='line'>|        plain text : M  E  S  S  A  G  E
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Continue with the next block:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>34 1f d9 00 3b 33 ab 40
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Notice that the original vector of this block is the previous enctyped block <code>ea e0 c6 90 3e 55 b4 49</code>, not the iv.</p>
+
+<p>After all the entire message came out:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>MESSAGE FROM SPY<span class="c">&lt;!--TABLE:agents NUMBER OF COLUMNS:5--&gt;</span>;SPY;66
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>SQL Injection</h3>
+
+<p>We didn&rsquo;t got the flag but a hint</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>Table: agents
+</span><span class='line'>columns: 5
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It should be a SQL injection attack.</p>
+
+<p>I dinn&rsquo;t solve this until the server was shut down. TAT</p>
+
+<p><a href="http://crypto.rop.sh/post/71CBLOYIN034">Writeup by cnc</a></p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-02-20T20:00:00+00:00" pubdate data-updated="true">2017-02-20</time></div>
+    
+
+
+    
+        
+            
+    <div class="comments"><a href="#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2017
+
+    xelz
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'xelz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://xelz.info/blog/2017/02/20/codegate-2017-2d-life-writeup/';
+        var disqus_url = 'http://xelz.info/blog/2017/02/20/codegate-2017-2d-life-writeup/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-41665464-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+</body>
+</html>
