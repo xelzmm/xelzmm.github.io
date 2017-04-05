@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: game | xelz's blog]]></title>
+  <link href="http://xelz.info/blog/categories/game/atom.xml" rel="self"/>
+  <link href="http://xelz.info/"/>
+  <updated>2017-02-20T18:34:01+00:00</updated>
+  <id>http://xelz.info/</id>
+  <author>
+    <name><![CDATA[xelz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Damned Rooms]]></title>
+    <link href="http://xelz.info/blog/2015/10/30/damned-rooms/"/>
+    <updated>2015-10-30T10:00:00+00:00</updated>
+    <id>http://xelz.info/blog/2015/10/30/damned-rooms</id>
+    <content type="html"><![CDATA[<h2>游戏名称</h2>
+
+<p><strong>密室惊魂Online</strong></p>
+
+<h2>项目说明</h2>
+
+<p>这个桌游是一个曾经开桌游店的同事送的，觉得这个游戏很有意思，但是一般需要5-8人，线下组局太难了。加入官方QQ群之后发现大家会在QQ群里通过建讨论组的方式来在线组局。此种方式需要一个MC主持游戏，每个人的选择和行动都是私聊给MC，MC通过PS软件绘制游戏地图，并通过各种图层来控制元素的堆放和移动，然后截图发在讨论组里。不禁感慨玩家的智慧是多么的强大。</p>
+
+<p>后来我就在想，何不用程序来代替MC和PS呢？于是这个项目就诞生了。</p>
+
+<p><strong>托管地址</strong>：<a href="https://github.com/xelzmm/danmned">https://github.com/xelzmm/danmned</a></p>
+
+<p><strong>开发语言</strong>：nodejs</p>
+
+<p><strong>相关技术</strong>：ejs, websocket, css3</p>
+
+<p><strong>游戏截图</strong></p>
+
+<p><img src="/assets/2015/damned.png" alt="教学界面" /></p>
+
+<h2>游戏介绍</h2>
+
+<p>密室惊魂是一款运用语言和推理逻辑，结合区域行动策略的版图桌面游戏。
+游戏讲述一群中毒的受害者被奸徒困在一个完美密室里，大家需要在有限的时间内互相交流合作，寻找线索破解迷题，最终突破奸徒的阻挠找到出口逃生。该款游戏的特色是将玩家的语言交流和实际行动相结合，是一个考验玩家之间合作和显示玩家智慧的新型语言推理类桌面游戏。</p>
+
+<p><strong>游戏人数</strong>： 5到9人，已支持3-4人的mini模式</p>
+
+<p><strong>游戏时长</strong>： 约60至90分钟</p>
+
+<p><strong>游戏类型</strong>： 语言推理类</p>
+
+<!-- more -->
+
+
+<p><strong>网杀地址</strong>： <a href="http://msjh.aliapp.com/">http://msjh.aliapp.com/</a> (已失效)   <a href="http://msjh.shinemarketing.cn">http://msjh.shinemarketing.cn</a></p>
+
+<p><strong>游戏Ｑ群</strong>：205189960 <a href="http://shang.qq.com/wpa/qunwpa?idkey=5c2b3d7e0616c2711001a6e8ab9661d9b0d6ae321169afb09e4fa0b38911e7ce"><img src="http://pub.idqqimg.com/wpa/images/group.png" alt="密室惊魂" /></a> (约战，问询，交流)</p>
+
+<h2>主要特色</h2>
+
+<ul>
+<li>使用文字输入来表述自己。</li>
+<li>使用自己专属的线索列表。</li>
+<li>标记出已监控线索的玩家状态。</li>
+<li>电脑当MC，全自动随机地图身份线索，智能移动路径提示。</li>
+<li>可以将游戏中的玩家的精彩对局记录下来。</li>
+<li>惊心动魄的密室文字冒险。</li>
+</ul>
+
+
+<h2>游戏说明</h2>
+
+<h3>准备进入游戏</h3>
+
+<ul>
+<li>进入游戏首页，并设定昵称。</li>
+<li>首次进入游戏首页，或者直接进入游戏，会强制要求设定昵称。</li>
+<li>昵称可在游戏首页进行修改</li>
+<li>创建游戏，或者直接加入已有游戏房间</li>
+<li>直接复制已创建好的房间URL即可直接进入游戏</li>
+<li>也可直接进入已有游戏观战（第三人称视角）</li>
+<li>进入游戏后可以聊天、切换准备状态</li>
+<li>当玩家数量>=3，且全部准备就绪，游戏将自动开始</li>
+</ul>
+
+
+<h3>游戏规则</h3>
+
+<ul>
+<li>按照《密室惊魂》大屋标准版规则执行</li>
+<li>每局游戏地图完全<code>随机</code>，安全房间只有一个(1号-12号房间内随机)</li>
+<li><code>受害者</code>目标：解除身上的剧毒，并通过获取线索找出安全房间逃生
+
+<ul>
+<li><code>逃生</code>定义：最后一回合时，已解毒，并处于安全房间内</li>
+<li><code>受害者总人数-2</code>完成逃生，即视作受害者团体胜利</li>
+</ul>
+</li>
+<li><code>奸徒</code>目标：阻止受害者逃生，受害者失败即为奸徒胜利
+
+<ul>
+<li>奸徒不需要<code>逃生</code>，逃生与否，不影响奸徒胜利</li>
+</ul>
+</li>
+<li><code>EX受害者</code>目标：与受害者一起逃生或者单独逃生
+
+<ul>
+<li>首先EX是受害者的一员，受害者胜利EX同样胜利</li>
+<li>其次，EX可以单独逃生，即当<code>只有</code>EX逃生时，EX单独胜利</li>
+<li>EX单独胜利，代表奸徒(若有)胜利，受害者失败</li>
+</ul>
+</li>
+<li><code>SP暗警</code>目标：解除身上的剧毒，并通过获取线索找出安全房间逃生
+
+<ul>
+<li>SP暗警属于普通受害者的一员</li>
+<li>SP暗警可以在拆弹时进行伏击(出<code>破坏</code>卡)，如若此做
+
+<ul>
+<li>若有奸徒选择破坏，则伏击成功，炸弹直接被解除，游戏增加一回合</li>
+<li>若无奸徒破坏，则因暗警失误造成拆弹失败</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>一定几率出现<code>EX受害者</code>/<code>SP暗警</code>/<code>奸徒</code>，人数越多几率越大</li>
+<li>扩展规则</li>
+<li>6人局增加<code>13号房间危险</code>一级线索卡，用于增加难度</li>
+<li>7人局增加<code>大厅危险</code>一级线索卡，用于增加难度</li>
+<li>8人局增加大厅<code>毒雾</code>功能，用于增加难度</li>
+<li>9人局增加<code>黑色房间危险</code>二级线索卡，用于增加难度</li>
+<li>增加的线索卡无线索意义，但可以用于升级、降级、销毁</li>
+</ul>
+
+
+<h4>发言阶段</h4>
+
+<ul>
+<li>按照<code>密室法则</code>依次发言</li>
+<li>每个玩家限时第一回合<code>70秒</code>，后续每回合<code>增加10秒</code></li>
+<li>发言期间，超过<code>15秒</code>无任何输入动作将自动超时结束</li>
+<li>不是自己的发言时间，禁止发言，但可以打字，提前准备发言内容</li>
+<li>玩家在此阶段可以作<code>任意发言</code></li>
+<li>输入指令<code>/xs</code>可以输出自己的线索标记状态</li>
+<li>发言中包含<code>over</code>字样，或者提交<code>空发言</code>，将提前结束发言</li>
+<li>满足钥匙<code>索要</code>或者<code>赠予</code>条件(自己没有/有钥匙，同房间内有其他有/没有钥匙的玩家)，可在此阶段发动</li>
+<li>发言按钮旁边会出现<code>索要/赠予</code>按钮</li>
+<li>发动后将会在<code>自己发言完毕时</code>询问目标玩家是否同意/接受</li>
+<li>目标玩家回应限时<code>15秒</code>，超时自动拒绝(索要)/接受(赠予)</li>
+<li>满足抢钥匙条件(同一房间玩家数>=3，且至少一人有钥匙)，没有钥匙的玩家可在此阶段发动抢钥匙</li>
+<li>发言按钮旁边会出现<code>抢钥匙</code>的按钮</li>
+<li>发动抢钥匙，则会在<code>当前房间内所有玩家</code>都发言完毕后进行<code>投票</code></li>
+<li>若存在两把以上的钥匙，先投票决定抢<code>谁</code>的钥匙，再投票<code>抢钥匙</code></li>
+<li>投票限时<code>15秒</code>，超时自动<code>弃权</code></li>
+<li>投票结束后会公布投票情况，并决定钥匙归属</li>
+<li>投票结果出现平票或者全部弃权，钥匙保留在原玩家身上</li>
+<li>如其他玩家说出线索卡内容，可自行<code>点击线索区域</code>进行标记</li>
+</ul>
+
+
+<h4>移动阶段</h4>
+
+<ul>
+<li>按照<code>密室法则</code>依次移动，每个玩家限时<code>30秒</code></li>
+<li>每次移动，可以走1-2步
+
+<ul>
+<li>进入相邻房间为1步，进入对角房间视为2步</li>
+</ul>
+</li>
+<li>不是自己的移动时间，无法移动</li>
+<li>超时将<code>自动移动</code>，在满足规则前提下完全随机(不会上锁)</li>
+<li>轮到玩家移动时，<code>点击要去的房间</code>，自动计算可选路径及<code>上锁/解锁</code>方案</li>
+<li>在<code>有钥匙</code>的前提下</li>
+<li>离开有解锁标记的房间，可以回头上锁</li>
+<li>进入有解锁标记的房间，可以将该房间上锁</li>
+<li>进入有上锁标记的房间，必须将该房间解锁</li>
+<li>停留在有上锁标记的房间，可以将该房间解锁</li>
+<li>途径的房间无法上锁/解锁</li>
+<li>一次移动过程中最多使用一次钥匙</li>
+<li>密室中任意时刻最多只能有3个房间被锁上</li>
+<li>在允许停留的情况下，<code>点击自己所在房间</code>，可以<code>停留</code></li>
+<li>大厅允许无条件停留</li>
+<li>逃生前一回合允许无条件停留</li>
+<li>在已上锁的房间内允许无条件停留</li>
+<li>在周围房间都已上锁的房间内允许无条件停留</li>
+<li>在已上锁的房间内允许解锁后停留(需有钥匙)</li>
+<li>在有锁但未上锁的房间内，可以上锁后停留(需有钥匙)</li>
+<li>除了以上允许停留的情况外，此阶段<code>必须移动</code>，不得停留在原房间</li>
+</ul>
+
+
+<h4>时间阶段</h4>
+
+<ul>
+<li>时间标记增加一回合</li>
+<li>如果到达第8回合(未成功拆弹两次)或者第9回合(已成功拆弹两次)，则进行游戏结算，公布<code>玩家身份</code>及<code>安全房间</code>，游戏结束</li>
+</ul>
+
+
+<h4>执行阶段</h4>
+
+<ul>
+<li>按顺序依次执行房间功能</li>
+<li>按照房间号码 0(大厅)、1、2&hellip;12的顺序依次执行每个房间的功能</li>
+<li>每个房间内按照<code>密室法则</code>，决定房间功能执行者，并执行房间功能</li>
+<li><code>密室法则</code>：每个房间内，只有<code>一个人</code>可以执行房间功能</li>
+<li>【L】代表房间内号码最大的玩家获得执行权</li>
+<li>【S】代表房间内号码最小的玩家获得执行权</li>
+<li>如遇以下几种情况，<code>让过</code>执行权给房间内下一位玩家(若有)</li>
+<li>玩家在解毒房间，但已经解毒</li>
+<li>玩家在线索房间，已经持有线索卡，并且选择不销毁线索卡</li>
+<li>玩家在升级/降级房间，但是没有线索卡，或者没有可与其合成的方案</li>
+<li>如遇以下几种情况，<code>跳过</code>房间功能执行</li>
+<li>玩家在监视房间，但是没有人可被监视</li>
+<li>玩家在线索房间，但是线索卡区域已经没有1级线索卡</li>
+<li>玩家在小号的拆弹房间，但是炸弹已经解除或者控制器已经被破坏</li>
+<li>玩家在大号的拆弹房间</li>
+<li>如房间内有<code>钥匙</code>，则按照房间L/S属性，没有钥匙的最大/小号玩家获得钥匙</li>
+<li><code>行动</code>：拆弹/升级/降级</li>
+<li>限时<code>15秒</code></li>
+<li>分别询问参与行动的玩家<code>配合</code>还是<code>破坏</code></li>
+<li>至少有1人<code>破坏</code>，则行动失败
+
+<ul>
+<li> 特殊情况，拆弹时，如有两个<code>破坏</code>，即<code>奸徒</code>与<code>SP暗警</code>都<code>破坏</code>，视作<code>SP暗警</code>破坏了<code>奸徒</code>的行动，炸弹直接被解除，游戏增加一回合</li>
+</ul>
+</li>
+<li>房间功能，以下省略的主语均代指<code>获得房间功能执行权的玩家</code></li>
+<li><code>大厅</code>
+
+<ul>
+<li>大厅必定是危险房间，没有任何功能</li>
+<li>8人局以上，大厅增加功能<code>毒雾</code></li>
+<li>停留在大厅的玩家将会<code>中毒</code>，<code>经过</code>毒雾大厅，不会中毒</li>
+<li>对尚未解毒的玩家没有任何影响</li>
+<li>中毒后，玩家棋子由<code>绿色</code>变为<code>红色</code></li>
+<li><code>毒雾</code>会在第6回合发言阶段之前散去，停留不再中毒</li>
+</ul>
+</li>
+<li><code>治疗</code>房间
+
+<ul>
+<li>进行<code>解毒</code>(逃生的必要条件)</li>
+<li>解毒后，玩家棋子由<code>红色</code>变为<code>绿色</code></li>
+</ul>
+</li>
+<li><code>线索</code>房间
+
+<ul>
+<li>没有线索卡则获得一张<code>【1】级线索卡</code>，获得后，自动标记线索区</li>
+<li>有线索卡则可选择是否<code>销毁线索卡</code>(销毁后不能立刻获得新的线索卡)</li>
+<li>任何时间一名玩家只能持有<code>一张线索卡</code>(无论等级)</li>
+</ul>
+</li>
+<li><code>监视</code>房间
+
+<ul>
+<li>查看任意一名<code>不在监视房</code>的玩家手中的线索卡</li>
+<li>查看后，自动标记自己的线索区</li>
+<li>无法查看在<code>任意监视房</code>内的其他玩家的线索卡</li>
+</ul>
+</li>
+<li><code>升级</code>房间 / <code>降级</code> 房间
+
+<ul>
+<li><code>同房间内</code>的<code>两张</code>低(高)等级线索卡合成为一张高(低)等级线索卡</li>
+<li>如成功发起，则参与合成的两名玩家，进入<code>行动</code>步骤</li>
+<li><code>1 + 1 = 2</code>, <code>1 + 2 = 3</code>, 其他不可升级</li>
+<li><code>3 - 1 = 2</code>, <code>3 - 2 = 1</code>, <code>2 - 1 = 1</code>, 其他不可降级</li>
+<li>如存在多名可与之合成的玩家，则先<code>询问</code>与谁合成</li>
+<li>合成后的线索卡归<code>房间功能执行者</code>所有，原线索卡<code>消失</code></li>
+<li>合成后获得线索卡的玩家自动获得线索区标记</li>
+<li>合成失败，线索卡各自保留</li>
+</ul>
+</li>
+<li><code>拆弹</code>房间：<code>两个拆弹房间</code>合力进行拆弹
+
+<ul>
+<li>两个拆弹房间<code>各至少1人</code>，才可发起拆弹</li>
+<li>两个拆弹房间<code>总人数</code>大于等于以下标准，才可发起拆弹</li>
+<li>5人局 第一次2人，第二次2人</li>
+<li>6人局 第一次2人，第二次3人</li>
+<li>7人局 第一次2人，第二次3人</li>
+<li>8人局 第一次3人，第二次3人</li>
+<li>9人局 第一次3人，第二次4人</li>
+<li>如成功发起，则两个拆弹房间内的<code>所有玩家</code>，进入<code>行动</code>步骤</li>
+<li><code>受害者</code>及<code>EX受害者</code>只能<code>配合</code>，<code>奸徒</code>和<code>SP暗警</code>可以<code>破坏</code></li>
+<li>至多可以拆弹两次，若两次均成功，或暗警伏击成功，游戏<code>增加一回合</code></li>
+<li>如拆弹失败，控制器被<code>永久破坏</code>，不可再次拆弹</li>
+</ul>
+</li>
+</ul>
+
+
+<h4>思考阶段</h4>
+
+<ul>
+<li>思考<code>15秒</code>，规划下一阶段的发言/行动</li>
+<li>此时会提示<code>剩余线索卡</code>张数、下一轮拆弹(如果可以)所需人数</li>
+<li>15秒过后，回到发言阶段继续<code>下一轮</code></li>
+</ul>
+
+
+<h3>mini模式</h3>
+
+<ul>
+<li><code>3-4人</code>游戏时自动开启<code>mini模式</code></li>
+<li>去掉<code>1、5、8、12号</code>房间</li>
+<li>去掉<code>拆弹</code>房间、<code>降级</code>房间</li>
+<li>去掉<code>钥匙</code>及<code>锁</code>功能</li>
+<li>去掉<code>3级线索卡</code></li>
+<li>去掉<code>EX受害者</code>、<code>SP暗警</code></li>
+<li>回合数固定为<code>8</code></li>
+<li>受害者胜利条件变为<code>逃生人数 &gt;= 受害者总人数 - 1</code></li>
+</ul>
+
+
+<h3>注意事项</h3>
+
+<ul>
+<li>线索区为<code>个人线索区</code></li>
+<li>自己的线索区<code>只能自己看到</code>，并不与其他玩家共享</li>
+<li>获得线索卡，或者查看到别人的线索卡，则自动进行标记，可以点击进行修改</li>
+<li>别人在发言阶段报出线索卡内容，可以<code>自行点击线索区</code>标记</li>
+<li>发言阶段输入<code>/xs</code>，可以自动输出自己的线索区标记状态至发言区</li>
+<li>游戏断线后会<code>自动重连</code>，请不要关闭或者刷新游戏页面，否则游戏将直接结束。</li>
+<li>如发现bug，请在官方QQ群(<a href="http://shang.qq.com/wpa/qunwpa?idkey=5c2b3d7e0616c2711001a6e8ab9661d9b0d6ae321169afb09e4fa0b38911e7ce">205189960</a>)进行反馈，同时提供以下信息</li>
+<li>操作系统版本</li>
+<li>浏览器版本</li>
+<li>完整的游戏记录(从聊天区复制出来即可)</li>
+</ul>
+
+
+<h2>版权声明</h2>
+
+<ul>
+<li>《密室惊魂Online》</li>
+<li>设计&amp;开发：<strong><a href="http://xelz.info">xelz</a></strong></li>
+<li>监制：KbueCat</li>
+<li>Online版本在获得官方许可下制作，但不作为官方版本发布、发售</li>
+<li>代码开源(<a href="https://github.com/xelzmm/damned">github</a>)，遵循<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" alt="CC(BY-NC-SA)" /></a>协议，禁止用于商业用途</li>
+<li>《密室惊魂》</li>
+<li>设计总监：KbueCat</li>
+<li>游戏版权归<strong>创游文化</strong>所有，包括但不限于制作Online版本使用到的游戏创意、规则、素材等</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

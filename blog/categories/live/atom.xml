@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: live | xelz's blog]]></title>
+  <link href="http://xelz.info/blog/categories/live/atom.xml" rel="self"/>
+  <link href="http://xelz.info/"/>
+  <updated>2017-02-20T18:34:01+00:00</updated>
+  <id>http://xelz.info/</id>
+  <author>
+    <name><![CDATA[xelz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[For Our One Year Anniversary]]></title>
+    <link href="http://xelz.info/blog/2014/04/20/for-our-one-year-anniversary/"/>
+    <updated>2014-04-20T20:00:00+00:00</updated>
+    <id>http://xelz.info/blog/2014/04/20/for-our-one-year-anniversary</id>
+    <content type="html"><![CDATA[<p>I make this page to remember our love.</p>
+
+<p>GitHub: <a href="https://github.com/xelzmm/Love">https://github.com/xelzmm/Love</a></p>
+
+<p>View: <a href="http://iloveyamei.aliapp.com">http://iloveyamei.aliapp.com</a> | <a href="http://love.xelz.info">http://love.xelz.info</a></p>
+
+<p><img src="/assets/2014/one-year.jpg" alt="" /></p>
+]]></content>
+  </entry>
+  
+</feed>

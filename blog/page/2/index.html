@@ -3,11 +3,11 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>Category: crypto - xelz's blog</title>
+	<title>xelz's blog</title>
 	<meta name="author" content="xelz">
 
 	
-	<meta name="description" content="Category: crypto">
+	<meta name="description" content="前两天BkP的CTF练习赛中的一道题，crypto 200，题目如下 message 1: QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM= encrypted: THbpB4bE82Rq35khemTQ10ntxZ8sf7s2WK8ErwcdDEc= &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -76,48 +76,61 @@
 		
 	
 	<div id="content" class="inner">
-	
 
 
-	
-	
-	<section class="archives"><h1 class="year">2017</h1>
-
-<article>
-	<h2 class="title"><a href="/blog/2017/02/20/codegate-2017-2d-life-writeup/">Codegate 2017 2D Life writeup</a></h2>
-	<div class="meta">
-		<div class="date">Feb 20</div>
+    <article class="post">
+	<h2 class="title">
 		
+		<a href="/blog/2013/06/12/bkp-ctf-2013-mitm/">
+		
+			BkP-CTF 2013 MITM</a>
+	</h2>
+	<div class="entry-content">
+		<p>前两天BkP的CTF练习赛中的一道题，crypto 200，题目如下</p>
 
-<div class="tags">
+<blockquote><p>message 1: QUVTLTI1NiBFQ0IgbW9kZSB0d2ljZSwgdHdvIGtleXM=</p>
 
-	<a class='category' href='/blog/categories/crypto/'>crypto</a>, <a class='category' href='/blog/categories/ctf/'>ctf</a>, <a class='category' href='/blog/categories/sqlinj/'>sqlinj</a>
+<p>encrypted: THbpB4bE82Rq35khemTQ10ntxZ8sf7s2WK8ErwcdDEc=</p>
 
-</div>
+<p>message 2: RWFjaCBrZXkgemVybyB1bnRpbCBsYXN0IDI0IGJpdHM=</p>
+
+<p>encrypted: 01YZbSrta2N+1pOeQppmPETzoT/Yqb816yGlyceuEOE=</p>
+
+<p>ciphertext: s5hd0ThTkv1U44r9aRyUhaX5qJe561MZ16071nlvM9U=</p></blockquote>
+
+<p>看到最后的等号首先就想到了base64编码，decode之后得到</p>
+
+<blockquote><p>message1: AES-256 ECB mode twice, two keys</p>
+
+<p>message2: Each key zero until last 24 bits</p>
+
+<p>两轮AES-256加密，padding=ECB，key不一样，但是前面都是0x00，只有最后24位需要破解</p>
+
+<p>密文都是2进制不可读，不贴了</p></blockquote>
+
+<p>题目提示了是256位(32字节的key)，前29个字节都是0，需要破解两个key的后3个字节，纯暴力方式需要尝试2<sup>24</sup> * 2<sup>24</sup> = 2<sup>48</sup> ≈ 2.81e14种可能，这么大的计算量，显然是不现实的。</p>
 
 
-	    
-	    <div class="comments"><a href="/blog/2017/02/20/codegate-2017-2d-life-writeup/#disqus_thread">Comments</a></div>
-	    
+		
+		<a href="/blog/2013/06/12/bkp-ctf-2013-mitm/" class="more-link">Read on &rarr;</a>
 	</div>
-</article>
-	
 
 
-	
+<div class="meta">
+	<div class="date">
 
 
-	
-	
-		</section>
-	
-	<section class="archives"><h1 class="year">2013</h1>
 
-<article>
-	<h2 class="title"><a href="/blog/2013/06/12/bkp-ctf-2013-mitm/">BkP-CTF 2013 MITM</a></h2>
-	<div class="meta">
-		<div class="date">Jun 12</div>
-		
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-12T19:27:34+00:00" pubdate data-updated="true">2013-06-12</time></div>
+    
 
 <div class="tags">
 
@@ -126,16 +139,23 @@
 </div>
 
 
-	    
-	    <div class="comments"><a href="/blog/2013/06/12/bkp-ctf-2013-mitm/#disqus_thread">Comments</a></div>
-	    
-	</div>
+    
+        
+            
+    <div class="comments"><a href="/blog/2013/06/12/bkp-ctf-2013-mitm/#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
 </article>
-	
-	</section>
-	
 
-
+<nav id="pagenavi">
+    
+    <a href="/index.html" class="prev">Prev</a>
+    
+    
+    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
+</nav>
 </div>
 	<footer id="footer" class="inner">Copyright &copy; 2017
 

