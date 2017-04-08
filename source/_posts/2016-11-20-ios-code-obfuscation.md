@@ -7,8 +7,6 @@ comments: true
 typora-root-url: ../../source
 ---
 
-## iOS代码混淆
-
 ### 标识符混淆
 
 念大婶在博客中介绍了两种方法，用于保护代码逻辑，对抗逆向分析
