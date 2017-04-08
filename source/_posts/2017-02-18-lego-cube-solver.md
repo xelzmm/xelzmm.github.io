@@ -7,9 +7,15 @@ comments: true
 typora-root-url: ../../source
 ---
 
-<iframe width="100%" height="450" src="https://www.youtube.com/embed/lXMsFn_69Dw" frameborder="0" allowfullscreen></iframe>
+视频预览
 
-没梯子请点[优酷](http://player.youku.com/embed/XMjUyMDcxMDk1Mg==)
+优酷视频:
+
+<iframe height=490 width='100%' src='http://player.youku.com/embed/XMjUyMDcxMDk1Mg==' frameborder=0 'allowfullscreen'></iframe>
+
+Youtube:
+
+<iframe width="100%" height="450" src="https://www.youtube.com/embed/lXMsFn_69Dw" frameborder="0" allowfullscreen></iframe>
 
 ## 0x00 简要说明
 
@@ -18,6 +24,8 @@ typora-root-url: ../../source
 **软件依赖**：LeJOS, BTStack, OpenCV2
 
 **还原效率**：扫描10~15秒，计算<1秒，还原~1分钟
+
+**Github**：[iOS控制器](https://github.com/xelzmm/ios-lego-cube-solver)  [Lego机器人](https://github.com/xelzmm/lego-cube-solver)
 
 <!-- more -->
 
