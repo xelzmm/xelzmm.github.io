@@ -4,7 +4,7 @@
   <title><![CDATA[Category: lego | xelz's blog]]></title>
   <link href="http://xelz.info/blog/categories/lego/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2017-04-08T15:41:15+00:00</updated>
+  <updated>2017-04-08T15:51:11+00:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -18,10 +18,17 @@
     <link href="http://xelz.info/blog/2017/02/18/lego-cube-solver/"/>
     <updated>2017-02-18T20:00:00+00:00</updated>
     <id>http://xelz.info/blog/2017/02/18/lego-cube-solver</id>
-    <content type="html"><![CDATA[<iframe width="100%" height="450" src="https://www.youtube.com/embed/lXMsFn_69Dw" frameborder="0" allowfullscreen></iframe>
+    <content type="html"><![CDATA[<p>视频预览</p>
+
+<p>优酷视频:</p>
+
+<iframe height=490 width='100%' src='http://player.youku.com/embed/XMjUyMDcxMDk1Mg==' frameborder=0 'allowfullscreen'></iframe>
 
 
-<p>没梯子请点<a href="http://player.youku.com/embed/XMjUyMDcxMDk1Mg==">优酷</a></p>
+<p>Youtube:</p>
+
+<iframe width="100%" height="450" src="https://www.youtube.com/embed/lXMsFn_69Dw" frameborder="0" allowfullscreen></iframe>
+
 
 <h2>0x00 简要说明</h2>
 
@@ -30,6 +37,8 @@
 <p><strong>软件依赖</strong>：LeJOS, BTStack, OpenCV2</p>
 
 <p><strong>还原效率</strong>：扫描10~15秒，计算&lt;1秒，还原~1分钟</p>
+
+<p><strong>Github</strong>：<a href="https://github.com/xelzmm/ios-lego-cube-solver">iOS控制器</a>  <a href="https://github.com/xelzmm/lego-cube-solver">Lego机器人</a></p>
 
 <!-- more -->
 
