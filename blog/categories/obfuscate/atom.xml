@@ -4,7 +4,7 @@
   <title><![CDATA[Category: obfuscate | xelz's blog]]></title>
   <link href="http://xelz.info/blog/categories/obfuscate/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2017-04-08T15:39:39+00:00</updated>
+  <updated>2017-04-08T15:41:15+00:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -109,6 +109,9 @@ void func1() {</p>
 ```</p>
 
 <p>使用<code>asm label</code>语法的好处是，只需要将符号的声明标记出来进行替换即可， 不需要对该符号的引用进行标记和替换。如果要混淆已经完成的代码，这一点非常省时省力。</p>
+
+<!-- more -->
+
 
 <p>扫描源代码并生成混淆头文件的脚本:</p>
 
