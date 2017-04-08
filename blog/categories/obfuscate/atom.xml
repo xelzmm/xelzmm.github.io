@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: security | xelz's blog]]></title>
-  <link href="http://xelz.info/blog/categories/security/atom.xml" rel="self"/>
+  <title><![CDATA[Category: obfuscate | xelz's blog]]></title>
+  <link href="http://xelz.info/blog/categories/obfuscate/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
   <updated>2017-04-08T15:38:40+00:00</updated>
   <id>http://xelz.info/</id>
@@ -12,87 +12,6 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
-  
-  <entry>
-    <title type="html"><![CDATA[Proxy Server Crawler]]></title>
-    <link href="http://xelz.info/blog/2017/02/03/proxy-server-crawler/"/>
-    <updated>2017-02-03T10:00:00+00:00</updated>
-    <id>http://xelz.info/blog/2017/02/03/proxy-server-crawler</id>
-    <content type="html"><![CDATA[<p>When we are doing security tests, we always change our IP address to bypass some security strategies. The easiest way to change IP is using a proxy.</p>
-
-<p>Some websites can provide proxy IPs, but none of them can ensure the healthy of those proxy hosts. It&rsquo;s a horrible thing to check them one by one by hand when you wanna got one. So we can crawl these websites and test every proxy IP automatically.</p>
-
-<p>The project is hosted at <a href="https://github.com/xelzmm/proxy_server_crawler">https://github.com/xelzmm/proxy_server_crawler</a>.</p>
-
-<h2>Introduction</h2>
-
-<p><strong>Proxy Server Crawler</strong> is a tool used to crawl public proxy servers from proxy websites. When crawled a proxy server(ip::port::type), it will test the functionality of the server automatically.</p>
-
-<p>Currently supported websites:</p>
-
-<ul>
-<li><a href="http://www.66ip.cn">http://www.66ip.cn</a></li>
-<li><a href="http://www.cz88.net">http://www.cz88.net</a></li>
-<li><a href="http://www.cn-proxy.com">http://www.cn-proxy.com</a></li>
-<li><a href="http://www.haodailiip.com">http://www.haodailiip.com</a></li>
-<li><a href="http://www.kuaidaili.com">http://www.kuaidaili.com</a></li>
-<li><a href="http://www.proxylists.net">http://www.proxylists.net</a></li>
-<li><a href="http://www.qiaodm.net">http://www.qiaodm.net</a></li>
-<li><a href="http://www.socks-proxy.net">http://www.socks-proxy.net</a></li>
-<li><a href="http://www.xroxy.com">http://www.xroxy.com</a></li>
-<li><a href="http://www.xicidaili.com">http://www.xicidaili.com</a></li>
-</ul>
-
-
-<p>Currently supported testing(for http proxy)</p>
-
-<ul>
-<li>ssl support</li>
-<li>post support</li>
-<li>speed (tested with 10 frequently used sites)</li>
-<li>type(high/anonymous/transparent)</li>
-</ul>
-
-
-<!-- more -->
-
-
-<h2>Requirements</h2>
-
-<ul>
-<li>Python >= 2.7</li>
-<li>Scrapy 1.3.0 (not tested for lower version)</li>
-<li>node (for some sites, you need node to bypass waf based on javascript)</li>
-</ul>
-
-
-<h2>Usage</h2>
-
-<p><code>bash
-cd proxy_server_crawler
-scrapy crawl chunzhen
-</code></p>
-
-<p>[log]</p>
-
-<p><code>
-[ result] ip: 59.41.214.218  , port: 3128 , type: http, proxy server not alive or healthy.
-[ result] ip: 117.90.6.67    , port: 9000 , type: http, proxy server not alive or healthy.
-[ result] ip: 117.175.183.10 , port: 8123 , speed: 984 , type: high
-[ result] ip: 180.95.154.221 , port: 80   , type: http, proxy server not alive or healthy.
-[ result] ip: 110.73.0.206   , port: 8123 , type: http, proxy server not alive or healthy.
-[  proxy] ip: 124.88.67.54   , port: 80   , speed: 448 , type: high       , post: True , ssl: False
-[ result] ip: 117.90.2.149   , port: 9000 , type: http, proxy server not alive or healthy.
-[ result] ip: 115.212.165.170, port: 9000 , type: http, proxy server not alive or healthy.
-[  proxy] ip: 118.123.22.192 , port: 3128 , speed: 769 , type: high       , post: True , ssl: False
-[  proxy] ip: 117.175.183.10 , port: 8123 , speed: 908 , type: high       , post: True , ssl: True
-</code></p>
-
-<h2>License</h2>
-
-<p>The MIT License (MIT)</p>
-]]></content>
-  </entry>
   
   <entry>
     <title type="html"><![CDATA[iOS代码混淆]]></title>
