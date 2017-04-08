@@ -4,7 +4,7 @@
   <title><![CDATA[xelz's blog]]></title>
   <link href="http://xelz.info/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2017-04-08T15:38:40+00:00</updated>
+  <updated>2017-04-08T15:39:39+00:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -1615,9 +1615,7 @@
     <link href="http://xelz.info/blog/2016/11/20/ios-code-obfuscation/"/>
     <updated>2016-11-20T20:00:00+00:00</updated>
     <id>http://xelz.info/blog/2016/11/20/ios-code-obfuscation</id>
-    <content type="html"><![CDATA[<h2>iOS代码混淆</h2>
-
-<h3>标识符混淆</h3>
+    <content type="html"><![CDATA[<h3>标识符混淆</h3>
 
 <p>念大婶在博客中介绍了两种方法，用于保护代码逻辑，对抗逆向分析</p>
 
