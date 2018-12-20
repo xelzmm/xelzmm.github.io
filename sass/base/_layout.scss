@@ -5,6 +5,7 @@ $max-width: 1000px;
 	padding: 0;
 }
 body{
+	-webkit-text-size-adjust: 100%;
 	font-family: $font-default;
 	/*font-weight: 300;*/
 	font-size: 15px;
