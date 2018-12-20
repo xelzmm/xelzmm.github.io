@@ -4,7 +4,7 @@
   <title><![CDATA[Category: security | xelz's blog]]></title>
   <link href="http://xelz.info/blog/categories/security/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2017-04-08T15:51:11+00:00</updated>
+  <updated>2018-12-20T10:42:55+00:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Proxy Server Crawler]]></title>
     <link href="http://xelz.info/blog/2017/02/03/proxy-server-crawler/"/>
-    <updated>2017-02-03T10:00:00+00:00</updated>
+    <updated>2017-02-03T18:00:00+08:00</updated>
     <id>http://xelz.info/blog/2017/02/03/proxy-server-crawler</id>
     <content type="html"><![CDATA[<p>When we are doing security tests, we always change our IP address to bypass some security strategies. The easiest way to change IP is using a proxy.</p>
 

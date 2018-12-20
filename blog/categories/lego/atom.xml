@@ -4,7 +4,7 @@
   <title><![CDATA[Category: lego | xelz's blog]]></title>
   <link href="http://xelz.info/blog/categories/lego/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2017-04-08T15:51:11+00:00</updated>
+  <updated>2018-12-20T10:42:55+00:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -157,7 +157,7 @@ private static void rotate(int angle, boolean changeFacelet) {
 
 <p>之后就可以将任意面，通过不超过两步的操作翻转到底面，例如，可以通过两次<code>PUSH</code>将顶面翻转到底面，也可以通过底座顺时针旋转90°后，再<code>PUSH</code>将左侧的面翻转到底面：</p>
 
-<p>```Java</p>
+<p>```java</p>
 
 <pre><code>/**
  * make the specified facelet downwards to bottom

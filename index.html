@@ -7,14 +7,7 @@
 	<meta name="author" content="xelz">
 
 	
-	<meta name="description" content="Description 2D Life 470 points 1
-2
-3
-4
-http://110.10.212.135:24135
-http://110.10.212.135:24136
-http://110.10.212.147:24135
-http://110.10.212.147: &hellip;">
+	<meta name="description" content="0x00 前言 苹果在WWDC 2015大会上引入了bitcode，随后在Xcode7中添加了在二进制中嵌入bitcode(Enable Bitcode)的功能，并且默认设置为开启状态。很多开发者在集成第三方SDK的时候都被bitcode坑过一把， &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -83,6 +76,162 @@ http://110.10.212.147: &hellip;">
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2018/11/24/all-you-need-to-know-about-bitcode/">
+		
+			关于bitcode, 知道这些就够了</a>
+	</h2>
+	<div class="entry-content">
+		<h2>0x00 前言</h2>
+
+<p>苹果在WWDC 2015大会上引入了bitcode，随后在Xcode7中添加了在二进制中嵌入bitcode(Enable Bitcode)的功能，并且默认设置为开启状态。很多开发者在集成第三方SDK的时候都被bitcode坑过一把，然后google百度一番发现只要关闭bitcode就可以了，但是大部分开发者都不清楚bitcode到底是什么东西。这篇文档将给大家详细地介绍与bitcode有关的内容。</p>
+
+<h2>0x01 什么是bitcode</h2>
+
+<p>研究bitcode之前需要先了解一下LLVM，因为bitcode是由LLVM引入的一种中间代码(Intermediate Representation，简称IR)，它是源代码被编译为二进制机器码过程中的中间表示形态，它既不是源代码，也不是机器码。从代码组织结构上看它比较接近机器码，但是在函数和指令层面使用了很多高级语言的特性。</p>
+
+<p>LLVM是一套优秀的编译器框架，目前NDK/Xcode均采用LLVM作为默认的编译器。LLVM的编译过程可以简单分为3个部分:</p>
+
+<p><img src="/assets/2018/RetargetableCompiler.png" alt="" /></p>
+
+<center>图来自 http://www.aosabook.org/en/llvm.html</center>
+
+
+<ol>
+<li>前端(Frontend)，负责把各种类型的源代码编译为中间表示，也就是bitcode，在LLVM体系内，不同的语言有不同的编译器前端，最常见的如clang负责c/c++/oc的编译，flang负责fortran的编译，swiftc负责swift的编译等等</li>
+<li>优化(Optimizer)，负责对bitcode进行各种类型的优化，将bitcode代码进行一些逻辑等价的转换，使得代码的执行效率更高，体积更小，比如DeadStrip/SimplifyCFG</li>
+<li>后端(Backend)，也叫CodeGenerator，负责把优化后的bitcode编译为指定目标架构的机器码，比如X86Backend负责把bitcode编译为x86指令集的机器码</li>
+</ol>
+
+
+<p>在这个体系中，不同语言的源代码将会被转化为统一的bitcode格式，三个模块可以充分复用，防止重复造轮子。如果要开发一门新的<code>x语言</code>，只需要造一个x语言的前端，将x语言的源代码编译为bitcode，优化和后端的事情完全不用管。同理，如果新的芯片架构问世，则只需要基于LLVM重新写一套目标平台的后端，非常方便。</p>
+
+<h2>0x02 bitcode初探</h2>
+
+<p>既然bitcode是代码的一种表示形式，因此它也会有自己的一套独立的语法，可以通过一个简单的例子来一探究竟，这里以clang为例，swift的操作和结果可能稍有不同。</p>
+
+<p>本文所涉及的内容可以自行操作，也可以直接下载<a href="/assets/2018/bitcode-demo.zip">我写这篇文章时保存的副本</a></p>
+
+<p>先编写一段helloworld代码(test.c)：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cp">#include &lt;stdio.h&gt;</span>
+</span><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;hello, world.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>通过以下命令可以将源代码编译为object文件:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>clang -c test.c -o test.o
+</span><span class='line'><span class="nv">$ </span>file test.o
+</span><span class='line'>test.o: Mach-O 64-bit object x86_64
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其实，这个命令同时完成了前端、优化、后端三个部分，可以通过 <code>-emit-llvm -c</code> 将前端这一步单独拆出来，这样就可以看到bitcode了:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>clang -emit-llvm -c test.c -o test.bc <span class="c"># 将源代码编译为bitcode</span>
+</span><span class='line'><span class="nv">$ </span>file test.bc
+</span><span class='line'>test.bc: LLVM bitcode, wrapper x86_64
+</span><span class='line'><span class="nv">$ </span>clang -c test.bc -o test.bc.o <span class="c"># 将bitcode编译为object</span>
+</span><span class='line'><span class="nv">$ </span>file test.bc.o
+</span><span class='line'>test.bc.o: Mach-O 64-bit object x86_64
+</span><span class='line'><span class="nv">$ </span>md5 test.bc.o test.o
+</span><span class='line'>MD5 <span class="o">(</span>test.bc.o<span class="o">)</span> <span class="o">=</span> 70ea3a520c26df84d1f7ca552e8e6620
+</span><span class='line'>MD5 <span class="o">(</span>test.o<span class="o">)</span> <span class="o">=</span> 70ea3a520c26df84d1f7ca552e8e6620
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>bitcode文件使用后缀名<code>.bc</code>表示，可以看到，将bitcode文件作为clang的输入，编出的object文件跟直接编源代码是相同的。然后在来看一下bitcode文件:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>hexdump -C test.bc  <span class="p">|</span> head
+</span><span class='line'>00000000  de c0 17 0b 00 00 00 00  14 00 00 00 08 0b 00 00  <span class="p">|</span>................<span class="p">|</span>
+</span><span class='line'>00000010  07 00 00 01 42 43 c0 de  35 14 00 00 07 00 00 00  <span class="p">|</span>....BC..5.......<span class="p">|</span>
+</span><span class='line'>00000020  62 0c 30 24 96 96 a6 a5  f7 d7 7f 4d d3 b4 5f d7  <span class="p">|</span>b.0<span class="nv">$.</span>......M.._.<span class="p">|</span>
+</span><span class='line'>00000030  3e 9e fb f9 4f 0b 51 80  4c 01 00 00 21 0c 00 00  <span class="p">|</span>&gt;...O.Q.L...!...<span class="p">|</span>
+</span><span class='line'>00000040  74 02 00 00 0b 02 21 00  02 00 00 00 13 00 00 00  <span class="p">|</span>t.....!.........<span class="p">|</span>
+</span><span class='line'>00000050  07 81 23 91 41 c8 04 49  06 10 32 39 92 01 84 0c  <span class="p">|</span>..#.A..I..29....<span class="p">|</span>
+</span><span class='line'>00000060  25 05 08 19 1e 04 8b 62  80 10 45 02 42 92 0b 42  <span class="p">|</span>%......b..E.B..B<span class="p">|</span>
+</span><span class='line'>00000070  84 10 32 14 38 08 18 4b  0a 32 42 88 48 90 14 20  <span class="p">|</span>..2.8..K.2B.H.. <span class="p">|</span>
+</span><span class='line'>00000080  43 46 88 a5 00 19 32 42  04 49 0e 90 11 22 c4 50  <span class="p">|</span>CF....2B.I...<span class="err">&quot;</span>.P<span class="p">|</span>
+</span><span class='line'>00000090  41 51 81 8c e1 83 e5 8a  04 21 46 06 51 18 00 00  <span class="p">|</span>AQ.......!F.Q...<span class="p">|</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>通过hexdump可以看出这个文件并非文本文件，全是乱码，这样的文件是很难分析的。其实LLVM提供了<code>llvm-dis</code>/ <code>llvm-as</code> 两个工具，用于将bitcode在二进制格式和可读的文本格式之间进行相互的转化，但遗憾的是Xcode的编译器工具链中并没有附带这个命令，因此只能另寻他法。</p>
+
+
+		
+		<a href="/blog/2018/11/24/all-you-need-to-know-about-bitcode/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2018-11-24T17:17:28+08:00" pubdate data-updated="true">2018-11-24</time></div>
+    
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ios/'>ios</a>
+
+</div>
+
+
+    
+        
+            
+    <div class="comments"><a href="/blog/2018/11/24/all-you-need-to-know-about-bitcode/#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
 
 
     <article class="post">
@@ -345,7 +494,7 @@ http://110.10.212.147: &hellip;">
   
 
 
-<time datetime="2017-02-03T10:00:00+00:00" pubdate data-updated="true">2017-02-03</time></div>
+<time datetime="2017-02-03T18:00:00+08:00" pubdate data-updated="true">2017-02-03</time></div>
     
 
 <div class="tags">
@@ -598,7 +747,7 @@ http://110.10.212.147: &hellip;">
   
 
 
-<time datetime="2015-10-30T10:00:00+00:00" pubdate data-updated="true">2015-10-30</time></div>
+<time datetime="2015-10-30T18:00:00+08:00" pubdate data-updated="true">2015-10-30</time></div>
     
 
 <div class="tags">
@@ -652,7 +801,7 @@ http://110.10.212.147: &hellip;">
   
 
 
-<time datetime="2014-12-17T03:36:53+00:00" pubdate data-updated="true">2014-12-17</time></div>
+<time datetime="2014-12-17T11:36:53+08:00" pubdate data-updated="true">2014-12-17</time></div>
     
 
 <div class="tags">
@@ -841,61 +990,6 @@ http://110.10.212.147: &hellip;">
 </div>
 </article>
 
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2014/04/20/for-our-one-year-anniversary/">
-		
-			For Our One Year Anniversary</a>
-	</h2>
-	<div class="entry-content">
-		<p>I make this page to remember our love.</p>
-
-<p>GitHub: <a href="https://github.com/xelzmm/Love">https://github.com/xelzmm/Love</a></p>
-
-<p>View: <a href="http://iloveyamei.aliapp.com">http://iloveyamei.aliapp.com</a> | <a href="http://love.xelz.info">http://love.xelz.info</a></p>
-
-<p><img src="/assets/2014/one-year.jpg" alt="" /></p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-04-20T20:00:00+00:00" pubdate data-updated="true">2014-04-20</time></div>
-    
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/live/'>live</a>
-
-</div>
-
-
-    
-        
-            
-    <div class="comments"><a href="/blog/2014/04/20/for-our-one-year-anniversary/#disqus_thread">Comments</a></div>
-            
-        
-    
-</div>
-</article>
-
 <nav id="pagenavi">
     
     
@@ -904,7 +998,7 @@ http://110.10.212.147: &hellip;">
     <div class="center"><a href="/blog/archives">Blog Archives</a></div>
 </nav>
 </div>
-	<footer id="footer" class="inner">Copyright &copy; 2017
+	<footer id="footer" class="inner">Copyright &copy; 2018
 
     xelz
 
