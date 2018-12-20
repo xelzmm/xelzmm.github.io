@@ -137,7 +137,7 @@ Youtube:
 
 之后就可以将任意面，通过不超过两步的操作翻转到底面，例如，可以通过两次`PUSH`将顶面翻转到底面，也可以通过底座顺时针旋转90°后，再`PUSH`将左侧的面翻转到底面：
 
-```Java
+```java
     /**
      * make the specified facelet downwards to bottom
      * @param facelet target face
