@@ -304,7 +304,7 @@ Contents of section __bitcode:
  0039 00                                   . # 只有一个字节 0x00
 ```
 
-这样的方式编译出的文件结构与`-fembed-bitcode` 的结果是一样的，唯一的区别就是 `__LLVM,__bitcode` 的内容并没有将bitcode文件嵌入进来，取而代之的是一个空的文件，只有一个占位符`0x00`
+这样的方式编译出的文件结构与`-fembed-bitcode` 的结果是一样的，唯一的区别就是 `__LLVM,__bitcode` 和 `__LLVM,__cmdline` 的内容并没有将实际的bitcode文件和编译参数嵌入进来，取而代之的一个字节的占位符 `0x00`
 
 ## 0x04 Bitcode Bundle
 
@@ -471,20 +471,23 @@ MD5 (test) = f4786288582decf2b8a1accb1aaa4a3c
 - 如果这个库是在本地编译的， 比如自己项目里或者子项目里的target，或者通过Pods引入了源代码，找到这个target的Build Settings把Enable Bitcode置为YES即可
 - 但如果是第三方提供的二进制库文件，则需要联系sdk的提供方确认是否能提供带bitcode的版本，否则只能关闭自己项目中的bitcode。这也是bitcode时至今日都没有得到大面积应用的最大障阻碍。
 
-当使用Archive方式打包出带有bitcode的包时，你会发现这个包里的二进制文件比没有开启bitcode时大出了许多，多出来的其实就是bitcode的体积，并且bitcode的体积，一般要二进制文件本身还要大
+当使用Archive方式打包出带有bitcode的包时，你会发现这个包里的二进制文件比没有开启bitcode时大出了许多，多出来的其实就是bitcode的体积，并且bitcode的体积，一般要比二进制文件本身还要大出许多
 
 ```bash
 $ ls -al test.o test_bitcode.o test.bc
 -rw-r--r--  1 xelz  staff  2848 12 19 18:42 test.bc
 -rw-r--r--@ 1 xelz  staff   784 12 19 18:24 test.o
 -rw-r--r--@ 1 xelz  staff  3920 12 19 18:59 test_bitcode.o
+$ ls -al test test_bitcode
+-rwxr-xr-x@ 1 xelz  staff   8432 12 19 21:38 test
+-rwxr-xr-x@ 1 xelz  staff  16624 12 19 20:50 test_bitcode
 ```
 
 当然，这部分内容并不会导致用户下载到的APP变大，因为用户下载到的代码中只会有机器码，不会包含bitcode。有的项目开启bitcode之后会发现二进制的体积增大到超出了苹果对[二进制体积的限制](https://help.apple.com/app-store-connect/#/dev611e0a21f)，但是完全不用担心，苹果的限制只是针对`__TEXT` 段，而嵌入的bitcode是存储在单独的`__LLVM` 段，不在苹果的限制范围内。
 
 打包出带有bitcode的xcarchive之后，可以导出Development IPA进行上线前的最终测试，或者上传到App Store Connect进行提审上架。进行此类操作时会发现Xcode Organizer中多出了bitcode相关的选项：
 
-- 导出Development版本时，可以勾选`Rebuild from Bitcode`，这时导出会变的很慢，因为Xcode在后台通过bitcode重新编译代码，这样导出的ipa最接近最终用户从AppStore下载的版本。而如果不勾选此选项，则会直接使用Archive时编译出的二进制代码，并把bitcode从二进制中去除以减小体积。
+- 导出Development版本时，可以勾选`Rebuild from Bitcode`，这时导出会变的很慢，因为Xcode在后台通过bitcode重新编译代码，这样导出的ipa最接近最终用户从AppStore下载的版本，为什么说是接近呢，因为你苹果使用的编译器版本很可能和你本地的不一样，并且苹果可能在编译时增加额外的优化步骤。而如果不勾选此选项，则会直接使用Archive时编译出的二进制代码，并把bitcode从二进制中去除以减小体积。
 
   ![rebuild from bitcode](/assets/2018/organizer-export.png)
 
@@ -557,6 +560,6 @@ $ otool -l test_bitcode_marker.o | grep -A 2  __LLVM | grep size
 
 #### bitcode是否能反编译出源代码
 
-从科学严谨的角度来说，无法给出确定的答案，但是这个问题跟“二进制文件是否能反编译出源代码”是一样的道理。编译是一个将源代码一层一层不断低级化的过程，每一层都可能会丢失一些特性，产生不可逆的转换，把源代码编译为bitcode或是二进制机器码是五十步之于百步的关系。在通常情况下，反编译bitcode要比反编译二进制文件更容易，但通过bitcode反编译出和源代码语义完全相同的代码，也是几乎不可能的。
+从科学严谨的角度来说，无法给出确定的答案，但是这个问题跟“二进制文件是否能反编译出源代码”是一样的道理。编译是一个将源代码一层一层不断低级化的过程，每一层都可能会丢失一些特性，产生不可逆的转换，把源代码编译为bitcode或是二进制机器码是五十步之于百步的关系。在通常情况下，反编译bitcode跟反编译二进制文件比要相对容易一些，但通过bitcode反编译出和源代码语义完全相同的代码，也是几乎不可能的。
 
 另外，从安全的角度考虑，Xcode 引入了 `Symbol Hiding` 和 `Debug info Striping` 机制，在链接时，bitcode中所有非导出符号均被隐藏，取而代之的是 `__hidden#0_` 或者 `__ir_hidden#1_` 这样的形式，debug信息也只保留了line-table，所有跟文件路径、标识符、导出符号等相关的信息全部都从bitcode中移除，相当于做了一层混淆，防止源代码级别的信息泄露，可谓是煞费苦心。
