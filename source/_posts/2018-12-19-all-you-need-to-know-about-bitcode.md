@@ -141,7 +141,7 @@ define i32 @main() #0 { ; 定义函数 @main，返回值为i32类型
 declare i32 @printf(i8*, ...) #1 ; 声明一个外部函数 @printf
 ```
 
-这段代码不难阅读， 其含义和逻辑与我们所写的源代码完全一致，只是用了另外一种语法表示出来。bitcode的具体格式及语法在此不做展开，虽然这个例子看起来非常简单易懂，但真实场景中，bitcode的格式远比这个复杂，有兴趣的同学可以直接阅读[LLVM Language Reference Manual](https://llvm.org/docs/LangRef.html)。
+这段代码不难阅读， 其含义和逻辑与我们所写的源代码基本一致，只是用了另外一种语法表示出来。bitcode的具体语法在此不做展开，虽然这个例子看起来非常简单易懂，但真实场景中，bitcode的语法远比这个复杂，有兴趣的同学可以直接阅读[LLVM Language Reference Manual](https://llvm.org/docs/LangRef.html)。
 
 ## 0x03 Enable Bitcode
 
@@ -171,6 +171,11 @@ declare i32 @printf(i8*, ...) #1 ; 声明一个外部函数 @printf
 
 ```bash
 $ clang -fembed-bitcode -c test.c -o test_bitcode.o
+```
+
+编译之后可以通过tool工具查看object文件的结构，此时你需要对Mach-O文件有一些基本的了解
+
+```bash
 $ otool -l test_bitcode.o
 # 以下为otool输出节选
 Section
@@ -238,7 +243,7 @@ MD5 (test_bitcode.o.bc) = 9901ac8db63be30dafc19c2f06b0cae8
 
 不难得出结论：
 
-- object文件中嵌入的`__LLVM,__bitcode` 正是完整的，未经任何加密或者压缩的bitcode文件
+- object文件中嵌入的`__LLVM,__bitcode` 正是完整的，未经任何加密或者压缩的bitcode文件，通过 `-fembed-bitcode` 参数，clang把对应的bitcode文件整个嵌入到了object文件中
 - `__LLVM,__cmdline` 是编译这个文件所用到的参数，如果要通过导出的bitcode重新编译这个object文件，必须带上这些参数
   - 导出的参数是`cc1` 也就是clang中真正"前端"部分的参数(clang命令其实是整合了各个环节，所以clang一个命令可以从源代码编出可执行文件)，所以编译时要带上`-cc1`
 - 导出的bitcode文件似乎和直接编译的bitcode不一样，先留个疑问，后面再研究
@@ -256,13 +261,13 @@ MD5 (test_rebuild.o) = 70ea3a520c26df84d1f7ca552e8e6620
 
 没有任何问题，并且通过内嵌的bitcode编译出的object文件与直接从源代码编译出来的object完全一样！鹅妹子嘤~！
 
-回到遗留的问题：为什么导出的bitcode文件和直接编译的bitcode会不一样？明明编出的object都是一模一样的！这是因为二进制的bitcode文件中还保存了一些与实际代码无关的meta信息。如果能将bitcode转换为文本格式，将能更直观地进行对比。前面已经提到，xcode中并没有附带转换工具，但是我们依然可以通过clang来完成这一操作：
+回到遗留的问题：为什么导出的bitcode文件和直接编译的bitcode会不一样？明明编出的object都是一模一样的！这是因为二进制的bitcode文件中还保存了一些与实际代码无关的meta信息。如果能将bitcode转换为文本格式，将能更直观地进行对比。前面已经提到，xcode中并没有附带转换工具，但是我们依然可以通过clang来完成这一操作，还记得前面用过的 `-emit-llvm -S` 吗？
 
 ```bash
 $ clang -emit-llvm -S test_bitcode.o.bc -o test_bitcode.o.ll
 ```
 
-神奇吧？其实clang内部是先将输入的文件转换成Module对象，然后再执行对应的处理：
+神奇吧？输入虽然已经是bitcode了，并非源代码，但是clang也能"编译"出LLVM Assembly。其实clang内部是先将输入的文件转换成Module对象，然后再执行对应的处理：
 
 - 如果输入是源代码，会先进行前端编译，得到一个Module
 - 如果输入是bitcode或者LLVM Assembly，那么直接进行parse操作，即可得到Module对象
@@ -468,7 +473,7 @@ MD5 (test) = f4786288582decf2b8a1accb1aaa4a3c
 
 遇到这种问题，也需要分两种情况来看：
 
-- 如果这个库是在本地编译的， 比如自己项目里或者子项目里的target，或者通过Pods引入了源代码，找到这个target的Build Settings把Enable Bitcode置为YES即可
+- 如果这个库是在本地编译的， 比如自己项目里或者子项目里的target，或者通过Pods引入了源代码，那么这个target一定没有开启bitcode，在工程中找到这个target的Build Settings把Enable Bitcode置为YES即可
 - 但如果是第三方提供的二进制库文件，则需要联系sdk的提供方确认是否能提供带bitcode的版本，否则只能关闭自己项目中的bitcode。这也是bitcode时至今日都没有得到大面积应用的最大障阻碍。
 
 当使用Archive方式打包出带有bitcode的包时，你会发现这个包里的二进制文件比没有开启bitcode时大出了许多，多出来的其实就是bitcode的体积，并且bitcode的体积，一般要比二进制文件本身还要大出许多
@@ -487,7 +492,7 @@ $ ls -al test test_bitcode
 
 打包出带有bitcode的xcarchive之后，可以导出Development IPA进行上线前的最终测试，或者上传到App Store Connect进行提审上架。进行此类操作时会发现Xcode Organizer中多出了bitcode相关的选项：
 
-- 导出Development版本时，可以勾选`Rebuild from Bitcode`，这时导出会变的很慢，因为Xcode在后台通过bitcode重新编译代码，这样导出的ipa最接近最终用户从AppStore下载的版本，为什么说是接近呢，因为你苹果使用的编译器版本很可能和你本地的不一样，并且苹果可能在编译时增加额外的优化步骤。而如果不勾选此选项，则会直接使用Archive时编译出的二进制代码，并把bitcode从二进制中去除以减小体积。
+- 导出Development版本时，可以勾选`Rebuild from Bitcode`，这时导出会变的很慢，因为Xcode在后台通过bitcode重新编译代码，这样导出的ipa最接近最终用户从AppStore下载的版本，为什么说是接近呢，因为苹果使用的编译器版本很可能和本地Xcode不一样，并且苹果可能在编译时增加额外的优化步骤，这些都会导致苹果编译后的二进制文件跟本地编译的版本产生差异。而如果不勾选此选项，则会直接使用Archive时编译出的二进制代码，并把bitcode从二进制中去除以减小体积。
 
   ![rebuild from bitcode](/assets/2018/organizer-export.png)
 
@@ -547,7 +552,7 @@ LLVM只是统一了中间语言的结构和语法格式，但不能像Java那样
 otool -arch armv7 -l xxxx.a | grep __LLVM | wc -l
 ```
 
-通过判断是否包含 `__LLVM` 或者关键字来判断是否支持bitcode，其实这种方式是完全错误的，通过前面的测试可以知道，这种方式区分不了bitcode和bitcode-marker，确定是否包含bitcode，还需要检查otool输出中`__LLVM` Segment 的长度，如
+通过判断是否包含 `__LLVM` 或者关键字来判断是否支持bitcode，其实这种方式是完全错误的，通过前面的测试可以知道，这种方式区分不了bitcode和bitcode-marker，确定是否包含bitcode，还需要检查otool输出中`__LLVM` Segment 的长度，如果长度只有1个字节，则并不能代表真正开启了bitcode：
 
 ```bash
 $ otool -l test_bitcode.o | grep -A 2  __LLVM | grep size
