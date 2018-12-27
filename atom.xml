@@ -4,7 +4,7 @@
   <title><![CDATA[xelz's blog]]></title>
   <link href="http://xelz.info/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2018-12-27T02:47:59+00:00</updated>
+  <updated>2018-12-27T02:53:52+00:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -243,7 +243,7 @@
 
 <ul>
 <li>当前支持的平台主要是iPhoneOS(armv7/arm64)，watchOS等</li>
-<li>注意不包括iPhoneSimulator(i386/x86_64)和macos，也就是说模拟器架构下不会编出bitcode</li>
+<li>注意不包括iPhoneSimulator(i386/x86_64)和macos，也就是说模拟器架构下不会编出bitcode。这个限制只是Xcode自身的限制，并非编译器的限制，我们使用编译器提供的命令行工具自行操作仍然可以编译出这些架构下的bitcode，本文中的示例就是基于macos平台/x86_64架构。</li>
 </ul>
 </li>
 <li>进行Archive时，bitcode会被嵌入到链接后的二进制文件中，用于提交给App Store
