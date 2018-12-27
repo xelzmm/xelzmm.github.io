@@ -90,7 +90,7 @@ $ hexdump -C test.bc  | head
 我们知道通过编译器的`-S`参数可以将源代码编译为文本的assembly代码，不进行最后一步assembly到机器码的翻译工作，而assembly和机器码是等价的两种表示形式，bitcode同样也是有文本和二进制(bitcode)两种等价表示形式，clang也为bitcode保留了这一特性，可以通过`-emit-llvm -S` 将源代码编译为文本格式的bitcode， 也叫做LLVM Assembly Language，一般后缀名使用`.ll`:
 
 ```bash
-$ clang -emti-llvm -S test.c -o test.ll # 将源代码编译为LLVM Assembly
+$ clang -emit-llvm -S test.c -o test.ll # 将源代码编译为LLVM Assembly
 ```
 
 test.ll的全部内容如下
@@ -141,7 +141,7 @@ define i32 @main() #0 { ; 定义函数 @main，返回值为i32类型
 declare i32 @printf(i8*, ...) #1 ; 声明一个外部函数 @printf
 ```
 
-这段代码不难阅读， 其含义和逻辑与我们所写的源代码基本一致，只是用了另外一种语法表示出来。bitcode的具体语法在此不做展开，虽然这个例子看起来非常简单易懂，但真实场景中，bitcode的语法远比这个复杂，有兴趣的同学可以直接阅读[LLVM Language Reference Manual](https://llvm.org/docs/LangRef.html)。
+这段代码不难阅读， 其含义和逻辑与我们所写的源代码基本一致，只是用了另外一种语法表示出来。因为没有经过优化，函数中的前两条语句其实是多余的，这在之后的优化阶段会被消除(dead_strip)。bitcode的具体语法在此不做展开，虽然这个例子看起来非常简单易懂，但真实场景中，bitcode的语法远比这个复杂，有兴趣的同学可以直接阅读[LLVM Language Reference Manual](https://llvm.org/docs/LangRef.html)。
 
 ## 0x03 Enable Bitcode
 
