@@ -159,7 +159,7 @@ declare i32 @printf(i8*, ...) #1 ; 声明一个外部函数 @printf
 
 - 开启此设置将会在支持的平台和架构中开启bitcode
   - 当前支持的平台主要是iPhoneOS(armv7/arm64)，watchOS等
-  - 注意不包括iPhoneSimulator(i386/x86_64)和macos，也就是说模拟器架构下不会编出bitcode
+  - 注意不包括iPhoneSimulator(i386/x86_64)和macos，也就是说模拟器架构下不会编出bitcode。这个限制只是Xcode自身的限制，并非编译器的限制，我们使用编译器提供的命令行工具自行操作仍然可以编译出这些架构下的bitcode，本文中的示例就是基于macos平台/x86_64架构。
 - 进行Archive时，bitcode会被嵌入到链接后的二进制文件中，用于提交给App Store
   - Enable Bitcode 设置为 YES 时，从编译日志中可以看出，Archive时多了一个编译参数 `-fembed-bitcode`
 - 进行其他类型的Build(非Archive)时，编译器只会检查是否满足开启bitcode的条件，但并不会真正生成bitcode
