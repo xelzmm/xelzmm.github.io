@@ -4,7 +4,7 @@
   <title><![CDATA[xelz's blog]]></title>
   <link href="http://xelz.info/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2018-12-22T16:53:21+00:00</updated>
+  <updated>2018-12-27T02:47:59+00:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -132,7 +132,7 @@
 <p>我们知道通过编译器的<code>-S</code>参数可以将源代码编译为文本的assembly代码，不进行最后一步assembly到机器码的翻译工作，而assembly和机器码是等价的两种表示形式，bitcode同样也是有文本和二进制(bitcode)两种等价表示形式，clang也为bitcode保留了这一特性，可以通过<code>-emit-llvm -S</code> 将源代码编译为文本格式的bitcode， 也叫做LLVM Assembly Language，一般后缀名使用<code>.ll</code>:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>clang -emti-llvm -S test.c -o test.ll <span class="c"># 将源代码编译为LLVM Assembly</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>clang -emit-llvm -S test.c -o test.ll <span class="c"># 将源代码编译为LLVM Assembly</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -222,7 +222,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>这段代码不难阅读， 其含义和逻辑与我们所写的源代码基本一致，只是用了另外一种语法表示出来。bitcode的具体语法在此不做展开，虽然这个例子看起来非常简单易懂，但真实场景中，bitcode的语法远比这个复杂，有兴趣的同学可以直接阅读<a href="https://llvm.org/docs/LangRef.html">LLVM Language Reference Manual</a>。</p>
+<p>这段代码不难阅读， 其含义和逻辑与我们所写的源代码基本一致，只是用了另外一种语法表示出来。因为没有经过优化，函数中的前两条语句其实是多余的，这在之后的优化阶段会被消除(dead_strip)。bitcode的具体语法在此不做展开，虽然这个例子看起来非常简单易懂，但真实场景中，bitcode的语法远比这个复杂，有兴趣的同学可以直接阅读<a href="https://llvm.org/docs/LangRef.html">LLVM Language Reference Manual</a>。</p>
 
 <h2>0x03 Enable Bitcode</h2>
 
