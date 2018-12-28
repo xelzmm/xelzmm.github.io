@@ -7,8 +7,8 @@
 	<meta name="author" content="xelz">
 
 	
-	<meta name="description" content="0x00 前言 苹果在WWDC 2015大会上引入了bitcode，随后在Xcode7中添加了在二进制中嵌入bitcode(Enable Bitcode)的功能，并且默认设置为开启状态。很多开发者在集成第三方SDK的时候都被bitcode坑过一把， &hellip;">
-	
+	<meta name="description" content="All you need to know about bitcode. what is bitcode？ how to compile bitcode？ how to recompile/rebuid from bitcode？ Why to enable bitcode?">
+	<meta name="keywords" content="ios, llvm, bitcode, Enable Bitcode, -fembed-bitcode, bitcode-marker, clang">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 	<link href="/atom.xml" rel="alternate" title="xelz's blog" type="application/atom+xml">
@@ -787,9 +787,15 @@
 <span class='line-number'>17</span>
 <span class='line-number'>18</span>
 <span class='line-number'>19</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>clang -cc1 -triple x86_64-apple-macosx10.14.0 -emit-obj -disable-llvm-passes bundle.extract/1 -o bundle.extract/1.o -x ir
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c"># 首先根据文件目录，将解压出的每一个bitcode文件编译为object</span>
+</span><span class='line'><span class="nv">$ </span>clang -cc1 -triple x86_64-apple-macosx10.14.0 -emit-obj -disable-llvm-passes bundle.extract/1 -o bundle.extract/1.o -x ir
 </span><span class='line'><span class="c"># 由于解压出的文件没有后缀名，clang无法判断输入文件的格式，因此使用 -x ir 强制指定输入文件为ir格式</span>
 </span><span class='line'><span class="c"># 也可以将其重命名为1.bc，这样就不用指定-x ir</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># 根据toc.xml中提供的链接参数，将所有object文件链接为可执行文件，本例中只有一个文件</span>
 </span><span class='line'><span class="nv">$ </span>ld <span class="se">\</span>
 </span><span class='line'>    -arch x86_64 <span class="sb">`</span><span class="c"># architecture` \</span>
 </span><span class='line'>    -syslibroot <span class="sb">`</span>xcrun --show-sdk-path --sdk macosx<span class="sb">`</span> <span class="sb">`</span><span class="c"># platform` \</span>

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ios | xelz's blog]]></title>
   <link href="http://xelz.info/blog/categories/ios/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2018-12-27T02:53:52+00:00</updated>
+  <updated>2018-12-28T06:28:39+00:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -522,12 +522,17 @@ MD5 (test_bitcode.o.bc) = 9901ac8db63be30dafc19c2f06b0cae8
 
 <p>从bundle中解压出来的文件，就是object中嵌入的bitcode，通过MD5对比可以看出链接时对bitcode文件自身没有做任何处理。可以注意到，用于编译各个bitcode文件的参数(cmdline)被放进了TOC中文件描述的区域，而TOC中多出了一个部分用于存放链接时所需要的信息和必要的参数，有了这些信息， 我们不难通过bitcode重新编译，并链接出一个新的可执行文件：</p>
 
-<p>```bash
-$ clang -cc1 -triple x86_64-apple-macosx10.14.0 -emit-obj -disable-llvm-passes bundle.extract/1 -o bundle.extract/1.o -x ir</p>
+<p>```bash</p>
+
+<h1>首先根据文件目录，将解压出的每一个bitcode文件编译为object</h1>
+
+<p>$ clang -cc1 -triple x86_64-apple-macosx10.14.0 -emit-obj -disable-llvm-passes bundle.extract/1 -o bundle.extract/1.o -x ir</p>
 
 <h1>由于解压出的文件没有后缀名，clang无法判断输入文件的格式，因此使用 -x ir 强制指定输入文件为ir格式</h1>
 
 <h1>也可以将其重命名为1.bc，这样就不用指定-x ir</h1>
+
+<h1>根据toc.xml中提供的链接参数，将所有object文件链接为可执行文件，本例中只有一个文件</h1>
 
 <p>$ ld \</p>
 
