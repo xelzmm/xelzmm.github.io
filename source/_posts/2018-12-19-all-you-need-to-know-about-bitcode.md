@@ -5,6 +5,8 @@ date: 2018-11-24 17:17:28 +0800
 comments: true
 categories: ios
 typora-root-url: ../../source
+keywords: "ios, llvm, bitcode, Enable Bitcode, -fembed-bitcode, bitcode-marker, clang"
+description: "All you need to know about bitcode. what is bitcode？ how to compile bitcode？ how to recompile/rebuid from bitcode？ Why to enable bitcode?"
 ---
 
 
@@ -436,9 +438,12 @@ header的结构非常清晰，内容基本包含这些：
 从bundle中解压出来的文件，就是object中嵌入的bitcode，通过MD5对比可以看出链接时对bitcode文件自身没有做任何处理。可以注意到，用于编译各个bitcode文件的参数(cmdline)被放进了TOC中文件描述的区域，而TOC中多出了一个部分用于存放链接时所需要的信息和必要的参数，有了这些信息， 我们不难通过bitcode重新编译，并链接出一个新的可执行文件：
 
 ```bash
+# 首先根据文件目录，将解压出的每一个bitcode文件编译为object
 $ clang -cc1 -triple x86_64-apple-macosx10.14.0 -emit-obj -disable-llvm-passes bundle.extract/1 -o bundle.extract/1.o -x ir 
 # 由于解压出的文件没有后缀名，clang无法判断输入文件的格式，因此使用 -x ir 强制指定输入文件为ir格式
 # 也可以将其重命名为1.bc，这样就不用指定-x ir
+
+# 根据toc.xml中提供的链接参数，将所有object文件链接为可执行文件，本例中只有一个文件
 $ ld \
     -arch x86_64 `# architecture` \
     -syslibroot `xcrun --show-sdk-path --sdk macosx` `# platform` \
