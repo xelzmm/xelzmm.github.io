@@ -1,0 +1,945 @@
+---
+layout: post
+title: "深度长文：细说iOS代码签名"
+date: 2019-01-11 11:12:14 +0800
+comments: true
+categories: ios
+typora-root-url: ../../source
+keywords: "ios, codesign, code signature, resign, developer certificate, entitlements, provisioning profile, mobileprovision"
+description: "All you need to know about iOS Code Signature. What is codesign？ Why do we need codesign？ How to resign an app？How does iDevice verify codesign? 什么是代码签名？为什么要进行代码签名？ iOS代码签名的结构是什么？ 代码签名是如何被校验的？如何重签名？"
+---
+
+## 0x00 前言
+
+2008年苹果发布iOS2.0时引入了强制代码签名(Mandatory Code Signing)技术，为了能够严格控制设备上能够运行的代码，这为iOS设备的安全性和苹果的AppStore生态奠定了坚实的基础。作为iOSer总是要跟代码签名打交道的，相信大部分人对代码签名都是一知半解，本文将会由浅入深，深挖代码签名的内部细节。
+
+#### 导航 
+
+- 一口气读完，大约需要40-60分钟
+  - [深度长文：细说iOS代码签名](/blog/2019/01/11/ios-code-signature/)
+- 分步阅读
+  - [细说iOS代码签名(一)](/blog/2019/01/11/ios-code-signature-1/)：签名的作用及原理
+  - [细说iOS代码签名(二)](/blog/2019/01/11/ios-code-signature-2/)：开发者证书、Entitlements、Provisioning Profile
+  - [细说iOS代码签名(三)](/blog/2019/01/11/ios-code-signature-3/)：签名的过程及代码签名的数据结构
+  - [细说iOS代码签名(四)](/blog/2019/01/11/ios-code-signature-4/)：签名校验、越狱、重签名
+
+<!-- more -->
+
+## 0x01 签名的作用
+
+数字签名其实跟我们手写的签名类似，代表一个特定的主体(签名者)对特定内容(被签名数据)的署名和认可，签名是对信息发送行为真实性的有效保障。数字签名在很多领域都有应用，iOS的代码签名正是其中最典型的一种，我们可以先尝试分析一下iOS上代码签名的目的和好处。
+
+#### 安全性
+
+代码签名的首要任务是保证设备及系统的安全性，只有被苹果设备认可的证书签名的代码才能够被执行，否则在安装或者运行时会因为无法通过内核的签名校验而失败。iOS的系统中内置了来自苹果的CA证书，系统自身的代码都是被苹果”签名“过的， 而用户从AppStore下载的App也都已被苹果官方进行签名。签名机制可以有效地防止来自外部的攻击。
+
+这里存在两种场景：
+
+- 第一种是对系统本身的攻击，比如越狱，假如黑客发现了内核任意读写的漏洞，借此注入提权代码，但是这些代码会因为没有合法的签名而被系统拒绝运行，也就自然无法对系统造成实质性的破坏。
+- 第二种是对设备或者用户的攻击，众所周知，提交到AppStore的应用代码都会经过苹果的审查，包含恶意代码的App是无法上架的。此时，黑客可能会尝试先提交一个正常的App，通过各种技术手段躲避Apple的审查，上架后从网络上下载恶意代码并加载执行，但这种方式也会因为签名不合法而失败。
+
+#### 沙盒
+
+除了能够避免非授权的恶意代码运行，代码签名还可以有效地限制app的行为，这部分功能主要是由Sandbox机制来保证，但Sandbox的配置是绑定在签名中的，就是通常所说的Entitlements文件。试想，如果Entitlements文件可以被任意修改，那么Sandbox也就失去了意义，所以Entitlements文件也是强制签名保护的对象。对于越狱来说，如果无法绕过签名和Sandbox，再强大的提权漏洞也无计可施。
+
+#### 垄断
+
+代码签名还给苹果带来了一个巨大的好处：App分发的绝对控制权。在iOS平台上(面向未越狱的用户)公开发行App的合法途径有且只有一种，就是上传到苹果官方的AppStore供用户下载。苹果会对App进行严格的审查并签名，App的功能及支付渠道也因此可以受苹果的严格管制，这为苹果带来的经济效益不言而喻。
+
+## 0x02 什么是签名
+
+签名的本质是用于验证数据的合法性，确保被签名的数据来自特定的来源，并且未经篡改。它基于非对称加密，和哈希算法，研究签名之前需要对这两种算法有一定的了解。
+
+#### 公钥加密算法
+
+也叫非对称加密，它在加密和解密时使用的是不同的密钥，具有这样的特征：
+
+- 有一对密钥 `a` 和  `b` ，满足 `a ≠ b`
+- 用密钥`a`加密的数据只能用`b`进行解密，`a`自身无法解密，反之亦然
+- 只知道其中一个密钥，无法推导出另一个
+- 把其中一个可以公开的叫做公钥，另一个不能公开的叫做私钥。
+
+![公钥加密算法](/assets/2019/pubkey_crypto.png)
+
+最常见的公钥加密算法是RSA公钥加密算法，也是签名中普遍使用的算法。其数学原理如下：
+
+- 选定两个超大的素数`p`, `q`，并计算他们的乘积`n = p * q`
+- 计算欧拉函数 `φ(n) = φ(p) * φ(q) = (p-1) * (q-1)`
+- 随机选定一个数`e`，满足`1 < e < φ(n)` ，且与`φ(n)`互质
+- 根据扩展欧几里得算法计算`e`对于`φ(n)`的乘法逆元`d` ，`e * d = 1 mod φ(n)`
+- `{n, e}` 和 `{n, d}` 分别组成这个算法的一对密钥
+- 对于给定明文`p`,  若使用`{n, e}` 作为加密密钥，其密文计算方法为 `c = p ^ e mod n`
+  - 这是一个`单向函数`，已知`{c, n, e}` 无法计算出`p`
+- 相应地需要使用`{n, d}`进行解密， `p' = c * d mod n`
+  - 这是上一步加密函数的`逆函数`
+- 两组密钥中`n`是相同的，那么如果已知了`e`和`d`其中的一个，想要计算另一个，必须知道`φ(n)`，也就是必须先将`n`分解`质因数`，得到`p`和`q`，但由于`n`的值非常大，这样的计算量基本上是`不可能`的，也就保障了算法的安全性
+
+理论上 `{n, e}` 和 `{n, d}` 可以互换，任何一个都可以是公钥或者私钥，加密和解密的函数也可以互换。但实践中，一般固定设置`e=65537(0x10001)`，相当于公开的一个约定，这样一来`{n, e}`就只能作为公钥使用。
+
+#### 哈希算法
+
+也叫散列或者摘要算法，对一段任意长度的数据，通过一定的映射和计算，得到一个固定长度的值，这个值就被称为这段数据的哈希值(hash)。给定一个哈希算法，它一定具有以下特征：
+
+- 哈希值不同的两段数据绝对不同
+- 相同的数据计算出的哈希值绝对相同
+- 由于哈希值是固定长度， 也就意味着哈希值的数量是有限的。而任意数据都可以计算出一个哈希值，计算哈希的过程，相当于无限集到有限集的映射。因此哈希值相同，对应的原始数据不一定相同，如果不同，则称这两段数据存在`哈希碰撞`，实际应用中认为这是小概率事件(数学意义上的"不可能事件")，优秀的哈希算法都是碰撞率`极低`的。
+- 哈希算法是单向算法，无法通过哈希值，`计算`出原始数据，这一点非常重要！
+
+常见的哈希算法有: md5, sha1, sha256等，其中sha1长度为160bits，而sha256长度为256bits，二者相比，sha256的取值范围更大，因此碰撞和破解的概率更低，也就相对更安全。
+
+#### 签名算法
+
+有了上面这两种算法作为基础，就可以组建一个签名和验证签名的体系了，如下图所示
+
+![签名与验证](/assets/2019/sign_verify.png)
+
+假如`A`要给`B`发送一段数据`d`，先对其签名：
+
+- 计算`d`的哈希值`h`，并使用自己的私钥`a` 对 `h` 进行加密，得到的密文`c`就是签名
+
+得到签名后，将数据`d`和签名`c`通过某种方式发送给`B`，此时`B`收到了数据`d'`以及签名`c'`，需要验证这段数据是否被篡改，以及是否是`A`发送的
+
+- 计算`d'`的哈希值`h'`，使用`A`的公钥`b`将签名`c'`解密，得到`h''`。通过对比`h'`和`h''`是否一致，就可以知道数据或签名是否被篡改。并且，如果哈希值是匹配的，能够说明这段数据一定是由`A`签名并发出的
+
+常见的签名算法：
+
+- sha1WithRSAEncryption：先对数据计算sha1摘要，再对摘要进行RSA加密
+- sha256WithRSAEncryption：先对数据计算sha256摘要，再对摘要进行RSA加密
+- md5WithRSAEncryption：先对数据计算MD5摘要，再对摘要进行RSA加密
+
+#### 证书
+
+上面这个例子中，任何需要接受`A`的消息的人都需要事先保存`A`的公钥。这样的方案存在一个很大的问题：公钥如何分发？如果`B`要接受来自很多不同来源的数据，不可能事先将所有来源的公钥都提前保存下来，并且这样无法适应来源变动(增加、删除、变更)等带来的变化。因此，一般会把公钥当做签名的一部分，随着数据一起分发，接收方不需要事先保存任何数据来源的公钥。
+
+![](/assets/2019/sign_verify1.png)
+
+但是这样会引入一个新的问题：如何知道数据中所携带的公钥就是否是发送者自己的公钥？
+
+这涉及到密钥的管理和分发，细节展开的话是一个非常大的课题。简单来说，可以把公钥和所有者的信息保存在一个文件里，并让一个可信的第三者使用其私钥对这个文件进行签名，得到一个签了名的公钥文件，这个文件就叫做`证书`。证书会作为签名的一部分，随着数据一起分发。
+
+![证书的结构](/assets/2019/cert_struct.png)
+
+这里出现了一个有意思的事情，数据签名中的证书本身也是一段数据(公钥+所有者信息)以及其签名组成的，但证书中的签名是简单签名，一般只有哈希值和签发者名称，不会再将签发者的证书包含在签名中，否则就陷入无限递归的死循环了。
+
+此时我们还需要使用第三者的公钥验证这个证书的合法性。虽然需要多验证一步，但是这样一来，本地不再需要保存每个数据来源的公钥，只需要保存这个第三者的证书(公钥)即可，每个数据来源的证书都由这个可信的第三者进行签发，这个可信的第三者就被称为证书颁发机构(Certification Authority)，简称`CA`。
+
+![签名的结构](/assets/2019/sign_struct.png)
+
+实际上，CA的证书可能也是由其他更高一级的CA进行签发的，这种情况会产生3级甚至3级以上的证书链，系统中只需要保存最高级CA的证书，中间CA的证书和信息提供者的证书依次进行递归校验即可。
+
+可以通过这个命令导出Xcode应用中可执行程序的签名证书，mac OS上的代码签名格式与iOS平台是相同的
+
+```bash
+$ codesign -d --extract-certificates=cert /Applications/Xcode.app/Contents/MacOS/Xcode
+```
+
+当前文件夹下会产生三个证书文件`cert0` `cert1` `cert2`。其中cert0是由cert1签发的，可以使用cert1验证其合法性，同理cert2可以验证cert1的合法性。而对于cert2，只需要对比系统的keychain中是否有相同的证书文件即可。通过下面的命令可以分别查看他们的所有者名称：
+
+```bash
+$ for i in 0 1 2; do openssl x509 -inform DER -text -noout -in cert$i | grep Subject:; done
+        Subject: CN=Apple Mac OS Application Signing, O=Apple Inc., C=US
+        Subject: C=US, O=Apple Inc., OU=Apple Worldwide Developer Relations, CN=Apple Worldwide Developer Relations Certification Authority
+        Subject: C=US, O=Apple Inc., OU=Apple Certification Authority, CN=Apple Root CA
+```
+
+## 0x03 开发者证书
+
+在了解了签名和证书的基本结构之后，我们来研究一下iOS的开发者证书，它是开发过程中必不可少的东西，相信大家都有接触。众所周知，iOS设备并不能像Android那样任意地安装app，app必须被Apple签名之后才能安装到设备上。而开发者在开发App的时候需要频繁地修改代码并安装到设备上进行测试，不可能每次都先上传给Apple进行签名，因此需要一种不需要苹果签名就可以运行的机制。这个机制的实现方式是：
+
+- 开发者自己持有一套密钥和证书，可以自行对app进行签名
+- 由Apple对开发者的身份进行“背书”，让设备间能够接信任开发者自行签名的app，这个“背书”的方式就是后面会提到的`Provisioning Profile`
+
+那么先研究一下开发者证书是如何产生的：在Xcode 8及之后的版本，Xcode会自动帮我们管理证书，我们可能根本不会有机会去研究它，但是在早期的版本中，需要我们自己动手操作，获取开发者证书主要有两个步骤
+
+#### 生成CSR文件(Certificate Signing Request)
+
+在Keychain菜单栏选择"从证书颁发机构请求证书..."
+
+![csr1](/assets/2019/csr1.png)
+
+![csr2](/assets/2019/csr2.png)
+
+这个操作会产生一个名为`CertificateSigningRequest.certSigningRequest` 的签名请求文件，在生成这个文件之前其实Keychain已经自动生成了一对公、私钥
+
+![csr3](/assets/2019/csr3.png)
+
+![csr4](/assets/2019/csr4.png)
+
+可以在Keychain中选中这个条目，右键选择导出，将密钥文件导出为p12文件，使用openssl查看其内容
+
+```bash
+$ openssl pkcs12 -in JustForTesting.p12 -out private_key.pem  # 导出p12文件中的密钥
+Enter Import Password:    # 输入p12文件的密码
+MAC verified OK
+Enter PEM pass phrase:    # 设定导出的密钥文件的密码
+Verifying - Enter PEM pass phrase:    # 确认密码
+$ openssl rsa -in private_key.pem -noout -text  # 查看密钥文件的内容
+Enter pass phrase for private_key.pem:   # 输入密钥文件的密码
+Private-Key: (2048 bit)
+modulus:
+    00:c2:98:f5:02:eb:dc:a6:fd:4b:12:4c:70:17:a6:
+    xx:xx:xx:xx:xx:xx:xx:...
+publicExponent: 65537 (0x10001)
+privateExponent:
+    00:a1:67:68:e1:51:6c:a4:fd:36:45:29:2d:58:10:
+    xx:xx:xx:xx:xx:xx:xx:...
+prime1:
+    00:f3:91:5d:5b:dc:c1:de:d2:ab:7a:5f:b2:27:41:
+    xx:xx:xx:xx:xx:xx:xx:...
+prime2:
+    00:cc:87:b5:c9:7e:81:39:94:13:c1:ff:3f:d7:7b:
+    xx:xx:xx:xx:xx:xx:xx:...
+exponent1:
+    00:a5:a0:22:c0:f5:d3:eb:86:8c:4e:b1:c6:3e:85:
+    xx:xx:xx:xx:xx:xx:xx:...
+exponent2:
+    00:8b:e1:00:85:a6:7c:10:79:e2:2d:5a:39:3a:51:
+    xx:xx:xx:xx:xx:xx:xx:...
+coefficient:
+    7e:30:60:84:fc:47:6b:90:fe:e7:32:1a:2f:b0:c4:
+    xx:xx:xx:xx:xx:xx:xx:...
+```
+
+这里出现了几个熟悉的面孔：
+
+- prime1/prime2 就是生成密钥所使用的两个超大的素数`p, q`
+- modulus 是这两个超大素数的乘积 `n = p * q`
+- publicExponent 是公钥因子，也就是前文中的`e`, 这里固定为 0x10001 (65535)
+- privateExponent 是私钥因子，即前文中的`d`
+
+CSR文件的内容其实就是个人信息、公钥(Modulus + PublicExponent)，以及自签名(使用自己的私钥进行签名)， 可通过openssl命令查看其内容：
+
+```bash
+$ openssl req -in ~/Desktop/CertificateSigningRequest.certSigningRequest -text -noout
+Certificate Request:
+    Data:
+        Version: 0 (0x0)
+        Subject: emailAddress=me@xelz.info, CN=JustForTesting, C=CN
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:c2:98:f5:02:eb:dc:a6:fd:4b:12:4c:70:17:a6:
+                    xx:xx:xx:xx:xx:xx:xx:...
+                Exponent: 65537 (0x10001)
+        Attributes:
+            a0:00
+    Signature Algorithm: sha256WithRSAEncryption
+         b7:11:aa:48:2f:b3:10:e9:71:c7:93:c3:ec:44:8d:0f:a0:5a:
+         xx:xx:xx:xx:xx:xx:xx:...
+```
+
+#### 提交给Apple进行签名
+
+在苹果开发者网站，将CSR提交给Apple进行签名，Apple会返回一个签好名的`证书文件`，后缀名为`cer`。
+
+先查看一下他的`sha1`值，后面会用到
+
+```bash
+$ shasum ios_development.cer
+11447116f2c5521b057b9b67290f0fdadeadfa0a  ios_development.cer
+```
+
+双击即可将其导入到Keychain中，Keychain会自动把它之前创建CSR时自动生成的密钥归为一组。无论是在证书列表中查看还是在密钥列表中查看，都能看到与之匹配的`另一半`。
+
+![](/assets/2019/csr5.png)
+
+查看证书的内容
+
+![](/assets/2019/cert1.png)
+
+可以从证书中得到几个关键信息：
+
+1. 证书的所有者，这部分信息并非由我们自行指定，而是签发者Apple根据我们的账号信息自动生成
+2. 证书的签发者，即前文所述的`CA`
+3. 证书的公钥信息，与之前生成的密钥文件及CSR完全一致
+
+现在应该可以理解证书和密钥的关系了，密钥中保存了私钥和公钥，私钥用于签名，而证书里面有且只有公钥，并且是被第三方`CA` "认证" 过，用于解密和校验。
+
+图中可以看到这个证书的签发者是`Apple Worldwide Developer Relations Certification Authority`，在Keychain中搜索这个名字， 可以看到它的证书详情。我们会发现，它的类型是`中级证书颁发机构(中级CA)`，它也包含签名，并且是由另外一个叫做`Apple Root CA`的`根证书颁发机构(根CA)`进行签发的，这样就形成了一条证书链。而继续查看`Apple Root CA`的证书，会发现它是自签名的，因为它会被内置在设备中，设备无条件信任它，也就不需要其他的机构为其背书了。
+
+![](/assets/2019/cert2.png)
+
+这样的证书链机制可以简化根证书颁发机构的工作，同时提升证书管理的安全性。将颁发底层证书的工作分散给多个中级证书颁发机构进行处理，根证书颁发机构只需要对下一级机构的证书进行管理和签发，降低根证书颁发机构私钥的使用频率，也就降低了私钥泄露的风险。中级证书颁发机构各司其职，即使出现私钥泄露这样的重大安全事故，也不至于波及整个证书网络。
+
+#### 开发证书与发布证书
+
+开发者证书按用途可分为Development证书和Distribution证书：
+
+- Development证书是用于开发及测试阶段使用的证书，它用于在设备安装上开发阶段的App后对App的完整性进行校验，一般证书名称为 iPhone Developer: xxxxxxx。如果是多人协作的开发者账号，任意成员都可以申请自己的Development证书。
+- Distribution证书是用于提交AppStore的证书，一般命名为 iPhone Distribution: xxxxxxxxx，用于让AppStore校验提交上来的App的完整性，只有管理员以上身份的开发者账号才可以申请，因此可以控制提交权限的范围。同时，Distribution证书不能用于开发及调试。
+
+#### 企业级开发者证书
+
+除了普通开发者证书(个人开发者账号和公司开发者账号使用的证书)外，还有一种特殊的`企业级开发者证书`，这种证书签名的App可以被直接安装在任意的iOS设备上，只要用户主动信任该证书即可。它的作用是方便企业给内部员工分发生产力工具，比如往往存在这样一些场景：企业内部无法访问互联网，自然也就无法通过AppStore安装应用，或是使用私有API，完成一些AppStore不允许的功能。前面所说的不需要苹果签名即可安装运行的机制同样适用于企业级开发者证书，并且是企业级开发者证书的基础。
+
+从证书的申请方式和内容来看，企业级开发者证书和普通开发者证书并无不同，只是开发者账号的申请方式和费用有区别。此外，Apple对这两种证书所能提供的Provisioning Profile有细微的差异，下一节马上就会分析。
+
+## 0x04 Entitlements & Provisioning Profile
+
+除了开发者证书，在进行iOS代码签名的时候还需要有这两个文件，他们是被签名内容的一部分
+
+#### Entitlements
+
+沙盒(Sandbox)技术是iOS安全体系中非常重要的一项技术，他的目的是通过各种技术手段限制App的行为，比如可读写的路径，允许访问的硬件，允许使用的服务等等，即使应用出现任意代码执行的漏洞，也无法影响到沙盒外的系统。（图来自[Apple开发者网站](https://developer.apple.com/library/archive/documentation/Security/Conceptual/AppSandboxDesignGuide/AboutAppSandbox/AboutAppSandbox.html)）
+
+![](/assets/2019/sandboxing.png)
+
+通常所说的Entitlements(授权文件)，也就是指iOS沙盒的配置文件，这个文件中声明了app所需的权限，如果app中使用到了某项沙盒限制的功能，但没有声明对应的权限，可能运行到相关的代码时会直接Crash。
+
+全新的iOS工程中是没有这个文件的，如果在`Capabilities`中开启了一些需要权限的功能之后，Xcode会自动(Xcode 8及之后的版本)生成Entilements文件，并将对应的权限声明添加到Entitlements文件中。
+
+![](/assets/2019/ent1.png)
+
+![](/assets/2019/ent2.png)
+
+这个文件其实是xml格式的`plist`文件，内容如下
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>inter-app-audio</key>
+	<true/>
+</dict>
+</plist>
+```
+
+实际上，这个文件的内容并非是全部的授权内容，因为缺省状态下，App默认会包含以下与Team ID及App ID相关的权限声明：
+
+```xml
+<dict>
+    <key>keychain-access-groups</key>
+    <array>
+        <string>xxxxxxxxxx.*</string>
+    </array>
+    <key>get-task-allow</key>
+    <true/>
+    <key>application-identifier</key>
+    <string>xxxxxxxxxx.test.CodeSign</string>
+    <key>com.apple.developer.team-identifier</key>
+    <string>xxxxxxxxxx</string>
+</dict>
+```
+
+其中`get-task-allow`代表是否允许被调试，它在开发阶段是必需的一项权限，而在进行Archive打包用于上架时会被去除。
+
+进行代码签名时，会将这个Entitlements文件(如有)与上述缺省内容进行合并，得到最终的授权文件，并嵌入二进制代码中，作为被签名内容的一部分，由代码签名保证其不可篡改性。
+
+#### Provisioning Profile
+
+Xcode对Provisioning Profile的解释是
+
+>  A provisioning profile is a collection of digital entities that uniquely ties developers and devices to an authorized iPhone Development Team and enables a device to be used for testing.
+
+Provisioning Profile在这里就起到了一个对设备和开发者授权的作用，他将开发者账号、证书、entitlements文件以及设备进行了绑定。
+
+同样地，在开发过程中，Xcode 8及后续版本默认情况下会自动帮我们管理Provisioining Profile，自动下载的Provisioning Profile都被存放在`~/Library/MobileDevice/Provisioning\ Profiles/`路径下，以`UUID`格式命名。直接拖拽下图中的齿轮图标到Finder中也可以将其复制出来。
+
+![](/assets/2019/provision1.png)
+
+由于这个文件是被苹果签过名的，所以我们没有办法伪造或者修改这个文件，它使用的是标准的CMS(Cryptographic Message Syntax)格式，可以通过security命令查看它的签名信息，并将文件的内容提取出来：
+
+```bash
+$ security cms -D -i xxxxxxxxxxx.mobileprovision -h 1 -n  # 查看签名信息
+SMIME: 	level=1.2; type=signedData; nsigners=1;
+		signer0.id="Apple iPhone OS Provisioning Profile Signing"; signer0.status=GoodSignature;
+	level=1.1; type=data;
+$ security cms -D -i ea8585cd-c2da-4b08-81c2-e32b28c34871.mobileprovision -o provision.plist  # 将内容导出
+```
+
+Provisioning Profile统一都是由`Apple iPhone OS Provisioning Profile Signing`进行签名的，机构名称言简意赅。导出的provision.plist内容如下
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AppIDName</key>
+	<string>TestCodeSign</string>
+    ...
+	<key>DeveloperCertificates</key>
+	<array>
+		<data>xxxxx</data>
+        <data>xxxxx</data>
+        <data>xxxxx</data>
+	</array>
+	<key>Entitlements</key>
+	<dict>
+		<key>keychain-access-groups</key>
+		<array>
+			<string>xxxxx.*</string>
+		</array>
+		<key>inter-app-audio</key>
+		<true/>
+		<key>get-task-allow</key>
+		<true/>
+		<key>application-identifier</key>
+		<string>xxxxx.test.CodeSign</string>
+		<key>com.apple.developer.team-identifier</key>
+		<string>xxxxx</string>
+		<key>com.apple.developer.siri</key>
+		<true/>
+	</dict>
+	<key>ExpirationDate</key>
+	<date>2020-01-22T05:14:57Z</date>
+	<key>Name</key>
+	<string>iOS Team Provisioning Profile: test.CodeSign</string>
+	<key>ProvisionedDevices</key>
+	<array>
+		<string>xxxxx</string>
+		<string>xxxxx</string>
+		<string>xxxxx</string>
+	</array>
+	...
+</dict>
+</plist>
+```
+
+很明显可以看出这是一个xml格式的plist文件，里面的内容不难理解，最关键的是这几项
+
+- **DeveloperCertificates**：允许使用的开发者证书，这是一个列表，一般包含生成这个Provisioning Profile文件时，当前开发者账号下所有有效的Development证书，以base64格式保存，使用base64解码之后就可以得到DER格式的开发者证书。通过计算每个证书的sha1值，可以看出，前文中新申请的证书，就在这个列表中
+
+```bash
+$ for i in `seq 3`; do /usr/libexec/PlistBuddy -x -c 'Print:DeveloperCertificates:'$i provision.plist | sed -n '/<data>/,/<\/data>/p' | sed -e '1d;$d' | base64 -D | shasum ; done
+  11447116f2c5521b057b9b67290f0fdadeadfa0a  -    # <--- 新申请的证书
+  df446e4fad5aa292c7323da4cf7b8869fa5c89e7  -
+  9d31f7e8c27760ffa061598ba90ea614948224bf  -
+```
+
+- **Entitlements**：允许使用的权限列表，实际在App中使用的权限必须是这个列表的子集，否则安装时会无法通过校验而失败。如果曾经开启过某个功能，Xcode自动更新了Provisioning Profile，后来又关闭它，Xcode并不会将其从Provisioning Profile中删去，如示例中的`com.apple.developer.siri`。
+- **ProvisionedDevices**：允许安装的设备列表，如果目标设备的UUID不在这个列表中，会安装失败。对于这一项，普通开发者证书和企业级开发者证书的待遇是不同的。普通开发者证书使用Provisioning Profile的方式安装App到设备，只是出于测试和调试的需要，因此Apple只允许最多注册100台用于测试的设备，否则开发者就可以以测试的名义任意任意分发自己的App了。而对于企业级开发者来说，本身就有任意安装的需求，因此在分发时，这一项会被`ProvisionsAllDevices`取代，代表授权任意设备。
+
+这些信息中有任何变动的时候，比如开发者证书有新增或者失效，在Capabilities中启用了当前App从未使用过的新功能，或是将新的iPhone连接到Xcode用于测试，Xcode都会自动重新申请Provisioning Profile。
+
+Provisioning Profile会被内置在App中，置于App根目录下的`embedded.mobileprovision`。安装App时如果签名校验通过，这个文件会自动被拷贝到iOS设备的`/Library/MobileDevice/Provisioning\ Profiles/`路径下。由于该文件已被Apple官方签名，系统可以无条件信任它，并用它来校验App的签名、权限，以及本机的UUID等是否满足来自官方的授权。通过这种方式，间接信任了使用开发者证书签名的App，让iOS设备可以运行非苹果官方签名的App。
+
+假如你有一台越狱的设备，查看任意一个从AppStore上下载下来的App，里面都不会有embedded.mobileprovision这个文件，因为经过Apple重新签名以后，设备就不再需要它了。
+
+## 0x05 CodeSign
+
+万事具备，只欠东风，已经具备了签名所需的所有条件，接下来就可以开始研究签名的具体过程了。
+
+在编译iOS App时，Xcode在编译的打包的流程中会自动进行代码签名， 可以在编译日志界面找到一个`Sign`的步骤，内部是调用了`codesign`这个命令对app进行签名
+
+![codesign](/assets/2019/sign1.png)
+
+codesign有几个关键参数
+
+- `--sign sign_identity` 指定签名所用的证书，可以指定证书的名字，比如`"iPhone Developer: xxx (xxx)"`也可以直接写证书文件的sha1值，xcode中就是直接指定sha1值的。通过观察图中的sha1值可以看出xcode自动选择了刚申请的最新证书。
+- `--entitlements entitlements_file` 指定签名所需要的entitlements文件，这里的entitlements文件跟前面看到的并不是同一个文件，而是基于原有entitlements文件，补充上缺省权限后生成的临时文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>application-identifier</key>
+	<string>xxxxxxxxxx.test.CodeSign</string>
+	<key>com.apple.developer.team-identifier</key>
+	<string>xxxxxxxxxx</string>
+	<key>get-task-allow</key>
+	<true/>
+	<key>inter-app-audio</key>
+	<true/>
+</dict>
+</plist>
+```
+
+如果想对比签名前后的区别，可以在`Build Settings`中找到`Code Signing Identity`，选择`Other`并将内容清除(即设置为空)，即可跳过代码签名。分别编译一个不签名的版本和签名的版本，对比可以发现
+
+![compare](/assets/2019/sign2.png)
+
+- 签名过的app中多了一个`_CodeSignature`文件夹，里面只有一个文件`CodeResources`
+- 还多了一个`embedded.mobileprovision` 文件
+- 二进制文件的内容存在差异，并且签名后体积变大了
+
+其中`embedded.mobileprovision`就是前文提到的Provisioning Profile文件，它直接被拷贝到了app的根目录并重命名，在此不再赘述，重点研究下另外两个不同点。
+
+#### _CodeSignature/CodeResources
+
+首先是`_CodeSingature/CodeResources`，这是一个plist文件，里面保存了app中每个文件（除了App的可执行文件）的`明文哈希值`
+
+```xml
+<plist version="1.0">
+<dict>
+	<key>files</key>
+	<dict>
+        <key>Base.lproj/Main.storyboardc/Info.plist</key>
+        <data>
+            MDrKFvFWroTb0+KEbQShBcoBvo4=
+        </data>
+		...
+	</dict>
+	<key>files2</key>
+	<dict>
+        <key>Base.lproj/Main.storyboardc/Info.plist</key>
+        <dict>
+            <key>hash</key>
+            <data>
+                MDrKFvFWroTb0+KEbQShBcoBvo4=
+            </data>
+            <key>hash2</key>
+            <data>
+                PpvapAjR62rl6Ym4E6hkTgpKmBICxTaQXeUqcpHmmqQ=
+            </data>
+        </dict>
+		...
+	</dict>
+	<key>rules</key>
+	...
+	<key>rules2</key>
+	...
+</dict>
+</plist>
+```
+
+`files`和`files2`分别是旧版本和新版本的文件列表，而`rules`与`rules2`分别是与之对应的规则说明，里面描述了计算hash时需要被排除的文件以及每个文件的权重。
+
+`files`中保存的是每个文件的sha1值，而`files2`中同时保存了sha1和sha256，因为sha1在计算机硬件高度发达的今天，已经相对没有那么安全了，因此最新的签名算法中，引入了sha256。注意，这里的hash值都是base64编码的明文，有些文章说这些值是使用私钥加密的哈希，这是很不负责任的错误说法，通过几条简单的命令就可以进行验证：
+
+```bash
+$ cat Base.lproj/Main.storyboardc/Info.plist | shasum -a 1
+303aca16f156ae84dbd3e2846d04a105ca01be8e  -
+$ echo -n 'MDrKFvFWroTb0+KEbQShBcoBvo4=' | base64 -D | hexdump
+0000000 30 3a ca 16 f1 56 ae 84 db d3 e2 84 6d 04 a1 05
+0000010 ca 01 be 8e
+$ # =========== 分割线 ===========
+$ cat Base.lproj/Main.storyboardc/Info.plist | shasum -a 256
+3e9bdaa408d1eb6ae5e989b813a8644e0a4a981202c536905de52a7291e69aa4  -
+$ echo -n 'PpvapAjR62rl6Ym4E6hkTgpKmBICxTaQXeUqcpHmmqQ=' | base64 -D | hexdump
+0000000 3e 9b da a4 08 d1 eb 6a e5 e9 89 b8 13 a8 64 4e
+0000010 0a 4a 98 12 02 c5 36 90 5d e5 2a 72 91 e6 9a a4
+```
+
+`_CodeSignature/CodeResources`文件的主要作用是保存签名时每个文件的哈希值，而这些哈希值并不需要都进行加密，因为非对称加密的性能是比较差的，全部都加密只会拖慢签名和校验的速度。其实只需要确保这个文件没有被篡改，自然也就可以确保每个文件都是签名时的原始状态，这一点在后续的内容中可以得到验证。
+
+#### LC_CODE_SIGNATURE
+
+使用`otool -l`对比签名前后的二进制文件，可以发现签名后二进制文件多了一个名为`LC_CODE_SIGNATURE`的Load Command
+
+```bash
+$ otool -l TestCodeSign | tail -n 5
+Load command 21
+      cmd LC_CODE_SIGNATURE
+  cmdsize 16
+  dataoff 54016
+ datasize 19888
+```
+
+MachOView中查看如下
+
+![](/assets/2019/codesign1.png)
+
+代码签名是一段纯二进制的数据，可以在[https://opensource.apple.com/source/Security/Security-55471/sec/Security/Tool/codesign.c.auto.html](https://opensource.apple.com/source/Security/Security-55471/sec/Security/Tool/codesign.c.auto.html) 看到一些结构定义，结合数据定义来分析
+
+![](/assets/2019/codesign2.png)
+
+```c
+// 红色部分①  Offset: 0xD300 = 54016 LC_CODE_SIGNATURE->dataoff
+struct __SuperBlob {
+    uint32_t magic;	  /* 0xFADE0CC0 = CSMAGIC_EMBEDDED_SIGNATURE */
+    uint32_t length;  /* 0x1A1E -> 6686 */
+    uint32_t count;	  /* 5 */
+    CS_BlobIndex index[];  /* 蓝色部分 */
+}
+// 蓝色部分②  5个BlobIndex
+struct __BlobIndex {
+    uint32_t type;    /* 0x0 -> Code Directory */
+    uint32_t offset;  /* 0x34 -> 0xD300 + 0x34 = 0xD334 指向绿色③*/
+}
+struct __BlobIndex {
+    uint32_t type;    /* 0x2 -> Requirements */
+    uint32_t offset;  /* 0x221 -> 0xD300 + 0x221 = 0xD521 */
+}
+struct __BlobIndex {
+    uint32_t type;    /* 0x5 -> Entitlements */
+    uint32_t offset;  /* 0x2CD -> 0xD300 + 0x2CD = 0xD5CD */
+}
+struct __BlobIndex {
+    uint32_t type;    /* 0x1000 -> Code Directory */
+    uint32_t offset;  /* 0x475 -> 0xD300 + 0x475 = 0xD775 */
+}
+struct __BlobIndex {
+    uint32_t type;    /* 0x10000 -> CMS Signature */
+    uint32_t offset;  /* 0x746 -> 0xD300 + 0x746 = 0xDA46 */
+}
+```
+这部分是典型的数据头结构，声明了5个Blob，以及每个Blob的类型和相对签名头部的偏移量。接下来把每个部分分别提取出来进行分析。
+
+#### CodeDirectory
+
+CodeDirectory是签名数据中最终要的部分，直译过来就是代码目录，其实里面是整个MachO文件的哈希值，这里的哈希并不是一次性对整个文件进行哈希，而是将MachO文件按照pageSize(一般是4k也就是4096字节)进行分页，每一页单独计算哈希，并按照顺序保存下来，就像目录一样。
+
+细心的同学会发现上面的数据中出现了两个CodeDirectory，type分别是`0x0`和`0x1000`，这也是历史遗留问题，`0x0`对应的是旧版本的代码签名，使用sha1算法进行哈希值的计算，而`0x1000`是后来引入的，采用sha256作为哈希算法，除了算法和哈希的长度不同之外，其他内容基本是一样的。取第一个进行分析：
+
+```c
+// 绿色部分③ Offset: 0xD334
+struct __CodeDirectory {
+    uint32_t magic;         /* 0xFADE0C02 -> CSMAGIC_CODEDIRECTORY */
+    uint32_t length;        /* 0x1ED -> 493 */
+    uint32_t version;       /* 0x00020400 -> v2.4.0 */
+    uint32_t flags;         /* 0 */
+    uint32_t hashOffset;    /* 0xD5 -> 0xD334 + 0xD5 = 0xD409 指向⑤*/
+    uint32_t identOffset;   /* 0x58 -> 0xD334 + 0x58 = 0xD38B 指向④*/
+    uint32_t nSpecialSlots; /* 5 */
+    uint32_t nCodeSlots;    /* 0xE -> 14 */
+    uint32_t codeLimit;     /* 0xD300 */
+    uint8_t hashSize;       /* 0x14 -> 20bytes -> 160bits (sha1) */
+    uint8_t hashType;       /* 0x01 (sha1) */
+    uint8_t spare1;         /* unused (must be zero) */
+    uint8_t pageSize;       /* 0x0C -> 2 ^ 0x0C = 0x1000 = 4096 */
+    uint32_t spare2;        /* unused (must be zero) */
+    /* followed by dynamic content as located by offset fields above */
+}
+```
+
+hashOffset就是"目录"第一页的偏移，从这个位置(0xD409)可以提取到一串20字节的sha1值(图中黄色⑤):
+
+```
+9D452342F9ED06189E4F099BCA7CB68D6432F775
+```
+
+这个值代表的就是该文件第一页的哈希值，通过以下命令计算文件前4096字节的sha1可进行验证
+
+```bash
+$ dd bs=1 skip=0 count=0x1000 if=TestCodeSign 2>/dev/null | shasum -a 1
+9d452342f9ed06189e4f099bca7cb68d6432f775  -
+```
+
+而紧接着的20个字节就是第二页的哈希值，以此类推，直到原始文件的最后一页。
+
+由于文件不一定是pageSize的整数倍，最后一页往往不足"一整页"的大小，因此需要额外的字段`codeLimit`记录文件的实际大小，也就是需要签名的数据的实际大小，通过这个值计算出最后一页的实际大小，并提取相应数据计算最后一页的签名。例子中`codeLimit=0xD300`，很容易得出最后一页大小为`0x300`
+
+```bash
+$ dd bs=1 skip=0xD000 count=0x300 if=TestCodeSign 2>/dev/null | shasum -a 1
+9dc960fc86f803c1fa100f2a1145cf7cbe58e803  -
+```
+
+计算出最后一页的sha1值与CodeDirectory中(图中黄色⑥)一致。
+
+nCodeSlots记录了文件的总页数14，可通过`0xD300 / 0x1000 = 13.1875`得出确实是14页。
+
+细心的朋友已经发现了，④ identifier和 ⑤ hashSlots 之间有一段多出的数据⑦，并且CodeDirectory中还有一个奇怪的值`nSpecialSlots=5`，整个文件的哈希值都已经包含在⑤和⑥之间了，这多出来的数据是怎么回事呢？
+
+原来，在第一页的前面，还有5个特殊的负数页，用来保存这些额外信息的哈希值。
+
+| 序号 |                       对应内容                   |
+| ---- | ----------------------------------------------------- |
+| -1   | App根目录的Info.plist文件                             
+| -2   | Requirements(代码签名的第二部分)                      
+| -3   | Resource Directory (_CodeSignature/CodeResources文件) 
+| -4   | 暂未使用                                              
+| -5   | Entitlements (代码签名的第三部分)                     
+
+同样地，出于性能考虑，这些哈希值并未经过任何加密，只需要确保这些哈希值未经篡改，就可以说明代码本身没有被篡改。
+
+#### Requirements
+
+用于指定签名校验时的一些额外的约束，签名时codesign命令会自动生成这部分数据，但目前并没有看到什么地方使用了它，就不深入分析了，官方文档有对这部分内容的详细描述
+
+- [Code Signing Tasks](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Introduction/Introduction.html)
+- [Code Signing Requirement Language](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html#//apple_ref/doc/uid/TP40005929-CH5-SW1)
+
+#### Entitlements
+
+![](/assets/2019/codesign3.png)
+
+通过头部的偏移定位到数据的位置，显然，这是一个Blob结构
+
+```c
+struct __Blob {       /* Address: 0xD5CD */
+    uint32_t magic;   /* 0xFADE7171 -> CSMAGIC_ENTITLEMENT */
+    uint32_t length;  /* 0x1A8 -> 424 */
+}
+```
+
+之前由Xcode生成的Entitlements文件被整个嵌入到签名数据中。
+
+#### CMS Signature
+
+CMS是`Cryptographic Message Syntax`的缩写，是一种标准的签名格式，由[RFC3852](https://www.ietf.org/rfc/rfc3852.txt)定义。还记得Provisioning Profile的签名吗？它们是相同的格式。CMS格式的签名中，除了包含前面我们推导出的加密哈希和证书之外，还承载了一些其他的信息。由于是二进制格式，不方便分析，可以将其内容从MachO文件中剥离出来，再找合适的工具进行解析。根据偏移量定位到CMS Signature的位置`0xDA46` 
+
+![](/assets/2019/codesign4.png)
+
+```c
+struct __Blob {       /* Address: 0xDA46 */
+    uint32_t magic;   /* 0xFADE0B01 -> CSMAGIC_BLOBWRAPPER */
+    uint32_t length;  /* 0x12D8 -> 4824 */
+}
+```
+
+除去头部的8个字节，把对应的内容提取出来
+
+```bash
+$ dd bs=1 skip=0xDA4E count=0x12D0 if=TestCodeSign of=cms_signature
+```
+
+可以将导出的cms_signature文件上传到[在线ASN.1解析工具](http://lapo.it/asn1js/)(支持CMS格式解析)进行分析
+
+![](/assets/2019/codesign5.png)
+
+文件被解析为树状结构，看起来还是不够直观，因为这个工具只是按照数据格式把内容进行了格式化，但是并没有标注所有字段的确切含义。其实我们还可以使用openssl进行查看，但是因为Mac上自带的openssl以及通过HomeBrew安装的openssl都是没有开启cms支持的，所以可以将文件拷贝到linux机器上或者自行编译openssl进行查看，具体方法在此不表。
+
+```bash
+$ openssl cms -cmsout -print -inform DER -in cms_signature
+CMS_ContentInfo:
+  contentType: pkcs7-signedData (1.2.840.113549.1.7.2)
+  d.signedData:
+    version: 1
+    digestAlgorithms:
+        algorithm: sha256 (2.16.840.1.101.3.4.2.1)
+        parameter: NULL
+    encapContentInfo:
+      eContentType: pkcs7-data (1.2.840.113549.1.7.1)
+      eContent: <ABSENT>
+    certificates:
+      ... [stripped] Apple Worldwide Developer Relations Certification Authority
+      ... [stripped] Apple Root CA
+      ... [stripped] iPhone Developer: xxxxxxx
+    signerInfos:
+        version: 1
+        d.issuerAndSerialNumber:
+          issuer: C=US, O=Apple Inc., OU=Apple Worldwide Developer Relations, CN=Apple Worldwide Developer Relations Certification Authority
+          serialNumber: 1008862887770590428
+        digestAlgorithm:
+          algorithm: sha256 (2.16.840.1.101.3.4.2.1)
+          parameter: NULL
+        signedAttrs:
+            ... [stripped]
+              SEQUENCE:
+    0:d=0  hl=2 l=  29 cons: SEQUENCE
+    2:d=1  hl=2 l=   5 prim:  OBJECT            :sha1
+    9:d=1  hl=2 l=  20 prim:  OCTET STRING      [HEX DUMP]:669421362B2F2B5303BCEBB47D793A75A6BBD32F
+
+            ... [stripped]
+        signatureAlgorithm:
+          algorithm: rsaEncryption (1.2.840.113549.1.1.1)
+          parameter: NULL
+        signature:
+          0000 - 77 00 50 9c 5c 6d 50 1e-cb 4b ca b7 91 d3 5b   w.P.\mP..K....[
+          000f - 2e 28 fe f3 5d 20 73 ef-0a 59 ac 2e ed bd 2a   .(..] s..Y....*
+          ... [stripped]
+        unsignedAttrs:
+          <EMPTY>
+```
+
+由于输出内容太多，将部分内容做了删减，可以观察到签名中主要包含了这些内容
+
+- **contentType**， 表明消息的类型，有6种取值，这里使用的是表示签名的signedData类型
+  - Data
+  - SignedData
+  - EnvelopedData
+  - DigestedData
+  - EncryptedData
+  - AuthenticatedData
+- **content**，SignedData类型的数据
+  - version等：略
+  - certificates： 证书链，包含用于签名的开发者证书及所有上游CA的证书
+  - signerInfos：真正的签名信息！
+    - version：版本号
+    - issuerAndSerialNumber：签名者信息，根据签名者的名称找到证书链中对应的证书，使用证书中的公钥即可验证签名是否有效
+    - digestAlgorithm：哈希算法
+    - signedAttrs：需要签名的属性, 是可选项，为空表示被签名的数据是原始文件的内容，如果不为空则至少要包含原始文件的类型以及其哈希值，此时被签名的数据就是signedAttrs的内容
+    - signatureAlgorithm：签名算法，这里指对哈希值进行加密所使用的算法
+    - signature：加密后的哈希值
+
+由于在Code Directory中已经保存了所有资源及代码的哈希值，那么我们只需要确保CodeDirectory不被篡改，即可确保整个app的完整性， 因此CMS Signature中只需要对CodeDirectory进行签名即可。而signedAttrs中支持这样一种特性：可以先计算被签名数据的哈希，然后再对哈希值进行签名。听起来有点绕，不过仔细体会一下应该不难理解。
+
+我们把CodeDirectory的内容抠出来，计算其哈希值，以第一个CodeDirectory为例，计算其sha1：
+
+```bash
+$ dd bs=1 skip=0xD334 count=0x1ED if=TestCodeSign 2>/dev/null | shasum -a 1
+669421362b2f2b5303bcebb47d793a75a6bbd32f  -
+```
+
+这个值叫做CDHash(Code Directory's Hash)，对比前面从cms_signature中解析出的 signedAttrs，会发现这两个值是一样的，也就是说CodeDirectory的哈希值被放在了signerInfos->signedAttrs中，作为最终真正被`签名`(计算哈希并加密)的内容。
+
+至此，我们已经从头到尾剖析了iOS代码签名的生成方式及数据结构，在这个过程中，至少存在4次计算哈希的行为，并且是环环相扣的
+
+1. _CodeSignature/CodeResources中对每个资源文件计算哈希
+2. Code Directory 中对MachO文件本身的每个分页，以及Info.plist、CodeResources、Entitlements等文件计算哈希
+3. CMS Signature的signedAttrs中对Code Directory计算哈希
+4. 对signedAttrs计算哈希并使用开发者的私钥加密
+
+只有最后一步的哈希值是被加密的， 前面几步的哈希值是否加密都不影响签名的效果，只要任意内容有变化，均会因某个环节的哈希不匹配而导致签名校验的失败。
+
+#### jtool
+
+相信上面的二进制分析已经让你眼花缭乱了，不过已经有大神做出了[jtool](http://www.newosxbook.com/tools/jtool.tar)这个工具，它是一款强大的MachO二进制分析工具，用来替代otool、nm、segedit等命令，也包括codesign的部分功能。通过以下命令可以将代码签名解析为可读的文本格式
+
+```bash
+$ jtool --sig -vv TestCodeSign
+Blob at offset: 54016 (19888 bytes) is an embedded signature of 6686 bytes, and 5 blobs
+	Blob 0: Type: 0 @52: Code Directory (493 bytes)
+		Version:     20400
+		Flags:       none (0x0)
+		CodeLimit:   0xd300
+		Identifier:  test.CodeSign (0x58)
+		Team ID:     xxxxxxxxxx (0x66)
+		Executable Segment: Base 0x00000000 Limit: 0x00000000 Flags: 0x00000000
+		CDHash:	     669421362b2f2b5303bcebb47d793a75a6bbd32f (computed)
+		# of Hashes: 14 code + 5 special
+		Hashes @213 size: 20 Type: SHA-1
+			Entitlements blob:	19a92ca549e53593b384681245de14897df2a9dd (OK)
+			Application Specific:	Not Bound
+			Resource Directory:	fb7df05e17f3b347d6b64868f468def49feecf25 (OK)
+			Requirements blob:	9d58965211c9cd83b208fffd575d741881ff81e4 (OK)
+			Bound Info.plist:	89e1951413c3eb05fab8f6a5f06c13b48926eabe (OK)
+			Slot   0 (File page @0x0000):	9d452342f9ed06189e4f099bca7cb68d6432f775 (OK)
+			... [stripped]
+	... [stripped]
+	Blob 4: Type: 10000 @1862: Blob Wrapper (4824 bytes) (0x10000 is CMS (RFC3852) signature)
+CA: Apple Certification Authority CN: Apple Root CA
+... [stripped]
+Time: 190122095805Z
+```
+
+#### Distribute App
+
+在Xcode Organizer中导出或者提交App时，Xcode会将Entitlements文件及embedded.mobileprovision文件替换为对应的版本，并使用对应的证书重新签名，主要区别如下
+
+| 类型        | Entitlements             | Provisioning Profile       | 证书           |
+| ----------- | ------------------------ | -------------------------- | -------------- |
+| AppStore    | 不可调试，推送为生产环境 | 无ProvisionedDevices       | 发布证书       
+| Ad Hoc      | 不可调试，推送为生产环境 | 允许安装到已注册的测试设备 | 发布证书       
+| Development | 可调试，推送为测试环境   | 允许安装到已注册的测试设备 | 开发证书       
+| Enterprise  | 不可调试，推送为生产环境 | ProvisionAllDevices        | 企业级发布证书 
+
+## 0x06 校验代码签名
+
+签名的校验并非一次性完成，在安装、启动、和运行时有着不同的校验规则。
+
+#### 安装
+
+App安装时的校验由位于iOS设备上的/usr/lib/libmis.dylib (dyld_shared_cache)提供。
+
+![](/assets/2019/libmis.png)
+
+App的安装是由`/usr/libexec/installd`完成的，`installd`会通过`libmis.dylib`校验ProvisioningProfile、Entitlements及签名的合法性，并递归地校验签名时每一个步骤生成的哈希值：CDHash, Code Directory, _CodeSignature/CodeResources。
+
+```bash
+$ otool -L installd | grep mis
+	/usr/lib/libmis.dylib (compatibility version 1.0.0, current version 1.0.0)   
+$ nm installd | grep ValidateSignature
+                 U _MISValidateSignatureAndCopyInfo
+                 U _kMISValidationOptionValidateSignatureOnly    
+```
+
+#### 启动
+
+进程启动时，loader会先将可执行文件加载到虚拟内存，在加载的过程中mach_loader会自动解析MachO文件中的LC_CODE_SIGNATURE并进行校验，可以参考mach_loader的代码 [bsd/kern/mach_loader.c](https://opensource.apple.com/source/xnu/xnu-4570.71.2/bsd/kern/mach_loader.c.auto.html)
+
+![](/assets/2019/verify1.png)
+
+`load_code_signature`在解析完签名的数据后会调用`mac_vnode_check_singature`函数进行验证，而这个函数会被名为`AFMI`(AppleMobileFileIntegrity)的内核扩展(kext)通过Hook的方式接管，而AFMI只是一层壳，最终也是调用了libmis.dylib来实现签名的校验，这一校验过程基本与安装时一致，防止安装后的篡改。
+
+需要注意的是，加载过程中为了提升加载效率，签名校验并不会去检查Code Directory与实际的代码是否匹配，仅仅只检查了CMS Signature及CDHash的合法性。
+
+#### 运行时
+
+当一页代码被加载到虚拟内存后，会立即触发`page fault`，此时内核中的`vm_fault`函数会被调用，紧接着调用`vm_fault_enter`，在`vm_fault_enter`的实现中会判断代码页是否需要签名校验，并执行校验的操作，参考代码[osfmk/vm/vm_fault.c](https://opensource.apple.com/source/xnu/xnu-4570.71.2/osfmk/vm/vm_fault.c.auto.html)
+
+```c
+kern_return_t vm_fault_enter(...) {
+// ...
+    /* Validate code signature if necessary. */
+	if (VM_FAULT_NEED_CS_VALIDATION(pmap, m, object)) {
+		vm_object_lock_assert_exclusive(object);
+
+		if (m->cs_validated) {
+			vm_cs_revalidates++;
+		}
+
+		/* VM map is locked, so 1 ref will remain on VM object -
+		 * so no harm if vm_page_validate_cs drops the object lock */
+		vm_page_validate_cs(m);
+	}
+// ...
+}
+```
+
+对于宏`VM_FAULT_NEED_CS_VALIDATION`的解释是
+
+```c
+/*
+* CODE SIGNING:
+* When soft faulting a page, we have to validate the page if:
+* 1. the page is being mapped in user space
+* 2. the page hasn't already been found to be "tainted"
+* 3. the page belongs to a code-signed object
+* 4. the page has not been validated yet or has been mapped
+for write. */
+#define VM_FAULT_NEED_CS_VALIDATION(pmap, page)
+((pmap) != kernel_pmap /*1*/ && !(page)->cs_tainted /*2*/ && (page)->object->code_signed /*3*/ && (!(page)->cs_validated || (page)->wpmapped /*4*/))
+```
+
+`vm_page_validate_cs`会计算当前代码页的哈希值，并与签名中CodeDirectory记录的值进行比对，完成代码签名的验证。如果不符，且不满足系统预设的例外条件，则会向内核发出CS_KILL指令，将进程结束。
+
+至此签名的校验流程就全部完成了。
+
+## 0x07 越狱与重签名
+
+#### 越狱
+
+越狱之后，签名校验机制会被破坏掉，否则用于实现越狱的代码自身就无法运行。比如在iOS6/7时代，典型的方式是替换 `libmis.dylib`中的`_MISValidateSignature`函数，使其永远返回验证成功，简单粗暴但很有效，因此越狱的设备可以不受签名限制运行任意程序。但是单纯解决掉这个函数只是解决了MachO文件的Load问题，运行时仍然会有沙盒和Code Directory的校验，想要对系统完全的控制权必须同时解决掉这两个问题。
+
+由于沙盒机制的实现分散在系统的各个角落，没有简单的方式可以将沙盒一刀切地屏蔽掉，因此一般越狱并不会破坏掉沙盒。但因为越狱设备签名校验机制被绕过，不再会根据embedded.mobileprovision文件检查Entitlements的合法性，因此我们可以在沙盒范围内，声明任意的权限。Code Directory的校验在内核层，破解难度相对较大，并且完全没有必要进行破解，因为Code Directory只是单纯地校验未加密的哈希值而已，只需要按照代码签名的格式做好Code Directory即可。
+
+越狱之父Saurik为此创造了[ldid](http://iphonedevwiki.net/index.php/Ldid)这个工具，用于给越狱设备上的程序制造"假"的签名。使用ldid进行签名只需要指定一个可选的`Entitlements`文件，签名之后，产生的LC_CODE_SIGNATURE中只会两个有效的Blob，分别是 Code Directory和 Entitlements，并没有最重要的CMS Signature部分，因为`_MISCalidateSignature`永远都会告诉系统签名是正确的。
+
+```bash
+$ cp TestCodeSign TestCodeSign.ldid
+$ ldid -Sxxx.entitlements TestCodeSign.ldid
+$ jtool --sig TestCodeSign.ldid -arch arm64
+Blob at offset: 54016 (928 bytes) is an embedded signature
+Code Directory (442 bytes)
+    ...
+ Empty requirement set (12 bytes)
+Entitlements (424 bytes) (use --ent to view)
+```
+
+#### 重签名
+
+有的时候出于各种原因，我们需要对一个App进行重签名，然后在自己的设备上进行测试。回顾一下签名的必备条件：
+
+- 开发者证书，以及对应的密钥
+- Entitlements文件
+- embedded.mobileprovision
+
+开发者证书和密钥我们已经有了，对于Entitlements和embedded.mobileprovision文件，为了确保重签后的App能够正常运行，必须使用和原App相同或者至少包含原App所需权限的Entitlements文件。这个并不难操作，只需要新建一个工程，开启相应的功能，让Xcode自动为我们生成即可。但是Entitlements文件中还有一些跟Team ID和App ID相关的配置，这两个是没有办法伪造的，因为我们不能使用已经被其他开发者注册过的ID。使用自己的ID一般也不会有什么问题，但在某些情况下可能导致最终的程序逻辑出现异常，这根具体的代码实现细节有关。
+
+现在，只要确保有正确的Entitlements文件，Provisioning Profile与Entitlements文件匹配，且包含重签时使用的证书及目标设备的UUID，就可以进行重签名了，如果重签名后无法安装，请检查Provisioning Profile文件是否满足上述条件。
+
+Entitlements文件中还标识了`application-identifier`，也就是Bundle ID，正常签名的App中，这个值和Info.plist中的`CFBundleIdentifier`的值是相同的，但实际在签名校验过程中，系统并不会检查二者是否一致。因此即使Entitlements中与Info.plist文件使用了不同的Bundle ID，理论上也不会影响重签名之后的运行。
+
+需要注意，App中除了可执行程序文件外，还会可能会有Frameworks及Plugins，里面都会包含二进制的代码文件，他们的哈希值也会被存储在 _CodeSignature/CodeResources中。所有的二进制代码都必须进行签名，而签名后二进制文件的哈希值就会产生变化，因此需要先对这两个文件夹下的二进制文件进行签名，再对App进行签名。
+
+重签名的基本流程如下，使用-f参数可以强制覆盖掉已有的签名
+
+```bash
+$ # 对Frameworks及Plugins中的每一个文件进行签名，此时不需要指定entitlements
+$ codesign -f -s "证书名称或者SHA1值" Target.app/Frameworks/xxxxx.framework
+$ codesign -f -s "证书名称或者SHA1值" Target.app/Frameworks/libxxxx.dylib
+$ ...
+$ # 将准备好的Provisioning Profile拷贝到App根目录
+$ cp ~/Library/MobileDevice/Provisioning\ Profiles/xxxxx.mobileprovision Target.app/embedded.mobileprovision
+$ # 对App进行签名
+$ codesign -f -s "证书名称或者SHA1值" --entitlements resign.entitlements Target.app
+```
+
+## 0x08 References
+
+|   reference    |    link    |
+|----------------|------------|
+| Code Signing Guide | [https://developer.apple.com/...](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Introduction/Introduction.html) 
+| ASN.1 JavaScript decoder | [http://lapo.it/asn1js/](http://lapo.it/asn1js/) 
+| Cryptographic Message Syntax (CMS) | [https://www.ietf.org/rfc/rfc3852.txt](https://www.ietf.org/rfc/rfc3852.txt) 
+| iSign in python | [https://github.com/saucelabs/isign](https://github.com/saucelabs/isign) 
+| CodeSigning (RSACon 2015) | [http://newosxbook.com/articles/CodeSigning.pdf](http://newosxbook.com/articles/CodeSigning.pdf) 
+| jtool | [http://www.newosxbook.com/tools/jtool.html](http://www.newosxbook.com/tools/jtool.html) 
+| mistool | [http://newosxbook.com/tools/mistool.html](http://newosxbook.com/tools/mistool.html) 
+| evasi0n7 jailbreak writeup |[https://geohot.com/e7writeup.html](https://geohot.com/e7writeup.html) 
+| iOS hacker's handbook | [https://books.google.com.hk/books?id=1kDcjKcz9GwC](https://books.google.com.hk/books?id=1kDcjKcz9GwC) 
+
