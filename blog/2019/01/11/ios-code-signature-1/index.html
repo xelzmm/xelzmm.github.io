@@ -1,0 +1,365 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>细说iOS代码签名(一) - xelz's blog</title>
+	<meta name="author" content="xelz">
+
+	
+	<meta name="description" content="All you need to know about iOS Code Signature. What is codesign？ Why do we need codesign？ How to resign an app？How does iDevice verify codesign? &hellip;">
+	<meta name="keywords" content="ios, codesign, code signature, resign, developer certificate, entitlements, provisioning profile, mobileprovision">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="xelz's blog" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script src="/javascripts/jquery.min.js"></script>
+    
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">xelz's blog</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="https://www.google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:xelz.info">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/xelzmm" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="https://www.google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:xelz.info">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">细说iOS代码签名(一)</h2>
+	<div class="entry-content"><h4>导航</h4>
+
+<ul>
+<li>一口气读完，大约需要40-60分钟
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature/">深度长文：细说iOS代码签名</a></li>
+</ul>
+</li>
+<li>分步阅读
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature-1/">细说iOS代码签名(一)</a>：签名的作用及原理</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-2/">细说iOS代码签名(二)</a>：开发者证书、Entitlements、Provisioning Profile</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-3/">细说iOS代码签名(三)</a>：签名的过程及代码签名的数据结构</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-4/">细说iOS代码签名(四)</a>：签名校验、越狱、重签名</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>0x01 签名的作用</h2>
+
+<p>数字签名其实跟我们手写的签名类似，代表一个特定的主体(签名者)对特定内容(被签名数据)的署名和认可，签名是对信息发送行为真实性的有效保障。数字签名在很多领域都有应用，iOS的代码签名正是其中最典型的一种，我们可以先尝试分析一下iOS上代码签名的目的和好处。</p>
+
+<!-- more -->
+
+
+<h4>安全性</h4>
+
+<p>代码签名的首要任务是保证设备及系统的安全性，只有被苹果设备认可的证书签名的代码才能够被执行，否则在安装或者运行时会因为无法通过内核的签名校验而失败。iOS的系统中内置了来自苹果的CA证书，系统自身的代码都是被苹果”签名“过的， 而用户从AppStore下载的App也都已被苹果官方进行签名。签名机制可以有效地防止来自外部的攻击。</p>
+
+<p>这里存在两种场景：</p>
+
+<ul>
+<li>第一种是对系统本身的攻击，比如越狱，假如黑客发现了内核任意读写的漏洞，借此注入提权代码，但是这些代码会因为没有合法的签名而被系统拒绝运行，也就自然无法对系统造成实质性的破坏。</li>
+<li>第二种是对设备或者用户的攻击，众所周知，提交到AppStore的应用代码都会经过苹果的审查，包含恶意代码的App是无法上架的。此时，黑客可能会尝试先提交一个正常的App，通过各种技术手段躲避Apple的审查，上架后从网络上下载恶意代码并加载执行，但这种方式也会因为签名不合法而失败。</li>
+</ul>
+
+
+<h4>沙盒</h4>
+
+<p>除了能够避免非授权的恶意代码运行，代码签名还可以有效地限制app的行为，这部分功能主要是由Sandbox机制来保证，但Sandbox的配置是绑定在签名中的，就是通常所说的Entitlements文件。试想，如果Entitlements文件可以被任意修改，那么Sandbox也就失去了意义，所以Entitlements文件也是强制签名保护的对象。对于越狱来说，如果无法绕过签名和Sandbox，再强大的提权漏洞也无计可施。</p>
+
+<h4>垄断</h4>
+
+<p>代码签名还给苹果带来了一个巨大的好处：App分发的绝对控制权。在iOS平台上(面向未越狱的用户)公开发行App的合法途径有且只有一种，就是上传到苹果官方的AppStore供用户下载。苹果会对App进行严格的审查并签名，App的功能及支付渠道也因此可以受苹果的严格管制，这为苹果带来的经济效益不言而喻。</p>
+
+<h2>0x02 什么是签名</h2>
+
+<p>签名的本质是用于验证数据的合法性，确保被签名的数据来自特定的来源，并且未经篡改。它基于非对称加密，和哈希算法，研究签名之前需要对这两种算法有一定的了解。</p>
+
+<h4>公钥加密算法</h4>
+
+<p>也叫非对称加密，它在加密和解密时使用的是不同的密钥，具有这样的特征：</p>
+
+<ul>
+<li>有一对密钥 <code>a</code> 和  <code>b</code> ，满足 <code>a ≠ b</code></li>
+<li>用密钥<code>a</code>加密的数据只能用<code>b</code>进行解密，<code>a</code>自身无法解密，反之亦然</li>
+<li>只知道其中一个密钥，无法推导出另一个</li>
+<li>把其中一个可以公开的叫做公钥，另一个不能公开的叫做私钥。</li>
+</ul>
+
+
+<p><img src="/assets/2019/pubkey_crypto.png" alt="公钥加密算法" /></p>
+
+<p>最常见的公钥加密算法是RSA公钥加密算法，也是签名中普遍使用的算法。其数学原理如下：</p>
+
+<ul>
+<li>选定两个超大的素数<code>p</code>, <code>q</code>，并计算他们的乘积<code>n = p * q</code></li>
+<li>计算欧拉函数 <code>φ(n) = φ(p) * φ(q) = (p-1) * (q-1)</code></li>
+<li>随机选定一个数<code>e</code>，满足<code>1 &lt; e &lt; φ(n)</code> ，且与<code>φ(n)</code>互质</li>
+<li>根据扩展欧几里得算法计算<code>e</code>对于<code>φ(n)</code>的乘法逆元<code>d</code> ，<code>e * d = 1 mod φ(n)</code></li>
+<li><code>{n, e}</code> 和 <code>{n, d}</code> 分别组成这个算法的一对密钥</li>
+<li>对于给定明文<code>p</code>,  若使用<code>{n, e}</code> 作为加密密钥，其密文计算方法为 <code>c = p ^ e mod n</code>
+
+<ul>
+<li>这是一个<code>单向函数</code>，已知<code>{c, n, e}</code> 无法计算出<code>p</code></li>
+</ul>
+</li>
+<li>相应地需要使用<code>{n, d}</code>进行解密， <code>p' = c * d mod n</code>
+
+<ul>
+<li>这是上一步加密函数的<code>逆函数</code></li>
+</ul>
+</li>
+<li>两组密钥中<code>n</code>是相同的，那么如果已知了<code>e</code>和<code>d</code>其中的一个，想要计算另一个，必须知道<code>φ(n)</code>，也就是必须先将<code>n</code>分解<code>质因数</code>，得到<code>p</code>和<code>q</code>，但由于<code>n</code>的值非常大，这样的计算量基本上是<code>不可能</code>的，也就保障了算法的安全性</li>
+</ul>
+
+
+<p>理论上 <code>{n, e}</code> 和 <code>{n, d}</code> 可以互换，任何一个都可以是公钥或者私钥，加密和解密的函数也可以互换。但实践中，一般固定设置<code>e=65537(0x10001)</code>，相当于公开的一个约定，这样一来<code>{n, e}</code>就只能作为公钥使用。</p>
+
+<h4>哈希算法</h4>
+
+<p>也叫散列或者摘要算法，对一段任意长度的数据，通过一定的映射和计算，得到一个固定长度的值，这个值就被称为这段数据的哈希值(hash)。给定一个哈希算法，它一定具有以下特征：</p>
+
+<ul>
+<li>哈希值不同的两段数据绝对不同</li>
+<li>相同的数据计算出的哈希值绝对相同</li>
+<li>由于哈希值是固定长度， 也就意味着哈希值的数量是有限的。而任意数据都可以计算出一个哈希值，计算哈希的过程，相当于无限集到有限集的映射。因此哈希值相同，对应的原始数据不一定相同，如果不同，则称这两段数据存在<code>哈希碰撞</code>，实际应用中认为这是小概率事件(数学意义上的&#8221;不可能事件&#8221;)，优秀的哈希算法都是碰撞率<code>极低</code>的。</li>
+<li>哈希算法是单向算法，无法通过哈希值，<code>计算</code>出原始数据，这一点非常重要！</li>
+</ul>
+
+
+<p>常见的哈希算法有: md5, sha1, sha256等，其中sha1长度为160bits，而sha256长度为256bits，二者相比，sha256的取值范围更大，因此碰撞和破解的概率更低，也就相对更安全。</p>
+
+<h4>签名算法</h4>
+
+<p>有了上面这两种算法作为基础，就可以组建一个签名和验证签名的体系了，如下图所示</p>
+
+<p><img src="/assets/2019/sign_verify.png" alt="签名与验证" /></p>
+
+<p>假如<code>A</code>要给<code>B</code>发送一段数据<code>d</code>，先对其签名：</p>
+
+<ul>
+<li>计算<code>d</code>的哈希值<code>h</code>，并使用自己的私钥<code>a</code> 对 <code>h</code> 进行加密，得到的密文<code>c</code>就是签名</li>
+</ul>
+
+
+<p>得到签名后，将数据<code>d</code>和签名<code>c</code>通过某种方式发送给<code>B</code>，此时<code>B</code>收到了数据<code>d'</code>以及签名<code>c'</code>，需要验证这段数据是否被篡改，以及是否是<code>A</code>发送的</p>
+
+<ul>
+<li>计算<code>d'</code>的哈希值<code>h'</code>，使用<code>A</code>的公钥<code>b</code>将签名<code>c'</code>解密，得到<code>h''</code>。通过对比<code>h'</code>和<code>h''</code>是否一致，就可以知道数据或签名是否被篡改。并且，如果哈希值是匹配的，能够说明这段数据一定是由<code>A</code>签名并发出的</li>
+</ul>
+
+
+<p>常见的签名算法：</p>
+
+<ul>
+<li>sha1WithRSAEncryption：先对数据计算sha1摘要，再对摘要进行RSA加密</li>
+<li>sha256WithRSAEncryption：先对数据计算sha256摘要，再对摘要进行RSA加密</li>
+<li>md5WithRSAEncryption：先对数据计算MD5摘要，再对摘要进行RSA加密</li>
+</ul>
+
+
+<h4>证书</h4>
+
+<p>上面这个例子中，任何需要接受<code>A</code>的消息的人都需要事先保存<code>A</code>的公钥。这样的方案存在一个很大的问题：公钥如何分发？如果<code>B</code>要接受来自很多不同来源的数据，不可能事先将所有来源的公钥都提前保存下来，并且这样无法适应来源变动(增加、删除、变更)等带来的变化。因此，一般会把公钥当做签名的一部分，随着数据一起分发，接收方不需要事先保存任何数据来源的公钥。</p>
+
+<p><img src="/assets/2019/sign_verify1.png" alt="" /></p>
+
+<p>但是这样会引入一个新的问题：如何知道数据中所携带的公钥就是否是发送者自己的公钥？</p>
+
+<p>这涉及到密钥的管理和分发，细节展开的话是一个非常大的课题。简单来说，可以把公钥和所有者的信息保存在一个文件里，并让一个可信的第三者使用其私钥对这个文件进行签名，得到一个签了名的公钥文件，这个文件就叫做<code>证书</code>。证书会作为签名的一部分，随着数据一起分发。</p>
+
+<p><img src="/assets/2019/cert_struct.png" alt="证书的结构" /></p>
+
+<p>这里出现了一个有意思的事情，数据签名中的证书本身也是一段数据(公钥+所有者信息)以及其签名组成的，但证书中的签名是简单签名，一般只有哈希值和签发者名称，不会再将签发者的证书包含在签名中，否则就陷入无限递归的死循环了。</p>
+
+<p>此时我们还需要使用第三者的公钥验证这个证书的合法性。虽然需要多验证一步，但是这样一来，本地不再需要保存每个数据来源的公钥，只需要保存这个第三者的证书(公钥)即可，每个数据来源的证书都由这个可信的第三者进行签发，这个可信的第三者就被称为证书颁发机构(Certification Authority)，简称<code>CA</code>。</p>
+
+<p><img src="/assets/2019/sign_struct.png" alt="签名的结构" /></p>
+
+<p>实际上，CA的证书可能也是由其他更高一级的CA进行签发的，这种情况会产生3级甚至3级以上的证书链，系统中只需要保存最高级CA的证书，中间CA的证书和信息提供者的证书依次进行递归校验即可。</p>
+
+<p>可以通过这个命令导出Xcode应用中可执行程序的签名证书，mac OS上的代码签名格式与iOS平台是相同的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>codesign -d --extract-certificates<span class="o">=</span>cert /Applications/Xcode.app/Contents/MacOS/Xcode
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>当前文件夹下会产生三个证书文件<code>cert0</code> <code>cert1</code> <code>cert2</code>。其中cert0是由cert1签发的，可以使用cert1验证其合法性，同理cert2可以验证cert1的合法性。而对于cert2，只需要对比系统的keychain中是否有相同的证书文件即可。通过下面的命令可以分别查看他们的所有者名称：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span><span class="k">for </span>i in 0 1 2<span class="p">;</span> <span class="k">do </span>openssl x509 -inform DER -text -noout -in cert<span class="nv">$i</span> <span class="p">|</span> grep Subject:<span class="p">;</span> <span class="k">done</span>
+</span><span class='line'><span class="k">        </span>Subject: <span class="nv">CN</span><span class="o">=</span>Apple Mac OS Application Signing, <span class="nv">O</span><span class="o">=</span>Apple Inc., <span class="nv">C</span><span class="o">=</span>US
+</span><span class='line'>        Subject: <span class="nv">C</span><span class="o">=</span>US, <span class="nv">O</span><span class="o">=</span>Apple Inc., <span class="nv">OU</span><span class="o">=</span>Apple Worldwide Developer Relations, <span class="nv">CN</span><span class="o">=</span>Apple Worldwide Developer Relations Certification Authority
+</span><span class='line'>        Subject: <span class="nv">C</span><span class="o">=</span>US, <span class="nv">O</span><span class="o">=</span>Apple Inc., <span class="nv">OU</span><span class="o">=</span>Apple Certification Authority, <span class="nv">CN</span><span class="o">=</span>Apple Root CA
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2019-01-11T11:12:14+08:00" pubdate data-updated="true">2019-01-11</time></div>
+    
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ios/'>ios</a>
+
+</div>
+
+
+    
+        
+            
+    <div class="comments"><a href="#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
+
+	<div class="share">
+	<div class="license">
+		<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">
+			<img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png">
+		</a>
+		<br>
+		This work is licensed under a 
+		<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">
+			Creative Commons Attribution-NonCommercial 4.0 International License
+		</a>
+		.
+	</div>
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2019
+
+    xelz
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'xelz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://xelz.info/blog/2019/01/11/ios-code-signature-1/';
+        var disqus_url = 'http://xelz.info/blog/2019/01/11/ios-code-signature-1/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-41665464-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+</body>
+</html>

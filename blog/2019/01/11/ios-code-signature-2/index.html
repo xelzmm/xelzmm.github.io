@@ -1,0 +1,628 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>细说iOS代码签名(二) - xelz's blog</title>
+	<meta name="author" content="xelz">
+
+	
+	<meta name="description" content="All you need to know about iOS Code Signature. What is codesign？ Why do we need codesign？ How to resign an app？How does iDevice verify codesign? &hellip;">
+	<meta name="keywords" content="ios, codesign, code signature, resign, developer certificate, entitlements, provisioning profile, mobileprovision">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="xelz's blog" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script src="/javascripts/jquery.min.js"></script>
+    
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">xelz's blog</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="https://www.google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:xelz.info">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/xelzmm" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="https://www.google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:xelz.info">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">细说iOS代码签名(二)</h2>
+	<div class="entry-content"><h4>导航</h4>
+
+<ul>
+<li>一口气读完，大约需要40-60分钟
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature/">深度长文：细说iOS代码签名</a></li>
+</ul>
+</li>
+<li>分步阅读
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature-1/">细说iOS代码签名(一)</a>：签名的作用及原理</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-2/">细说iOS代码签名(二)</a>：开发者证书、Entitlements、Provisioning Profile</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-3/">细说iOS代码签名(三)</a>：签名的过程及代码签名的数据结构</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-4/">细说iOS代码签名(四)</a>：签名校验、越狱、重签名</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>0x03 开发者证书</h2>
+
+<p>在了解了签名和证书的基本结构之后，我们来研究一下iOS的开发者证书，它是开发过程中必不可少的东西，相信大家都有接触。众所周知，iOS设备并不能像Android那样任意地安装app，app必须被Apple签名之后才能安装到设备上。而开发者在开发App的时候需要频繁地修改代码并安装到设备上进行测试，不可能每次都先上传给Apple进行签名，因此需要一种不需要苹果签名就可以运行的机制。</p>
+
+<!-- more -->
+
+
+<p>这个机制的实现方式是：</p>
+
+<ul>
+<li>开发者自己持有一套密钥和证书，可以自行对app进行签名</li>
+<li>由Apple对开发者的身份进行“背书”，让设备间能够接信任开发者自行签名的app，这个“背书”的方式就是后面会提到的<code>Provisioning Profile</code></li>
+</ul>
+
+
+<p>那么先研究一下开发者证书是如何产生的：在Xcode 8及之后的版本，Xcode会自动帮我们管理证书，我们可能根本不会有机会去研究它，但是在早期的版本中，需要我们自己动手操作，获取开发者证书主要有两个步骤</p>
+
+<h4>生成CSR文件(Certificate Signing Request)</h4>
+
+<p>在Keychain菜单栏选择&#8221;从证书颁发机构请求证书&hellip;&#8221;</p>
+
+<p><img src="/assets/2019/csr1.png" alt="csr1" /></p>
+
+<p><img src="/assets/2019/csr2.png" alt="csr2" /></p>
+
+<p>这个操作会产生一个名为<code>CertificateSigningRequest.certSigningRequest</code> 的签名请求文件，在生成这个文件之前其实Keychain已经自动生成了一对公、私钥</p>
+
+<p><img src="/assets/2019/csr3.png" alt="csr3" /></p>
+
+<p><img src="/assets/2019/csr4.png" alt="csr4" /></p>
+
+<p>可以在Keychain中选中这个条目，右键选择导出，将密钥文件导出为p12文件，使用openssl查看其内容</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>openssl pkcs12 -in JustForTesting.p12 -out private_key.pem  <span class="c"># 导出p12文件中的密钥</span>
+</span><span class='line'>Enter Import Password:    <span class="c"># 输入p12文件的密码</span>
+</span><span class='line'>MAC verified OK
+</span><span class='line'>Enter PEM pass phrase:    <span class="c"># 设定导出的密钥文件的密码</span>
+</span><span class='line'>Verifying - Enter PEM pass phrase:    <span class="c"># 确认密码</span>
+</span><span class='line'><span class="nv">$ </span>openssl rsa -in private_key.pem -noout -text  <span class="c"># 查看密钥文件的内容</span>
+</span><span class='line'>Enter pass phrase <span class="k">for </span>private_key.pem:   <span class="c"># 输入密钥文件的密码</span>
+</span><span class='line'>Private-Key: <span class="o">(</span>2048 bit<span class="o">)</span>
+</span><span class='line'>modulus:
+</span><span class='line'>    00:c2:98:f5:02:eb:dc:a6:fd:4b:12:4c:70:17:a6:
+</span><span class='line'>    xx:xx:xx:xx:xx:xx:xx:...
+</span><span class='line'>publicExponent: 65537 <span class="o">(</span>0x10001<span class="o">)</span>
+</span><span class='line'>privateExponent:
+</span><span class='line'>    00:a1:67:68:e1:51:6c:a4:fd:36:45:29:2d:58:10:
+</span><span class='line'>    xx:xx:xx:xx:xx:xx:xx:...
+</span><span class='line'>prime1:
+</span><span class='line'>    00:f3:91:5d:5b:dc:c1:de:d2:ab:7a:5f:b2:27:41:
+</span><span class='line'>    xx:xx:xx:xx:xx:xx:xx:...
+</span><span class='line'>prime2:
+</span><span class='line'>    00:cc:87:b5:c9:7e:81:39:94:13:c1:ff:3f:d7:7b:
+</span><span class='line'>    xx:xx:xx:xx:xx:xx:xx:...
+</span><span class='line'>exponent1:
+</span><span class='line'>    00:a5:a0:22:c0:f5:d3:eb:86:8c:4e:b1:c6:3e:85:
+</span><span class='line'>    xx:xx:xx:xx:xx:xx:xx:...
+</span><span class='line'>exponent2:
+</span><span class='line'>    00:8b:e1:00:85:a6:7c:10:79:e2:2d:5a:39:3a:51:
+</span><span class='line'>    xx:xx:xx:xx:xx:xx:xx:...
+</span><span class='line'>coefficient:
+</span><span class='line'>    7e:30:60:84:fc:47:6b:90:fe:e7:32:1a:2f:b0:c4:
+</span><span class='line'>    xx:xx:xx:xx:xx:xx:xx:...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这里出现了几个熟悉的面孔：</p>
+
+<ul>
+<li>prime1/prime2 就是生成密钥所使用的两个超大的素数<code>p, q</code></li>
+<li>modulus 是这两个超大素数的乘积 <code>n = p * q</code></li>
+<li>publicExponent 是公钥因子，也就是前文中的<code>e</code>, 这里固定为 0x10001 (65535)</li>
+<li>privateExponent 是私钥因子，即前文中的<code>d</code></li>
+</ul>
+
+
+<p>CSR文件的内容其实就是个人信息、公钥(Modulus + PublicExponent)，以及自签名(使用自己的私钥进行签名)， 可通过openssl命令查看其内容：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>openssl req -in ~/Desktop/CertificateSigningRequest.certSigningRequest -text -noout
+</span><span class='line'>Certificate Request:
+</span><span class='line'>    Data:
+</span><span class='line'>        Version: 0 <span class="o">(</span>0x0<span class="o">)</span>
+</span><span class='line'>        Subject: <span class="nv">emailAddress</span><span class="o">=</span>me@xelz.info, <span class="nv">CN</span><span class="o">=</span>JustForTesting, <span class="nv">C</span><span class="o">=</span>CN
+</span><span class='line'>        Subject Public Key Info:
+</span><span class='line'>            Public Key Algorithm: rsaEncryption
+</span><span class='line'>                Public-Key: <span class="o">(</span>2048 bit<span class="o">)</span>
+</span><span class='line'>                Modulus:
+</span><span class='line'>                    00:c2:98:f5:02:eb:dc:a6:fd:4b:12:4c:70:17:a6:
+</span><span class='line'>                    xx:xx:xx:xx:xx:xx:xx:...
+</span><span class='line'>                Exponent: 65537 <span class="o">(</span>0x10001<span class="o">)</span>
+</span><span class='line'>        Attributes:
+</span><span class='line'>            a0:00
+</span><span class='line'>    Signature Algorithm: sha256WithRSAEncryption
+</span><span class='line'>         b7:11:aa:48:2f:b3:10:e9:71:c7:93:c3:ec:44:8d:0f:a0:5a:
+</span><span class='line'>         xx:xx:xx:xx:xx:xx:xx:...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>提交给Apple进行签名</h4>
+
+<p>在苹果开发者网站，将CSR提交给Apple进行签名，Apple会返回一个签好名的<code>证书文件</code>，后缀名为<code>cer</code>。</p>
+
+<p>先查看一下他的<code>sha1</code>值，后面会用到</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>shasum ios_development.cer
+</span><span class='line'>11447116f2c5521b057b9b67290f0fdadeadfa0a  ios_development.cer
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>双击即可将其导入到Keychain中，Keychain会自动把它之前创建CSR时自动生成的密钥归为一组。无论是在证书列表中查看还是在密钥列表中查看，都能看到与之匹配的<code>另一半</code>。</p>
+
+<p><img src="/assets/2019/csr5.png" alt="" /></p>
+
+<p>查看证书的内容</p>
+
+<p><img src="/assets/2019/cert1.png" alt="" /></p>
+
+<p>可以从证书中得到几个关键信息：</p>
+
+<ol>
+<li>证书的所有者，这部分信息并非由我们自行指定，而是签发者Apple根据我们的账号信息自动生成</li>
+<li>证书的签发者，即前文所述的<code>CA</code></li>
+<li>证书的公钥信息，与之前生成的密钥文件及CSR完全一致</li>
+</ol>
+
+
+<p>现在应该可以理解证书和密钥的关系了，密钥中保存了私钥和公钥，私钥用于签名，而证书里面有且只有公钥，并且是被第三方<code>CA</code> &ldquo;认证&rdquo; 过，用于解密和校验。</p>
+
+<p>图中可以看到这个证书的签发者是<code>Apple Worldwide Developer Relations Certification Authority</code>，在Keychain中搜索这个名字， 可以看到它的证书详情。我们会发现，它的类型是<code>中级证书颁发机构(中级CA)</code>，它也包含签名，并且是由另外一个叫做<code>Apple Root CA</code>的<code>根证书颁发机构(根CA)</code>进行签发的，这样就形成了一条证书链。而继续查看<code>Apple Root CA</code>的证书，会发现它是自签名的，因为它会被内置在设备中，设备无条件信任它，也就不需要其他的机构为其背书了。</p>
+
+<p><img src="/assets/2019/cert2.png" alt="" /></p>
+
+<p>这样的证书链机制可以简化根证书颁发机构的工作，同时提升证书管理的安全性。将颁发底层证书的工作分散给多个中级证书颁发机构进行处理，根证书颁发机构只需要对下一级机构的证书进行管理和签发，降低根证书颁发机构私钥的使用频率，也就降低了私钥泄露的风险。中级证书颁发机构各司其职，即使出现私钥泄露这样的重大安全事故，也不至于波及整个证书网络。</p>
+
+<h4>开发证书与发布证书</h4>
+
+<p>开发者证书按用途可分为Development证书和Distribution证书：</p>
+
+<ul>
+<li>Development证书是用于开发及测试阶段使用的证书，它用于在设备安装上开发阶段的App后对App的完整性进行校验，一般证书名称为 iPhone Developer: xxxxxxx。如果是多人协作的开发者账号，任意成员都可以申请自己的Development证书。</li>
+<li>Distribution证书是用于提交AppStore的证书，一般命名为 iPhone Distribution: xxxxxxxxx，用于让AppStore校验提交上来的App的完整性，只有管理员以上身份的开发者账号才可以申请，因此可以控制提交权限的范围。同时，Distribution证书不能用于开发及调试。</li>
+</ul>
+
+
+<h4>企业级开发者证书</h4>
+
+<p>除了普通开发者证书(个人开发者账号和公司开发者账号使用的证书)外，还有一种特殊的<code>企业级开发者证书</code>，这种证书签名的App可以被直接安装在任意的iOS设备上，只要用户主动信任该证书即可。它的作用是方便企业给内部员工分发生产力工具，比如往往存在这样一些场景：企业内部无法访问互联网，自然也就无法通过AppStore安装应用，或是使用私有API，完成一些AppStore不允许的功能。前面所说的不需要苹果签名即可安装运行的机制同样适用于企业级开发者证书，并且是企业级开发者证书的基础。</p>
+
+<p>从证书的申请方式和内容来看，企业级开发者证书和普通开发者证书并无不同，只是开发者账号的申请方式和费用有区别。此外，Apple对这两种证书所能提供的Provisioning Profile有细微的差异，下一节马上就会分析。</p>
+
+<h2>0x04 Entitlements &amp; Provisioning Profile</h2>
+
+<p>除了开发者证书，在进行iOS代码签名的时候还需要有这两个文件，他们是被签名内容的一部分</p>
+
+<h4>Entitlements</h4>
+
+<p>沙盒(Sandbox)技术是iOS安全体系中非常重要的一项技术，他的目的是通过各种技术手段限制App的行为，比如可读写的路径，允许访问的硬件，允许使用的服务等等，即使应用出现任意代码执行的漏洞，也无法影响到沙盒外的系统。（图来自<a href="https://developer.apple.com/library/archive/documentation/Security/Conceptual/AppSandboxDesignGuide/AboutAppSandbox/AboutAppSandbox.html">Apple开发者网站</a>）</p>
+
+<p><img src="/assets/2019/sandboxing.png" alt="" /></p>
+
+<p>通常所说的Entitlements(授权文件)，也就是指iOS沙盒的配置文件，这个文件中声明了app所需的权限，如果app中使用到了某项沙盒限制的功能，但没有声明对应的权限，可能运行到相关的代码时会直接Crash。</p>
+
+<p>全新的iOS工程中是没有这个文件的，如果在<code>Capabilities</code>中开启了一些需要权限的功能之后，Xcode会自动(Xcode 8及之后的版本)生成Entilements文件，并将对应的权限声明添加到Entitlements文件中。</p>
+
+<p><img src="/assets/2019/ent1.png" alt="" /></p>
+
+<p><img src="/assets/2019/ent2.png" alt="" /></p>
+
+<p>这个文件其实是xml格式的<code>plist</code>文件，内容如下</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+</span><span class='line'><span class="cp">&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;</span>
+</span><span class='line'><span class="nt">&lt;plist</span> <span class="na">version=</span><span class="s">&quot;1.0&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'><span class="nt">&lt;dict&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>inter-app-audio<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;true/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/dict&gt;</span>
+</span><span class='line'><span class="nt">&lt;/plist&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>实际上，这个文件的内容并非是全部的授权内容，因为缺省状态下，App默认会包含以下与Team ID及App ID相关的权限声明：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;dict&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;key&gt;</span>keychain-access-groups<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;array&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;string&gt;</span>xxxxxxxxxx.*<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/array&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;key&gt;</span>get-task-allow<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;true/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;key&gt;</span>application-identifier<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;string&gt;</span>xxxxxxxxxx.test.CodeSign<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;key&gt;</span>com.apple.developer.team-identifier<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;string&gt;</span>xxxxxxxxxx<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'><span class="nt">&lt;/dict&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其中<code>get-task-allow</code>代表是否允许被调试，它在开发阶段是必需的一项权限，而在进行Archive打包用于上架时会被去除。</p>
+
+<p>进行代码签名时，会将这个Entitlements文件(如有)与上述缺省内容进行合并，得到最终的授权文件，并嵌入二进制代码中，作为被签名内容的一部分，由代码签名保证其不可篡改性。</p>
+
+<h4>Provisioning Profile</h4>
+
+<p>Xcode对Provisioning Profile的解释是</p>
+
+<blockquote><p> A provisioning profile is a collection of digital entities that uniquely ties developers and devices to an authorized iPhone Development Team and enables a device to be used for testing.</p></blockquote>
+
+<p>Provisioning Profile在这里就起到了一个对设备和开发者授权的作用，他将开发者账号、证书、entitlements文件以及设备进行了绑定。</p>
+
+<p>同样地，在开发过程中，Xcode 8及后续版本默认情况下会自动帮我们管理Provisioining Profile，自动下载的Provisioning Profile都被存放在<code>~/Library/MobileDevice/Provisioning\ Profiles/</code>路径下，以<code>UUID</code>格式命名。直接拖拽下图中的齿轮图标到Finder中也可以将其复制出来。</p>
+
+<p><img src="/assets/2019/provision1.png" alt="" /></p>
+
+<p>由于这个文件是被苹果签过名的，所以我们没有办法伪造或者修改这个文件，它使用的是标准的CMS(Cryptographic Message Syntax)格式，可以通过security命令查看它的签名信息，并将文件的内容提取出来：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>security cms -D -i xxxxxxxxxxx.mobileprovision -h 1 -n  <span class="c"># 查看签名信息</span>
+</span><span class='line'>SMIME:    <span class="nv">level</span><span class="o">=</span>1.2<span class="p">;</span> <span class="nb">type</span><span class="o">=</span>signedData<span class="p">;</span> <span class="nv">nsigners</span><span class="o">=</span>1<span class="p">;</span>
+</span><span class='line'>      signer0.id<span class="o">=</span><span class="s2">&quot;Apple iPhone OS Provisioning Profile Signing&quot;</span><span class="p">;</span> signer0.status<span class="o">=</span>GoodSignature<span class="p">;</span>
+</span><span class='line'>  <span class="nv">level</span><span class="o">=</span>1.1<span class="p">;</span> <span class="nb">type</span><span class="o">=</span>data<span class="p">;</span>
+</span><span class='line'><span class="nv">$ </span>security cms -D -i ea8585cd-c2da-4b08-81c2-e32b28c34871.mobileprovision -o provision.plist  <span class="c"># 将内容导出</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Provisioning Profile统一都是由<code>Apple iPhone OS Provisioning Profile Signing</code>进行签名的，机构名称言简意赅。导出的provision.plist内容如下</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+</span><span class='line'><span class="cp">&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;</span>
+</span><span class='line'><span class="nt">&lt;plist</span> <span class="na">version=</span><span class="s">&quot;1.0&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'><span class="nt">&lt;dict&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>AppIDName<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;string&gt;</span>TestCodeSign<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>    ...
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>DeveloperCertificates<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;array&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;data&gt;</span>xxxxx<span class="nt">&lt;/data&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;data&gt;</span>xxxxx<span class="nt">&lt;/data&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;data&gt;</span>xxxxx<span class="nt">&lt;/data&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/array&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>Entitlements<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;dict&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;key&gt;</span>keychain-access-groups<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;array&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;string&gt;</span>xxxxx.*<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/array&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;key&gt;</span>inter-app-audio<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;true/&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;key&gt;</span>get-task-allow<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;true/&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;key&gt;</span>application-identifier<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;string&gt;</span>xxxxx.test.CodeSign<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;key&gt;</span>com.apple.developer.team-identifier<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;string&gt;</span>xxxxx<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;key&gt;</span>com.apple.developer.siri<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;true/&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/dict&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>ExpirationDate<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;date&gt;</span>2020-01-22T05:14:57Z<span class="nt">&lt;/date&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>Name<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;string&gt;</span>iOS Team Provisioning Profile: test.CodeSign<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>ProvisionedDevices<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;array&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;string&gt;</span>xxxxx<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;string&gt;</span>xxxxx<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;string&gt;</span>xxxxx<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/array&gt;</span>
+</span><span class='line'>  ...
+</span><span class='line'><span class="nt">&lt;/dict&gt;</span>
+</span><span class='line'><span class="nt">&lt;/plist&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>很明显可以看出这是一个xml格式的plist文件，里面的内容不难理解，最关键的是这几项</p>
+
+<ul>
+<li><strong>DeveloperCertificates</strong>：允许使用的开发者证书，这是一个列表，一般包含生成这个Provisioning Profile文件时，当前开发者账号下所有有效的Development证书，以base64格式保存，使用base64解码之后就可以得到DER格式的开发者证书。通过计算每个证书的sha1值，可以看出，前文中新申请的证书，就在这个列表中</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span><span class="k">for </span>i in <span class="sb">`</span>seq 3<span class="sb">`</span><span class="p">;</span> <span class="k">do</span> /usr/libexec/PlistBuddy -x -c <span class="s1">&#39;Print:DeveloperCertificates:&#39;</span><span class="nv">$i</span> provision.plist <span class="p">|</span> sed -n <span class="s1">&#39;/&lt;data&gt;/,/&lt;\/data&gt;/p&#39;</span> <span class="p">|</span> sed -e <span class="s1">&#39;1d;$d&#39;</span> <span class="p">|</span> base64 -D <span class="p">|</span> shasum <span class="p">;</span> <span class="k">done</span>
+</span><span class='line'><span class="k">  </span>11447116f2c5521b057b9b67290f0fdadeadfa0a  -    <span class="c"># &lt;--- 新申请的证书</span>
+</span><span class='line'>  df446e4fad5aa292c7323da4cf7b8869fa5c89e7  -
+</span><span class='line'>  9d31f7e8c27760ffa061598ba90ea614948224bf  -
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><strong>Entitlements</strong>：允许使用的权限列表，实际在App中使用的权限必须是这个列表的子集，否则安装时会无法通过校验而失败。如果曾经开启过某个功能，Xcode自动更新了Provisioning Profile，后来又关闭它，Xcode并不会将其从Provisioning Profile中删去，如示例中的<code>com.apple.developer.siri</code>。</li>
+<li><strong>ProvisionedDevices</strong>：允许安装的设备列表，如果目标设备的UUID不在这个列表中，会安装失败。对于这一项，普通开发者证书和企业级开发者证书的待遇是不同的。普通开发者证书使用Provisioning Profile的方式安装App到设备，只是出于测试和调试的需要，因此Apple只允许最多注册100台用于测试的设备，否则开发者就可以以测试的名义任意任意分发自己的App了。而对于企业级开发者来说，本身就有任意安装的需求，因此在分发时，这一项会被<code>ProvisionsAllDevices</code>取代，代表授权任意设备。</li>
+</ul>
+
+
+<p>这些信息中有任何变动的时候，比如开发者证书有新增或者失效，在Capabilities中启用了当前App从未使用过的新功能，或是将新的iPhone连接到Xcode用于测试，Xcode都会自动重新申请Provisioning Profile。</p>
+
+<p>Provisioning Profile会被内置在App中，置于App根目录下的<code>embedded.mobileprovision</code>。安装App时如果签名校验通过，这个文件会自动被拷贝到iOS设备的<code>/Library/MobileDevice/Provisioning\ Profiles/</code>路径下。由于该文件已被Apple官方签名，系统可以无条件信任它，并用它来校验App的签名、权限，以及本机的UUID等是否满足来自官方的授权。通过这种方式，间接信任了使用开发者证书签名的App，让iOS设备可以运行非苹果官方签名的App。</p>
+
+<p>假如你有一台越狱的设备，查看任意一个从AppStore上下载下来的App，里面都不会有embedded.mobileprovision这个文件，因为经过Apple重新签名以后，设备就不再需要它了。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2019-01-11T11:12:14+08:00" pubdate data-updated="true">2019-01-11</time></div>
+    
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ios/'>ios</a>
+
+</div>
+
+
+    
+        
+            
+    <div class="comments"><a href="#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
+
+	<div class="share">
+	<div class="license">
+		<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">
+			<img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png">
+		</a>
+		<br>
+		This work is licensed under a 
+		<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">
+			Creative Commons Attribution-NonCommercial 4.0 International License
+		</a>
+		.
+	</div>
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2019
+
+    xelz
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'xelz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://xelz.info/blog/2019/01/11/ios-code-signature-2/';
+        var disqus_url = 'http://xelz.info/blog/2019/01/11/ios-code-signature-2/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-41665464-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+</body>
+</html>

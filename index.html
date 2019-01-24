@@ -7,7 +7,9 @@
 	<meta name="author" content="xelz">
 
 	
-	<meta name="description" content="0x00 前言 苹果在WWDC 2015大会上引入了bitcode，随后在Xcode7中添加了在二进制中嵌入bitcode(Enable Bitcode)的功能，并且默认设置为开启状态。很多开发者在集成第三方SDK的时候都被bitcode坑过一把， &hellip;">
+	<meta name="description" content="导航 一口气读完，大约需要40-60分钟 深度长文：细说iOS代码签名 分步阅读 细说iOS代码签名(一)：签名的作用及原理
+细说iOS代码签名(二)：开发者证书、Entitlements、Provisioning Profile
+细说iOS代码签名(三)：签名的过程及代码签名的数据结构 &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -76,6 +78,371 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2019/01/11/ios-code-signature-4/">
+		
+			细说iOS代码签名(四)</a>
+	</h2>
+	<div class="entry-content">
+		<h4>导航</h4>
+
+<ul>
+<li>一口气读完，大约需要40-60分钟
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature/">深度长文：细说iOS代码签名</a></li>
+</ul>
+</li>
+<li>分步阅读
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature-1/">细说iOS代码签名(一)</a>：签名的作用及原理</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-2/">细说iOS代码签名(二)</a>：开发者证书、Entitlements、Provisioning Profile</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-3/">细说iOS代码签名(三)</a>：签名的过程及代码签名的数据结构</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-4/">细说iOS代码签名(四)</a>：签名校验、越狱、重签名</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>0x06 签名的校验</h2>
+
+<p>签名的校验并非一次性完成，在安装、启动、和运行时有着不同的校验规则。</p>
+
+
+		
+		<a href="/blog/2019/01/11/ios-code-signature-4/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2019-01-11T11:12:14+08:00" pubdate data-updated="true">2019-01-11</time></div>
+    
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ios/'>ios</a>
+
+</div>
+
+
+    
+        
+            
+    <div class="comments"><a href="/blog/2019/01/11/ios-code-signature-4/#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2019/01/11/ios-code-signature-3/">
+		
+			细说iOS代码签名(三)</a>
+	</h2>
+	<div class="entry-content">
+		<h4>导航</h4>
+
+<ul>
+<li>一口气读完，大约需要40-60分钟
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature/">深度长文：细说iOS代码签名</a></li>
+</ul>
+</li>
+<li>分步阅读
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature-1/">细说iOS代码签名(一)</a>：签名的作用及原理</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-2/">细说iOS代码签名(二)</a>：开发者证书、Entitlements、Provisioning Profile</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-3/">细说iOS代码签名(三)</a>：签名的过程及代码签名的数据结构</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-4/">细说iOS代码签名(四)</a>：签名校验、越狱、重签名</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>0x05 CodeSign</h2>
+
+<p>万事具备，只欠东风，已经具备了签名所需的所有条件，接下来就可以开始研究签名的具体过程了。</p>
+
+
+		
+		<a href="/blog/2019/01/11/ios-code-signature-3/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2019-01-11T11:12:14+08:00" pubdate data-updated="true">2019-01-11</time></div>
+    
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ios/'>ios</a>
+
+</div>
+
+
+    
+        
+            
+    <div class="comments"><a href="/blog/2019/01/11/ios-code-signature-3/#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2019/01/11/ios-code-signature-2/">
+		
+			细说iOS代码签名(二)</a>
+	</h2>
+	<div class="entry-content">
+		<h4>导航</h4>
+
+<ul>
+<li>一口气读完，大约需要40-60分钟
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature/">深度长文：细说iOS代码签名</a></li>
+</ul>
+</li>
+<li>分步阅读
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature-1/">细说iOS代码签名(一)</a>：签名的作用及原理</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-2/">细说iOS代码签名(二)</a>：开发者证书、Entitlements、Provisioning Profile</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-3/">细说iOS代码签名(三)</a>：签名的过程及代码签名的数据结构</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-4/">细说iOS代码签名(四)</a>：签名校验、越狱、重签名</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>0x03 开发者证书</h2>
+
+<p>在了解了签名和证书的基本结构之后，我们来研究一下iOS的开发者证书，它是开发过程中必不可少的东西，相信大家都有接触。众所周知，iOS设备并不能像Android那样任意地安装app，app必须被Apple签名之后才能安装到设备上。而开发者在开发App的时候需要频繁地修改代码并安装到设备上进行测试，不可能每次都先上传给Apple进行签名，因此需要一种不需要苹果签名就可以运行的机制。</p>
+
+
+		
+		<a href="/blog/2019/01/11/ios-code-signature-2/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2019-01-11T11:12:14+08:00" pubdate data-updated="true">2019-01-11</time></div>
+    
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ios/'>ios</a>
+
+</div>
+
+
+    
+        
+            
+    <div class="comments"><a href="/blog/2019/01/11/ios-code-signature-2/#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2019/01/11/ios-code-signature-1/">
+		
+			细说iOS代码签名(一)</a>
+	</h2>
+	<div class="entry-content">
+		<h4>导航</h4>
+
+<ul>
+<li>一口气读完，大约需要40-60分钟
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature/">深度长文：细说iOS代码签名</a></li>
+</ul>
+</li>
+<li>分步阅读
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature-1/">细说iOS代码签名(一)</a>：签名的作用及原理</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-2/">细说iOS代码签名(二)</a>：开发者证书、Entitlements、Provisioning Profile</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-3/">细说iOS代码签名(三)</a>：签名的过程及代码签名的数据结构</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-4/">细说iOS代码签名(四)</a>：签名校验、越狱、重签名</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>0x01 签名的作用</h2>
+
+<p>数字签名其实跟我们手写的签名类似，代表一个特定的主体(签名者)对特定内容(被签名数据)的署名和认可，签名是对信息发送行为真实性的有效保障。数字签名在很多领域都有应用，iOS的代码签名正是其中最典型的一种，我们可以先尝试分析一下iOS上代码签名的目的和好处。</p>
+
+
+		
+		<a href="/blog/2019/01/11/ios-code-signature-1/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2019-01-11T11:12:14+08:00" pubdate data-updated="true">2019-01-11</time></div>
+    
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ios/'>ios</a>
+
+</div>
+
+
+    
+        
+            
+    <div class="comments"><a href="/blog/2019/01/11/ios-code-signature-1/#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2019/01/11/ios-code-signature/">
+		
+			深度长文：细说iOS代码签名</a>
+	</h2>
+	<div class="entry-content">
+		<h2>0x00 前言</h2>
+
+<p>2008年苹果发布iOS2.0时引入了强制代码签名(Mandatory Code Signing)技术，为了能够严格控制设备上能够运行的代码，这为iOS设备的安全性和苹果的AppStore生态奠定了坚实的基础。作为iOSer总是要跟代码签名打交道的，相信大部分人对代码签名都是一知半解，本文将会由浅入深，深挖代码签名的内部细节。</p>
+
+<h4>导航</h4>
+
+<ul>
+<li>一口气读完，大约需要40-60分钟
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature/">深度长文：细说iOS代码签名</a></li>
+</ul>
+</li>
+<li>分步阅读
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature-1/">细说iOS代码签名(一)</a>：签名的作用及原理</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-2/">细说iOS代码签名(二)</a>：开发者证书、Entitlements、Provisioning Profile</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-3/">细说iOS代码签名(三)</a>：签名的过程及代码签名的数据结构</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-4/">细说iOS代码签名(四)</a>：签名校验、越狱、重签名</li>
+</ul>
+</li>
+</ul>
+
+
+
+		
+		<a href="/blog/2019/01/11/ios-code-signature/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2019-01-11T11:12:14+08:00" pubdate data-updated="true">2019-01-11</time></div>
+    
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ios/'>ios</a>
+
+</div>
+
+
+    
+        
+            
+    <div class="comments"><a href="/blog/2019/01/11/ios-code-signature/#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
 
 
     <article class="post">
@@ -688,308 +1055,6 @@
 </div>
 </article>
 
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2015/10/30/damned-rooms/">
-		
-			Damned Rooms</a>
-	</h2>
-	<div class="entry-content">
-		<h2>游戏名称</h2>
-
-<p><strong>密室惊魂Online</strong></p>
-
-<h2>项目说明</h2>
-
-<p>这个桌游是一个曾经开桌游店的同事送的，觉得这个游戏很有意思，但是一般需要5-8人，线下组局太难了。加入官方QQ群之后发现大家会在QQ群里通过建讨论组的方式来在线组局。此种方式需要一个MC主持游戏，每个人的选择和行动都是私聊给MC，MC通过PS软件绘制游戏地图，并通过各种图层来控制元素的堆放和移动，然后截图发在讨论组里。不禁感慨玩家的智慧是多么的强大。</p>
-
-<p>后来我就在想，何不用程序来代替MC和PS呢？于是这个项目就诞生了。</p>
-
-<p><strong>托管地址</strong>：<a href="https://github.com/xelzmm/danmned">https://github.com/xelzmm/danmned</a></p>
-
-<p><strong>开发语言</strong>：nodejs</p>
-
-<p><strong>相关技术</strong>：ejs, websocket, css3</p>
-
-<p><strong>游戏截图</strong></p>
-
-<p><img src="/assets/2015/damned.png" alt="教学界面" /></p>
-
-<h2>游戏介绍</h2>
-
-<p>密室惊魂是一款运用语言和推理逻辑，结合区域行动策略的版图桌面游戏。
-游戏讲述一群中毒的受害者被奸徒困在一个完美密室里，大家需要在有限的时间内互相交流合作，寻找线索破解迷题，最终突破奸徒的阻挠找到出口逃生。该款游戏的特色是将玩家的语言交流和实际行动相结合，是一个考验玩家之间合作和显示玩家智慧的新型语言推理类桌面游戏。</p>
-
-<p><strong>游戏人数</strong>： 5到9人，已支持3-4人的mini模式</p>
-
-<p><strong>游戏时长</strong>： 约60至90分钟</p>
-
-<p><strong>游戏类型</strong>： 语言推理类</p>
-
-
-		
-		<a href="/blog/2015/10/30/damned-rooms/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-10-30T18:00:00+08:00" pubdate data-updated="true">2015-10-30</time></div>
-    
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/game/'>game</a>, <a class='category' href='/blog/categories/nodejs/'>nodejs</a>
-
-</div>
-
-
-    
-        
-            
-    <div class="comments"><a href="/blog/2015/10/30/damned-rooms/#disqus_thread">Comments</a></div>
-            
-        
-    
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2014/12/17/what-is-a-router/">
-		
-			什么是路由器(译)？</a>
-	</h2>
-	<div class="entry-content">
-		<p>Origin：<a href="http://www.inetdaemon.com/tutorials/internet/ip/routing/define_router.shtml">http://www.inetdaemon.com/tutorials/internet/ip/routing/define_router.shtml</a></p>
-
-<p>路由器(包括无线路由器)，是一种连接两个以上不同的网络、具备网络间数据包转发功能的专用网络设备。它基于IP协议，工作在网络层(OSI七层模型的第3层)。路由器的主要功能是将不同的网络连接起来，让它们相互间能够进行数据交换，并将局域网内不必要的广播流量精确地发送到目标主机。有很多制造路由器的厂商，简单列举一些：Cisco(思科)，Linksys，Juniper，Netgear(网件)，Nortel (北电)，Redback，Lucent(朗讯)，3Com，HP(惠普)，Dlink，Belkin(贝尔金)等。</p>
-
-<p>有一些网络技能认证考试(如CCNA，CCNP，JNCIA，JNCIE)会考你区分网络设备的能力。这篇关于路由器的文章主要会解释如何辨别路由器，路由器有哪些功能(当然不包含某些厂商特有的技术)。</p>
-
-
-		
-		<a href="/blog/2014/12/17/what-is-a-router/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-12-17T11:36:53+08:00" pubdate data-updated="true">2014-12-17</time></div>
-    
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/network/'>network</a>
-
-</div>
-
-
-    
-        
-            
-    <div class="comments"><a href="/blog/2014/12/17/what-is-a-router/#disqus_thread">Comments</a></div>
-            
-        
-    
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2014/07/28/resolve-google-ban-linode/">
-		
-			Solution for Google Banning Linodes</a>
-	</h2>
-	<div class="entry-content">
-		<h3>Google banned Linodes</h3>
-
-<p>I usually use linode to visit Google services via ssh tunnel. but recently I always got captchas even <code>Sorry...</code> page.</p>
-
-<p>Finally I knows that google banned ipv6 traffics from linode which they treated as robots.</p>
-
-<h3>Solution</h3>
-
-<p>disable ipv6 of linode</p>
-
-<h4>for Ubuntu</h4>
-
-<p>append lines below to <code>/etc/sysctl.conf</code></p>
-
-<ul>
-<li><p>net.ipv6.conf.all.disable_ipv6=1</p></li>
-<li><p>net.ipv6.conf.default.disable_ipv6=1</p></li>
-<li><p>net.ipv6.conf.lo.disable_ipv6=1</p></li>
-</ul>
-
-
-<p>then restart network <code>/etc/init.d/networking restart</code> or <code>reboot</code></p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-07-28T18:00:00+00:00" pubdate data-updated="true">2014-07-28</time></div>
-    
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/tricks/'>tricks</a>
-
-</div>
-
-
-    
-        
-            
-    <div class="comments"><a href="/blog/2014/07/28/resolve-google-ban-linode/#disqus_thread">Comments</a></div>
-            
-        
-    
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2014/07/25/new-to-jekyll/">
-		
-			New to Jekyll!</a>
-	</h2>
-	<div class="entry-content">
-		<p>Hello Jekyll.</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-07-25T17:58:57+00:00" pubdate data-updated="true">2014-07-25</time></div>
-    
-
-
-    
-        
-            
-        
-    
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2014/06/09/write-up-of-a-very-interesting-wargame/">
-		
-			Write Up of a Very Interesting Wargame</a>
-	</h2>
-	<div class="entry-content">
-		<p>Recently I&rsquo;m playing a wargame named [shhhh&hellip; edited].</p>
-
-<p>I&rsquo;ve hidden the game name so that challengers could not find here by some searching work.</p>
-
-<p>If you guys are about to cheat by this, get lost now.</p>
-
-<p>You can find the game at [url]<code>c-a-n-y-o-u-h-a-c-k.i-t</code>(replace the dash with nothing)</p>
-
-<p>Try to figure out by yourself, if you are really really really stucked, have a sight for some hints.</p>
-
-
-		
-		<a href="/blog/2014/06/09/write-up-of-a-very-interesting-wargame/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-06-09T18:00:00+00:00" pubdate data-updated="true">2014-06-09</time></div>
-    
-
-<div class="tags">
-
-	<a class='category' href='/blog/categories/ctf/'>ctf</a>, <a class='category' href='/blog/categories/wargame/'>wargame</a>
-
-</div>
-
-
-    
-        
-            
-    <div class="comments"><a href="/blog/2014/06/09/write-up-of-a-very-interesting-wargame/#disqus_thread">Comments</a></div>
-            
-        
-    
-</div>
-</article>
-
 <nav id="pagenavi">
     
     
@@ -998,7 +1063,7 @@
     <div class="center"><a href="/blog/archives">Blog Archives</a></div>
 </nav>
 </div>
-	<footer id="footer" class="inner">Copyright &copy; 2018
+	<footer id="footer" class="inner">Copyright &copy; 2019
 
     xelz
 

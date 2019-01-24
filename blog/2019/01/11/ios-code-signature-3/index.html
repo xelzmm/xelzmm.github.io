@@ -1,0 +1,884 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>细说iOS代码签名(三) - xelz's blog</title>
+	<meta name="author" content="xelz">
+
+	
+	<meta name="description" content="All you need to know about iOS Code Signature. What is codesign？ Why do we need codesign？ How to resign an app？How does iDevice verify codesign? &hellip;">
+	<meta name="keywords" content="ios, codesign, code signature, resign, developer certificate, entitlements, provisioning profile, mobileprovision">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="xelz's blog" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script src="/javascripts/jquery.min.js"></script>
+    
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">xelz's blog</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="https://www.google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:xelz.info">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+		<a class="github" href="https://github.com/xelzmm" title="GitHub">GitHub</a>
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="https://www.google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:xelz.info">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">细说iOS代码签名(三)</h2>
+	<div class="entry-content"><h4>导航</h4>
+
+<ul>
+<li>一口气读完，大约需要40-60分钟
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature/">深度长文：细说iOS代码签名</a></li>
+</ul>
+</li>
+<li>分步阅读
+
+<ul>
+<li><a href="/blog/2019/01/11/ios-code-signature-1/">细说iOS代码签名(一)</a>：签名的作用及原理</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-2/">细说iOS代码签名(二)</a>：开发者证书、Entitlements、Provisioning Profile</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-3/">细说iOS代码签名(三)</a>：签名的过程及代码签名的数据结构</li>
+<li><a href="/blog/2019/01/11/ios-code-signature-4/">细说iOS代码签名(四)</a>：签名校验、越狱、重签名</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>0x05 CodeSign</h2>
+
+<p>万事具备，只欠东风，已经具备了签名所需的所有条件，接下来就可以开始研究签名的具体过程了。</p>
+
+<!-- more -->
+
+
+<p>在编译iOS App时，Xcode在编译的打包的流程中会自动进行代码签名， 可以在编译日志界面找到一个<code>Sign</code>的步骤，内部是调用了<code>codesign</code>这个命令对app进行签名</p>
+
+<p><img src="/assets/2019/sign1.png" alt="codesign" /></p>
+
+<p>codesign有几个关键参数</p>
+
+<ul>
+<li><code>--sign sign_identity</code> 指定签名所用的证书，可以指定证书的名字，比如<code>"iPhone Developer: xxx (xxx)"</code>也可以直接写证书文件的sha1值，xcode中就是直接指定sha1值的。通过观察图中的sha1值可以看出xcode自动选择了刚申请的最新证书。</li>
+<li><code>--entitlements entitlements_file</code> 指定签名所需要的entitlements文件，这里的entitlements文件跟前面看到的并不是同一个文件，而是基于原有entitlements文件，补充上缺省权限后生成的临时文件</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+</span><span class='line'><span class="cp">&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;</span>
+</span><span class='line'><span class="nt">&lt;plist</span> <span class="na">version=</span><span class="s">&quot;1.0&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'><span class="nt">&lt;dict&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>application-identifier<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;string&gt;</span>xxxxxxxxxx.test.CodeSign<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>com.apple.developer.team-identifier<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;string&gt;</span>xxxxxxxxxx<span class="nt">&lt;/string&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>get-task-allow<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;true/&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>inter-app-audio<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;true/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/dict&gt;</span>
+</span><span class='line'><span class="nt">&lt;/plist&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果想对比签名前后的区别，可以在<code>Build Settings</code>中找到<code>Code Signing Identity</code>，选择<code>Other</code>并将内容清除(即设置为空)，即可跳过代码签名。分别编译一个不签名的版本和签名的版本，对比可以发现</p>
+
+<p><img src="/assets/2019/sign2.png" alt="compare" /></p>
+
+<ul>
+<li>签名过的app中多了一个<code>_CodeSignature</code>文件夹，里面只有一个文件<code>CodeResources</code></li>
+<li>还多了一个<code>embedded.mobileprovision</code> 文件</li>
+<li>二进制文件的内容存在差异，并且签名后体积变大了</li>
+</ul>
+
+
+<p>其中<code>embedded.mobileprovision</code>就是前文提到的Provisioning Profile文件，它直接被拷贝到了app的根目录并重命名，在此不再赘述，重点研究下另外两个不同点。</p>
+
+<h4>_CodeSignature/CodeResources</h4>
+
+<p>首先是<code>_CodeSingature/CodeResources</code>，这是一个plist文件，里面保存了app中每个文件（除了App的可执行文件）的<code>明文哈希值</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;plist</span> <span class="na">version=</span><span class="s">&quot;1.0&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'><span class="nt">&lt;dict&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>files<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;dict&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;key&gt;</span>Base.lproj/Main.storyboardc/Info.plist<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;data&gt;</span>
+</span><span class='line'>            MDrKFvFWroTb0+KEbQShBcoBvo4=
+</span><span class='line'>        <span class="nt">&lt;/data&gt;</span>
+</span><span class='line'>      ...
+</span><span class='line'>  <span class="nt">&lt;/dict&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>files2<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;dict&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;key&gt;</span>Base.lproj/Main.storyboardc/Info.plist<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;dict&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;key&gt;</span>hash<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;data&gt;</span>
+</span><span class='line'>                MDrKFvFWroTb0+KEbQShBcoBvo4=
+</span><span class='line'>            <span class="nt">&lt;/data&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;key&gt;</span>hash2<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;data&gt;</span>
+</span><span class='line'>                PpvapAjR62rl6Ym4E6hkTgpKmBICxTaQXeUqcpHmmqQ=
+</span><span class='line'>            <span class="nt">&lt;/data&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/dict&gt;</span>
+</span><span class='line'>      ...
+</span><span class='line'>  <span class="nt">&lt;/dict&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>rules<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  ...
+</span><span class='line'>  <span class="nt">&lt;key&gt;</span>rules2<span class="nt">&lt;/key&gt;</span>
+</span><span class='line'>  ...
+</span><span class='line'><span class="nt">&lt;/dict&gt;</span>
+</span><span class='line'><span class="nt">&lt;/plist&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>files</code>和<code>files2</code>分别是旧版本和新版本的文件列表，而<code>rules</code>与<code>rules2</code>分别是与之对应的规则说明，里面描述了计算hash时需要被排除的文件以及每个文件的权重。</p>
+
+<p><code>files</code>中保存的是每个文件的sha1值，而<code>files2</code>中同时保存了sha1和sha256，因为sha1在计算机硬件高度发达的今天，已经相对没有那么安全了，因此最新的签名算法中，引入了sha256。注意，这里的hash值都是base64编码的明文，有些文章说这些值是使用私钥加密的哈希，这是很不负责任的错误说法，通过几条简单的命令就可以进行验证：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>cat Base.lproj/Main.storyboardc/Info.plist <span class="p">|</span> shasum -a 1
+</span><span class='line'>303aca16f156ae84dbd3e2846d04a105ca01be8e  -
+</span><span class='line'><span class="nv">$ </span><span class="nb">echo</span> -n <span class="s1">&#39;MDrKFvFWroTb0+KEbQShBcoBvo4=&#39;</span> <span class="p">|</span> base64 -D <span class="p">|</span> hexdump
+</span><span class='line'>0000000 30 3a ca 16 f1 56 ae 84 db d3 e2 84 6d 04 a1 05
+</span><span class='line'>0000010 ca 01 be 8e
+</span><span class='line'><span class="nv">$ </span><span class="c"># =========== 分割线 ===========</span>
+</span><span class='line'><span class="nv">$ </span>cat Base.lproj/Main.storyboardc/Info.plist <span class="p">|</span> shasum -a 256
+</span><span class='line'>3e9bdaa408d1eb6ae5e989b813a8644e0a4a981202c536905de52a7291e69aa4  -
+</span><span class='line'><span class="nv">$ </span><span class="nb">echo</span> -n <span class="s1">&#39;PpvapAjR62rl6Ym4E6hkTgpKmBICxTaQXeUqcpHmmqQ=&#39;</span> <span class="p">|</span> base64 -D <span class="p">|</span> hexdump
+</span><span class='line'>0000000 3e 9b da a4 08 d1 eb 6a e5 e9 89 b8 13 a8 64 4e
+</span><span class='line'>0000010 0a 4a 98 12 02 c5 36 90 5d e5 2a 72 91 e6 9a a4
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>_CodeSignature/CodeResources</code>文件的主要作用是保存签名时每个文件的哈希值，而这些哈希值并不需要都进行加密，因为非对称加密的性能是比较差的，全部都加密只会拖慢签名和校验的速度。其实只需要确保这个文件没有被篡改，自然也就可以确保每个文件都是签名时的原始状态，这一点在后续的内容中可以得到验证。</p>
+
+<h4>LC_CODE_SIGNATURE</h4>
+
+<p>使用<code>otool -l</code>对比签名前后的二进制文件，可以发现签名后二进制文件多了一个名为<code>LC_CODE_SIGNATURE</code>的Load Command</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>otool -l TestCodeSign <span class="p">|</span> tail -n 5
+</span><span class='line'>Load <span class="nb">command </span>21
+</span><span class='line'>      cmd LC_CODE_SIGNATURE
+</span><span class='line'>  cmdsize 16
+</span><span class='line'>  dataoff 54016
+</span><span class='line'> datasize 19888
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>MachOView中查看如下</p>
+
+<p><img src="/assets/2019/codesign1.png" alt="" /></p>
+
+<p>代码签名是一段纯二进制的数据，可以在<a href="https://opensource.apple.com/source/Security/Security-55471/sec/Security/Tool/codesign.c.auto.html">https://opensource.apple.com/source/Security/Security-55471/sec/Security/Tool/codesign.c.auto.html</a> 看到一些结构定义，结合数据定义来分析</p>
+
+<p><img src="/assets/2019/codesign2.png" alt="" /></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// 红色部分①  Offset: 0xD300 = 54016 LC_CODE_SIGNATURE-&gt;dataoff</span>
+</span><span class='line'><span class="k">struct</span> <span class="n">__SuperBlob</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">magic</span><span class="p">;</span>   <span class="cm">/* 0xFADE0CC0 = CSMAGIC_EMBEDDED_SIGNATURE */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">length</span><span class="p">;</span>  <span class="cm">/* 0x1A1E -&gt; 6686 */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">count</span><span class="p">;</span>   <span class="cm">/* 5 */</span>
+</span><span class='line'>    <span class="n">CS_BlobIndex</span> <span class="n">index</span><span class="p">[];</span>  <span class="cm">/* 蓝色部分 */</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="c1">// 蓝色部分②  5个BlobIndex</span>
+</span><span class='line'><span class="k">struct</span> <span class="n">__BlobIndex</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">type</span><span class="p">;</span>    <span class="cm">/* 0x0 -&gt; Code Directory */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">offset</span><span class="p">;</span>  <span class="cm">/* 0x34 -&gt; 0xD300 + 0x34 = 0xD334 指向绿色③*/</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">struct</span> <span class="n">__BlobIndex</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">type</span><span class="p">;</span>    <span class="cm">/* 0x2 -&gt; Requirements */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">offset</span><span class="p">;</span>  <span class="cm">/* 0x221 -&gt; 0xD300 + 0x221 = 0xD521 */</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">struct</span> <span class="n">__BlobIndex</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">type</span><span class="p">;</span>    <span class="cm">/* 0x5 -&gt; Entitlements */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">offset</span><span class="p">;</span>  <span class="cm">/* 0x2CD -&gt; 0xD300 + 0x2CD = 0xD5CD */</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">struct</span> <span class="n">__BlobIndex</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">type</span><span class="p">;</span>    <span class="cm">/* 0x1000 -&gt; Code Directory */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">offset</span><span class="p">;</span>  <span class="cm">/* 0x475 -&gt; 0xD300 + 0x475 = 0xD775 */</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">struct</span> <span class="n">__BlobIndex</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">type</span><span class="p">;</span>    <span class="cm">/* 0x10000 -&gt; CMS Signature */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">offset</span><span class="p">;</span>  <span class="cm">/* 0x746 -&gt; 0xD300 + 0x746 = 0xDA46 */</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这部分是典型的数据头结构，声明了5个Blob，以及每个Blob的类型和相对签名头部的偏移量。接下来把每个部分分别提取出来进行分析。</p>
+
+<h4>CodeDirectory</h4>
+
+<p>CodeDirectory是签名数据中最终要的部分，直译过来就是代码目录，其实里面是整个MachO文件的哈希值，这里的哈希并不是一次性对整个文件进行哈希，而是将MachO文件按照pageSize(一般是4k也就是4096字节)进行分页，每一页单独计算哈希，并按照顺序保存下来，就像目录一样。</p>
+
+<p>细心的同学会发现上面的数据中出现了两个CodeDirectory，type分别是<code>0x0</code>和<code>0x1000</code>，这也是历史遗留问题，<code>0x0</code>对应的是旧版本的代码签名，使用sha1算法进行哈希值的计算，而<code>0x1000</code>是后来引入的，采用sha256作为哈希算法，除了算法和哈希的长度不同之外，其他内容基本是一样的。取第一个进行分析：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// 绿色部分③ Offset: 0xD334</span>
+</span><span class='line'><span class="k">struct</span> <span class="n">__CodeDirectory</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">magic</span><span class="p">;</span>         <span class="cm">/* 0xFADE0C02 -&gt; CSMAGIC_CODEDIRECTORY */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">length</span><span class="p">;</span>        <span class="cm">/* 0x1ED -&gt; 493 */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">version</span><span class="p">;</span>       <span class="cm">/* 0x00020400 -&gt; v2.4.0 */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">flags</span><span class="p">;</span>         <span class="cm">/* 0 */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">hashOffset</span><span class="p">;</span>    <span class="cm">/* 0xD5 -&gt; 0xD334 + 0xD5 = 0xD409 指向⑤*/</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">identOffset</span><span class="p">;</span>   <span class="cm">/* 0x58 -&gt; 0xD334 + 0x58 = 0xD38B 指向④*/</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">nSpecialSlots</span><span class="p">;</span> <span class="cm">/* 5 */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">nCodeSlots</span><span class="p">;</span>    <span class="cm">/* 0xE -&gt; 14 */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">codeLimit</span><span class="p">;</span>     <span class="cm">/* 0xD300 */</span>
+</span><span class='line'>    <span class="kt">uint8_t</span> <span class="n">hashSize</span><span class="p">;</span>       <span class="cm">/* 0x14 -&gt; 20bytes -&gt; 160bits (sha1) */</span>
+</span><span class='line'>    <span class="kt">uint8_t</span> <span class="n">hashType</span><span class="p">;</span>       <span class="cm">/* 0x01 (sha1) */</span>
+</span><span class='line'>    <span class="kt">uint8_t</span> <span class="n">spare1</span><span class="p">;</span>         <span class="cm">/* unused (must be zero) */</span>
+</span><span class='line'>    <span class="kt">uint8_t</span> <span class="n">pageSize</span><span class="p">;</span>       <span class="cm">/* 0x0C -&gt; 2 ^ 0x0C = 0x1000 = 4096 */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">spare2</span><span class="p">;</span>        <span class="cm">/* unused (must be zero) */</span>
+</span><span class='line'>    <span class="cm">/* followed by dynamic content as located by offset fields above */</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>hashOffset就是&#8221;目录&#8221;第一页的偏移，从这个位置(0xD409)可以提取到一串20字节的sha1值(图中黄色⑤):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="mi">9</span><span class="n">D452342F9ED06189E4F099BCA7CB68D6432F775</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个值代表的就是该文件第一页的哈希值，通过以下命令计算文件前4096字节的sha1可进行验证</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>dd <span class="nv">bs</span><span class="o">=</span>1 <span class="nv">skip</span><span class="o">=</span>0 <span class="nv">count</span><span class="o">=</span>0x1000 <span class="k">if</span><span class="o">=</span>TestCodeSign 2&gt;/dev/null <span class="p">|</span> shasum -a 1
+</span><span class='line'>9d452342f9ed06189e4f099bca7cb68d6432f775  -
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>而紧接着的20个字节就是第二页的哈希值，以此类推，直到原始文件的最后一页。</p>
+
+<p>由于文件不一定是pageSize的整数倍，最后一页往往不足&#8221;一整页&#8221;的大小，因此需要额外的字段<code>codeLimit</code>记录文件的实际大小，也就是需要签名的数据的实际大小，通过这个值计算出最后一页的实际大小，并提取相应数据计算最后一页的签名。例子中<code>codeLimit=0xD300</code>，很容易得出最后一页大小为<code>0x300</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>dd <span class="nv">bs</span><span class="o">=</span>1 <span class="nv">skip</span><span class="o">=</span>0xD000 <span class="nv">count</span><span class="o">=</span>0x300 <span class="k">if</span><span class="o">=</span>TestCodeSign 2&gt;/dev/null <span class="p">|</span> shasum -a 1
+</span><span class='line'>9dc960fc86f803c1fa100f2a1145cf7cbe58e803  -
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>计算出最后一页的sha1值与CodeDirectory中(图中黄色⑥)一致。</p>
+
+<p>nCodeSlots记录了文件的总页数14，可通过<code>0xD300 / 0x1000 = 13.1875</code>得出确实是14页。</p>
+
+<p>细心的朋友已经发现了，④ identifier和 ⑤ hashSlots 之间有一段多出的数据⑦，并且CodeDirectory中还有一个奇怪的值<code>nSpecialSlots=5</code>，整个文件的哈希值都已经包含在⑤和⑥之间了，这多出来的数据是怎么回事呢？</p>
+
+<p>原来，在第一页的前面，还有5个特殊的负数页，用来保存这些额外信息的哈希值。</p>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th> 序号 </th>
+<th> 对应内容                                              </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td> -1   </td>
+<td> App根目录的Info.plist文件                            </td>
+</tr>
+<tr>
+<td></td>
+<td> -2   </td>
+<td> Requirements(代码签名的第二部分)                      </td>
+</tr>
+<tr>
+<td></td>
+<td> -3   </td>
+<td> Resource Directory (_CodeSignature/CodeResources文件) </td>
+</tr>
+<tr>
+<td></td>
+<td> -4   </td>
+<td> 暂未使用                                              </td>
+</tr>
+<tr>
+<td></td>
+<td> -5   </td>
+<td> Entitlements (代码签名的第三部分)                     </td>
+</tr>
+</tbody>
+</table>
+
+
+<p>同样地，出于性能考虑，这些哈希值并未经过任何加密，只需要确保这些哈希值未经篡改，就可以说明代码本身没有被篡改。</p>
+
+<h4>Requirements</h4>
+
+<p>用于指定签名校验时的一些额外的约束，签名时codesign命令会自动生成这部分数据，但目前并没有看到什么地方使用了它，就不深入分析了，官方文档有对这部分内容的详细描述</p>
+
+<ul>
+<li><a href="https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Introduction/Introduction.html">Code Signing Tasks</a></li>
+<li><a href="https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html#//apple_ref/doc/uid/TP40005929-CH5-SW1">Code Signing Requirement Language</a></li>
+</ul>
+
+
+<h4>Entitlements</h4>
+
+<p><img src="/assets/2019/codesign3.png" alt="" /></p>
+
+<p>通过头部的偏移定位到数据的位置，显然，这是一个Blob结构</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">__Blob</span> <span class="p">{</span>       <span class="cm">/* Address: 0xD5CD */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">magic</span><span class="p">;</span>   <span class="cm">/* 0xFADE7171 -&gt; CSMAGIC_ENTITLEMENT */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">length</span><span class="p">;</span>  <span class="cm">/* 0x1A8 -&gt; 424 */</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>之前由Xcode生成的Entitlements文件被整个嵌入到签名数据中。</p>
+
+<h4>CMS Signature</h4>
+
+<p>CMS是<code>Cryptographic Message Syntax</code>的缩写，是一种标准的签名格式，由<a href="https://www.ietf.org/rfc/rfc3852.txt">RFC3852</a>定义。还记得Provisioning Profile的签名吗？它们是相同的格式。CMS格式的签名中，除了包含前面我们推导出的加密哈希和证书之外，还承载了一些其他的信息。由于是二进制格式，不方便分析，可以将其内容从MachO文件中剥离出来，再找合适的工具进行解析。根据偏移量定位到CMS Signature的位置<code>0xDA46</code></p>
+
+<p><img src="/assets/2019/codesign4.png" alt="" /></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">__Blob</span> <span class="p">{</span>       <span class="cm">/* Address: 0xDA46 */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">magic</span><span class="p">;</span>   <span class="cm">/* 0xFADE0B01 -&gt; CSMAGIC_BLOBWRAPPER */</span>
+</span><span class='line'>    <span class="kt">uint32_t</span> <span class="n">length</span><span class="p">;</span>  <span class="cm">/* 0x12D8 -&gt; 4824 */</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>除去头部的8个字节，把对应的内容提取出来</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>dd <span class="nv">bs</span><span class="o">=</span>1 <span class="nv">skip</span><span class="o">=</span>0xDA4E <span class="nv">count</span><span class="o">=</span>0x12D0 <span class="k">if</span><span class="o">=</span>TestCodeSign <span class="nv">of</span><span class="o">=</span>cms_signature
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以将导出的cms_signature文件上传到<a href="http://lapo.it/asn1js/">在线ASN.1解析工具</a>(支持CMS格式解析)进行分析</p>
+
+<p><img src="/assets/2019/codesign5.png" alt="" /></p>
+
+<p>文件被解析为树状结构，看起来还是不够直观，因为这个工具只是按照数据格式把内容进行了格式化，但是并没有标注所有字段的确切含义。其实我们还可以使用openssl进行查看，但是因为Mac上自带的openssl以及通过HomeBrew安装的openssl都是没有开启cms支持的，所以可以将文件拷贝到linux机器上或者自行编译openssl进行查看，具体方法在此不表。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>openssl cms -cmsout -print -inform DER -in cms_signature
+</span><span class='line'>CMS_ContentInfo:
+</span><span class='line'>  contentType: pkcs7-signedData <span class="o">(</span>1.2.840.113549.1.7.2<span class="o">)</span>
+</span><span class='line'>  d.signedData:
+</span><span class='line'>    version: 1
+</span><span class='line'>    digestAlgorithms:
+</span><span class='line'>        algorithm: sha256 <span class="o">(</span>2.16.840.1.101.3.4.2.1<span class="o">)</span>
+</span><span class='line'>        parameter: NULL
+</span><span class='line'>    encapContentInfo:
+</span><span class='line'>      eContentType: pkcs7-data <span class="o">(</span>1.2.840.113549.1.7.1<span class="o">)</span>
+</span><span class='line'>      eContent: &lt;ABSENT&gt;
+</span><span class='line'>    certificates:
+</span><span class='line'>      ... <span class="o">[</span>stripped<span class="o">]</span> Apple Worldwide Developer Relations Certification Authority
+</span><span class='line'>      ... <span class="o">[</span>stripped<span class="o">]</span> Apple Root CA
+</span><span class='line'>      ... <span class="o">[</span>stripped<span class="o">]</span> iPhone Developer: xxxxxxx
+</span><span class='line'>    signerInfos:
+</span><span class='line'>        version: 1
+</span><span class='line'>        d.issuerAndSerialNumber:
+</span><span class='line'>          issuer: <span class="nv">C</span><span class="o">=</span>US, <span class="nv">O</span><span class="o">=</span>Apple Inc., <span class="nv">OU</span><span class="o">=</span>Apple Worldwide Developer Relations, <span class="nv">CN</span><span class="o">=</span>Apple Worldwide Developer Relations Certification Authority
+</span><span class='line'>          serialNumber: 1008862887770590428
+</span><span class='line'>        digestAlgorithm:
+</span><span class='line'>          algorithm: sha256 <span class="o">(</span>2.16.840.1.101.3.4.2.1<span class="o">)</span>
+</span><span class='line'>          parameter: NULL
+</span><span class='line'>        signedAttrs:
+</span><span class='line'>            ... <span class="o">[</span>stripped<span class="o">]</span>
+</span><span class='line'>              SEQUENCE:
+</span><span class='line'>    0:d<span class="o">=</span>0  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>  29 cons: SEQUENCE
+</span><span class='line'>    2:d<span class="o">=</span>1  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>   5 prim:  OBJECT            :sha1
+</span><span class='line'>    9:d<span class="o">=</span>1  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>  20 prim:  OCTET STRING      <span class="o">[</span>HEX DUMP<span class="o">]</span>:669421362B2F2B5303BCEBB47D793A75A6BBD32F
+</span><span class='line'>
+</span><span class='line'>            ... <span class="o">[</span>stripped<span class="o">]</span>
+</span><span class='line'>        signatureAlgorithm:
+</span><span class='line'>          algorithm: rsaEncryption <span class="o">(</span>1.2.840.113549.1.1.1<span class="o">)</span>
+</span><span class='line'>          parameter: NULL
+</span><span class='line'>        signature:
+</span><span class='line'>          0000 - 77 00 50 9c 5c 6d 50 1e-cb 4b ca b7 91 d3 5b   w.P.<span class="se">\m</span>P..K....<span class="o">[</span>
+</span><span class='line'>          000f - 2e 28 fe f3 5d 20 73 ef-0a 59 ac 2e ed bd 2a   .<span class="o">(</span>..<span class="o">]</span> s..Y....*
+</span><span class='line'>          ... <span class="o">[</span>stripped<span class="o">]</span>
+</span><span class='line'>        unsignedAttrs:
+</span><span class='line'>          &lt;EMPTY&gt;
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>由于输出内容太多，将部分内容做了删减，可以观察到签名中主要包含了这些内容</p>
+
+<ul>
+<li><strong>contentType</strong>， 表明消息的类型，有6种取值，这里使用的是表示签名的signedData类型
+
+<ul>
+<li>Data</li>
+<li>SignedData</li>
+<li>EnvelopedData</li>
+<li>DigestedData</li>
+<li>EncryptedData</li>
+<li>AuthenticatedData</li>
+</ul>
+</li>
+<li><strong>content</strong>，SignedData类型的数据
+
+<ul>
+<li>version等：略</li>
+<li>certificates： 证书链，包含用于签名的开发者证书及所有上游CA的证书</li>
+<li>signerInfos：真正的签名信息！
+
+<ul>
+<li>version：版本号</li>
+<li>issuerAndSerialNumber：签名者信息，根据签名者的名称找到证书链中对应的证书，使用证书中的公钥即可验证签名是否有效</li>
+<li>digestAlgorithm：哈希算法</li>
+<li>signedAttrs：需要签名的属性, 是可选项，为空表示被签名的数据是原始文件的内容，如果不为空则至少要包含原始文件的类型以及其哈希值，此时被签名的数据就是signedAttrs的内容</li>
+<li>signatureAlgorithm：签名算法，这里指对哈希值进行加密所使用的算法</li>
+<li>signature：加密后的哈希值</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+<p>由于在Code Directory中已经保存了所有资源及代码的哈希值，那么我们只需要确保CodeDirectory不被篡改，即可确保整个app的完整性， 因此CMS Signature中只需要对CodeDirectory进行签名即可。而signedAttrs中支持这样一种特性：可以先计算被签名数据的哈希，然后再对哈希值进行签名。听起来有点绕，不过仔细体会一下应该不难理解。</p>
+
+<p>我们把CodeDirectory的内容抠出来，计算其哈希值，以第一个CodeDirectory为例，计算其sha1：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>dd <span class="nv">bs</span><span class="o">=</span>1 <span class="nv">skip</span><span class="o">=</span>0xD334 <span class="nv">count</span><span class="o">=</span>0x1ED <span class="k">if</span><span class="o">=</span>TestCodeSign 2&gt;/dev/null <span class="p">|</span> shasum -a 1
+</span><span class='line'>669421362b2f2b5303bcebb47d793a75a6bbd32f  -
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个值叫做CDHash(Code Directory&rsquo;s Hash)，对比前面从cms_signature中解析出的 signedAttrs，会发现这两个值是一样的，也就是说CodeDirectory的哈希值被放在了signerInfos->signedAttrs中，作为最终真正被<code>签名</code>(计算哈希并加密)的内容。</p>
+
+<p>至此，我们已经从头到尾剖析了iOS代码签名的生成方式及数据结构，在这个过程中，至少存在4次计算哈希的行为，并且是环环相扣的</p>
+
+<ol>
+<li>_CodeSignature/CodeResources中对每个资源文件计算哈希</li>
+<li>Code Directory 中对MachO文件本身的每个分页，以及Info.plist、CodeResources、Entitlements等文件计算哈希</li>
+<li>CMS Signature的signedAttrs中对Code Directory计算哈希</li>
+<li>对signedAttrs计算哈希并使用开发者的私钥加密</li>
+</ol>
+
+
+<p>只有最后一步的哈希值是被加密的， 前面几步的哈希值是否加密都不影响签名的效果，只要任意内容有变化，均会因某个环节的哈希不匹配而导致签名校验的失败。</p>
+
+<h4>jtool</h4>
+
+<p>相信上面的二进制分析已经让你眼花缭乱了，不过已经有大神做出了<a href="http://www.newosxbook.com/tools/jtool.tar">jtool</a>这个工具，它是一款强大的MachO二进制分析工具，用来替代otool、nm、segedit等命令，也包括codesign的部分功能。通过以下命令可以将代码签名解析为可读的文本格式</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>jtool --sig -vv TestCodeSign
+</span><span class='line'>Blob at offset: 54016 <span class="o">(</span>19888 bytes<span class="o">)</span> is an embedded signature of 6686 bytes, and 5 blobs
+</span><span class='line'>  Blob 0: Type: 0 @52: Code Directory <span class="o">(</span>493 bytes<span class="o">)</span>
+</span><span class='line'>      Version:     20400
+</span><span class='line'>      Flags:       none <span class="o">(</span>0x0<span class="o">)</span>
+</span><span class='line'>      CodeLimit:   0xd300
+</span><span class='line'>      Identifier:  test.CodeSign <span class="o">(</span>0x58<span class="o">)</span>
+</span><span class='line'>      Team ID:     xxxxxxxxxx <span class="o">(</span>0x66<span class="o">)</span>
+</span><span class='line'>      Executable Segment: Base 0x00000000 Limit: 0x00000000 Flags: 0x00000000
+</span><span class='line'>      CDHash:      669421362b2f2b5303bcebb47d793a75a6bbd32f <span class="o">(</span>computed<span class="o">)</span>
+</span><span class='line'>      <span class="c"># of Hashes: 14 code + 5 special</span>
+</span><span class='line'>      Hashes @213 size: 20 Type: SHA-1
+</span><span class='line'>          Entitlements blob:  19a92ca549e53593b384681245de14897df2a9dd <span class="o">(</span>OK<span class="o">)</span>
+</span><span class='line'>          Application Specific:   Not Bound
+</span><span class='line'>          Resource Directory: fb7df05e17f3b347d6b64868f468def49feecf25 <span class="o">(</span>OK<span class="o">)</span>
+</span><span class='line'>          Requirements blob:  9d58965211c9cd83b208fffd575d741881ff81e4 <span class="o">(</span>OK<span class="o">)</span>
+</span><span class='line'>          Bound Info.plist:   89e1951413c3eb05fab8f6a5f06c13b48926eabe <span class="o">(</span>OK<span class="o">)</span>
+</span><span class='line'>          Slot   0 <span class="o">(</span>File page @0x0000<span class="o">)</span>: 9d452342f9ed06189e4f099bca7cb68d6432f775 <span class="o">(</span>OK<span class="o">)</span>
+</span><span class='line'>          ... <span class="o">[</span>stripped<span class="o">]</span>
+</span><span class='line'>  ... <span class="o">[</span>stripped<span class="o">]</span>
+</span><span class='line'>  Blob 4: Type: 10000 @1862: Blob Wrapper <span class="o">(</span>4824 bytes<span class="o">)</span> <span class="o">(</span>0x10000 is CMS <span class="o">(</span>RFC3852<span class="o">)</span> signature<span class="o">)</span>
+</span><span class='line'>CA: Apple Certification Authority CN: Apple Root CA
+</span><span class='line'>... <span class="o">[</span>stripped<span class="o">]</span>
+</span><span class='line'>Time: 190122095805Z
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Distribute App</h4>
+
+<p>在Xcode Organizer中导出或者提交App时，Xcode会将Entitlements文件及embedded.mobileprovision文件替换为对应的版本，并使用对应的证书重新签名，主要区别如下</p>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th> 类型        </th>
+<th> Entitlements             </th>
+<th> Provisioning Profile       </th>
+<th> 证书           </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td> AppStore    </td>
+<td> 不可调试，推送为生产环境 </td>
+<td> 无ProvisionedDevices       </td>
+<td> 发布证书       </td>
+</tr>
+<tr>
+<td></td>
+<td> Ad Hoc      </td>
+<td> 不可调试，推送为生产环境 </td>
+<td> 允许安装到已注册的测试设备 </td>
+<td> 发布证书       </td>
+</tr>
+<tr>
+<td></td>
+<td> Development </td>
+<td> 可调试，推送为测试环境   </td>
+<td> 允许安装到已注册的测试设备 </td>
+<td> 开发证书       </td>
+</tr>
+<tr>
+<td></td>
+<td> Enterprise  </td>
+<td> 不可调试，推送为生产环境 </td>
+<td> ProvisionAllDevices        </td>
+<td> 企业级发布证书 </td>
+</tr>
+</tbody>
+</table>
+
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2019-01-11T11:12:14+08:00" pubdate data-updated="true">2019-01-11</time></div>
+    
+
+<div class="tags">
+
+	<a class='category' href='/blog/categories/ios/'>ios</a>
+
+</div>
+
+
+    
+        
+            
+    <div class="comments"><a href="#disqus_thread">Comments</a></div>
+            
+        
+    
+</div>
+</article>
+
+	<div class="share">
+	<div class="license">
+		<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">
+			<img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png">
+		</a>
+		<br>
+		This work is licensed under a 
+		<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">
+			Creative Commons Attribution-NonCommercial 4.0 International License
+		</a>
+		.
+	</div>
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2019
+
+    xelz
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'xelz';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://xelz.info/blog/2019/01/11/ios-code-signature-3/';
+        var disqus_url = 'http://xelz.info/blog/2019/01/11/ios-code-signature-3/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-41665464-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+</body>
+</html>
