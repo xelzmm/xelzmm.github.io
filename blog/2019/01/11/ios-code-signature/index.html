@@ -428,6 +428,8 @@
 
 <p>现在应该可以理解证书和密钥的关系了，密钥中保存了私钥和公钥，私钥用于签名，而证书里面有且只有公钥，并且是被第三方<code>CA</code> &ldquo;认证&rdquo; 过，用于解密和校验。</p>
 
+<p>一般我们说使用<code>证书</code>签名，实际上是使用与证书所匹配的私钥进行<code>签名</code>，<code>证书</code>只是作为签名数据的一部分被嵌入到签名结构中。如果Keychain中只有证书，没有对应的密钥文件，是无法进行签名的，会得到<code>Missing private key</code>之类的报错提示。</p>
+
 <p>图中可以看到这个证书的签发者是<code>Apple Worldwide Developer Relations Certification Authority</code>，在Keychain中搜索这个名字， 可以看到它的证书详情。我们会发现，它的类型是<code>中级证书颁发机构(中级CA)</code>，它也包含签名，并且是由另外一个叫做<code>Apple Root CA</code>的<code>根证书颁发机构(根CA)</code>进行签发的，这样就形成了一条证书链。而继续查看<code>Apple Root CA</code>的证书，会发现它是自签名的，因为它会被内置在设备中，设备无条件信任它，也就不需要其他的机构为其背书了。</p>
 
 <p><img src="/assets/2019/cert2.png" alt="" /></p>
