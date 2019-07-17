@@ -4,7 +4,7 @@
   <title><![CDATA[xelz's blog]]></title>
   <link href="http://xelz.info/atom.xml" rel="self"/>
   <link href="http://xelz.info/"/>
-  <updated>2019-01-25T03:22:05+00:00</updated>
+  <updated>2019-07-17T08:06:28+00:00</updated>
   <id>http://xelz.info/</id>
   <author>
     <name><![CDATA[xelz]]></name>
@@ -862,6 +862,86 @@
 
 
 <p>这个值叫做CDHash(Code Directory&rsquo;s Hash)，对比前面从cms_signature中解析出的 signedAttrs，会发现这两个值是一样的，也就是说CodeDirectory的哈希值被放在了signerInfos->signedAttrs中，作为最终真正被<code>签名</code>(计算哈希并加密)的内容。</p>
+
+<p>根据<a href="https://tools.ietf.org/html/rfc5652#section-5.4">RFC5652 &ndash; Cryptographic Message Syntax (CMS)</a>中的规定，整个signedAttrs的内容会作为最终被签名的对象，我们可以按照RFC的规则来手动验证签名的计算过程。结合在线ASN.1解析工具的解析结果，定位到signedAttrs的偏移量为4016，先将这部分内容通过dd或者openssl命令提取出来，由于dd命令需要知道偏移和长度，而openssl可以直接将指定起始位置的整个节点dump出来，使用openssl会更为方便一些</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>openssl asn1parse -in cms_signature -inform DER -strparse 4016 -noout -out signedAttrs
+</span><span class='line'><span class="nv">$ </span>hexdump signedAttrs <span class="p">|</span> head -n 1
+</span><span class='line'>0000000 a0 82 02 25 30 18 06 09 2a 86 48 86 f7 0d 01 09
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这是一段ASN.1编码的数据，使用BER(BasicEncoding Rules)规则编码，在编码时，表示<code>SET OF</code>的tag(编码为0x31)会被替换为<code>IMPLICIT [0]</code>(编码为0xA0)，因此，在计算时需要将数据还原，即将首字节<code>a0</code>替换回<code>31</code>。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>dd <span class="nv">bs</span><span class="o">=</span>1 <span class="nv">skip</span><span class="o">=</span>1 <span class="nv">count</span><span class="o">=</span>1000 <span class="k">if</span><span class="o">=</span>signedAttrs <span class="nv">of</span><span class="o">=</span>signedAttrs_1
+</span><span class='line'><span class="nv">$ </span><span class="o">(</span><span class="nb">echo</span> -en <span class="s1">&#39;\x31&#39;</span><span class="p">;</span> cat signedAttrs_1<span class="o">)</span> &gt; signedAttrs_2
+</span><span class='line'><span class="nv">$ </span>hexdump signedAttrs_2 <span class="p">|</span> head -n 1
+</span><span class='line'>0000000 31 82 02 25 30 18 06 09 2a 86 48 86 f7 0d 01 09
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>计算其哈希值，由于singerInfos->digestAlgorithm指明了使用sha256，所以我们计算这个文件的sha256值</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>shasum -a 256 signedAttrs_2
+</span><span class='line'>8ea2964f63f4066b31092c08dae2dfcdb42b10e7b4658c69679eae015d7f0366  signedAttrs_2
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个hash值最终会使用开发者证书对应的私钥进行加密，得到签名数据，并保存在signerInfos->signature中。如果要验证签名，则需要使用公钥对签名数据进行解密， 再将解密后的数据与上述hash值进行对比。</p>
+
+<p>首先先从文件中分别提取签名的开发者证书和最终的签名数据，然后再从开发者证书中提取公钥对其进行解密</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c"># 提取证书链，cert0即为签名证书，和前文申请到的开发者证书是完全一样的</span>
+</span><span class='line'><span class="nv">$ </span>codesign -d --extract-certificates<span class="o">=</span>cert TestCodeSign
+</span><span class='line'><span class="nv">$ </span>shasum cert0 ios_development.cer
+</span><span class='line'>11447116f2c5521b057b9b67290f0fdadeadfa0a  cert0
+</span><span class='line'>11447116f2c5521b057b9b67290f0fdadeadfa0a  ios_development.cer
+</span><span class='line'><span class="c"># 从cms_signature文件中偏移4584处提取最终的签名数据，保存为signature</span>
+</span><span class='line'><span class="c"># 这部分内容是使用开发者的私钥对signedAttrs的hash值进行加密而来的</span>
+</span><span class='line'><span class="nv">$ </span>openssl asn1parse -in cms_signature -inform DER -strparse 4584 -noout -out signature
+</span><span class='line'><span class="c"># 提取签名证书中的公钥，保存为pub_key.pem</span>
+</span><span class='line'><span class="nv">$ </span>openssl x509 -inform DER -in cert0 -pubkey -noout &gt; pub_key.pem
+</span><span class='line'><span class="c"># 使用公钥对签名数据进行解密，并对解密出的数据按照asn.1格式进行解析</span>
+</span><span class='line'><span class="nv">$ </span>openssl rsautl -in signature -verify -asn1parse -inkey pub_key.pem -pubin
+</span><span class='line'>    0:d<span class="o">=</span>0  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>  49 cons: SEQUENCE
+</span><span class='line'>    2:d<span class="o">=</span>1  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>  13 cons:  SEQUENCE
+</span><span class='line'>    4:d<span class="o">=</span>2  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>   9 prim:   OBJECT            :sha256
+</span><span class='line'>   15:d<span class="o">=</span>2  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>   0 prim:   NULL
+</span><span class='line'>   17:d<span class="o">=</span>1  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>  32 prim:  OCTET STRING
+</span><span class='line'>      0000 - 8e a2 96 4f 63 f4 06 6b-31 09 2c 08 da e2 df <span class="nb">cd</span>   ...Oc..k1.,.....
+</span><span class='line'>      0010 - b4 2b 10 e7 b4 65 8c 69-67 9e ae 01 5d 7f 03 66   .+...e.ig...<span class="o">]</span>..f
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>解密后的数据， 可以看出跟我们自己计算的signedAttrs的hash值是相同的，如此一来也就完成了整个代码签名的校验。</p>
 
 <p>至此，我们已经从头到尾剖析了iOS代码签名的生成方式及数据结构，在这个过程中，至少存在4次计算哈希的行为，并且是环环相扣的</p>
 
@@ -2785,6 +2865,86 @@
 
 
 <p>这个值叫做CDHash(Code Directory&rsquo;s Hash)，对比前面从cms_signature中解析出的 signedAttrs，会发现这两个值是一样的，也就是说CodeDirectory的哈希值被放在了signerInfos->signedAttrs中，作为最终真正被<code>签名</code>(计算哈希并加密)的内容。</p>
+
+<p>根据<a href="https://tools.ietf.org/html/rfc5652#section-5.4">RFC5652 &ndash; Cryptographic Message Syntax (CMS)</a>中的规定，整个signedAttrs的内容会作为最终被签名的对象，我们可以按照RFC的规则来手动验证签名的计算过程。结合在线ASN.1解析工具的解析结果，定位到signedAttrs的偏移量为4016，先将这部分内容通过dd或者openssl命令提取出来，由于dd命令需要知道偏移和长度，而openssl可以直接将指定起始位置的整个节点dump出来，使用openssl会更为方便一些</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>openssl asn1parse -in cms_signature -inform DER -strparse 4016 -noout -out signedAttrs
+</span><span class='line'><span class="nv">$ </span>hexdump signedAttrs <span class="p">|</span> head -n 1
+</span><span class='line'>0000000 a0 82 02 25 30 18 06 09 2a 86 48 86 f7 0d 01 09
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这是一段ASN.1编码的数据，使用BER(BasicEncoding Rules)规则编码，在编码时，表示<code>SET OF</code>的tag(编码为0x31)会被替换为<code>IMPLICIT [0]</code>(编码为0xA0)，因此，在计算时需要将数据还原，即将首字节<code>a0</code>替换回<code>31</code>。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>dd <span class="nv">bs</span><span class="o">=</span>1 <span class="nv">skip</span><span class="o">=</span>1 <span class="nv">count</span><span class="o">=</span>1000 <span class="k">if</span><span class="o">=</span>signedAttrs <span class="nv">of</span><span class="o">=</span>signedAttrs_1
+</span><span class='line'><span class="nv">$ </span><span class="o">(</span><span class="nb">echo</span> -en <span class="s1">&#39;\x31&#39;</span><span class="p">;</span> cat signedAttrs_1<span class="o">)</span> &gt; signedAttrs_2
+</span><span class='line'><span class="nv">$ </span>hexdump signedAttrs_2 <span class="p">|</span> head -n 1
+</span><span class='line'>0000000 31 82 02 25 30 18 06 09 2a 86 48 86 f7 0d 01 09
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>计算其哈希值，由于singerInfos->digestAlgorithm指明了使用sha256，所以我们计算这个文件的sha256值</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>shasum -a 256 signedAttrs_2
+</span><span class='line'>8ea2964f63f4066b31092c08dae2dfcdb42b10e7b4658c69679eae015d7f0366  signedAttrs_2
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个hash值最终会使用开发者证书对应的私钥进行加密，得到签名数据，并保存在signerInfos->signature中。如果要验证签名，则需要使用公钥对签名数据进行解密， 再将解密后的数据与上述hash值进行对比。</p>
+
+<p>首先先从文件中分别提取签名的开发者证书和最终的签名数据，然后再从开发者证书中提取公钥对其进行解密</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c"># 提取证书链，cert0即为签名证书，和前文申请到的开发者证书是完全一样的</span>
+</span><span class='line'><span class="nv">$ </span>codesign -d --extract-certificates<span class="o">=</span>cert TestCodeSign
+</span><span class='line'><span class="nv">$ </span>shasum cert0 ios_development.cer
+</span><span class='line'>11447116f2c5521b057b9b67290f0fdadeadfa0a  cert0
+</span><span class='line'>11447116f2c5521b057b9b67290f0fdadeadfa0a  ios_development.cer
+</span><span class='line'><span class="c"># 从cms_signature文件中偏移4584处提取最终的签名数据，保存为signature</span>
+</span><span class='line'><span class="c"># 这部分内容是使用开发者的私钥对signedAttrs的hash值进行加密而来的</span>
+</span><span class='line'><span class="nv">$ </span>openssl asn1parse -in cms_signature -inform DER -strparse 4584 -noout -out signature
+</span><span class='line'><span class="c"># 提取签名证书中的公钥，保存为pub_key.pem</span>
+</span><span class='line'><span class="nv">$ </span>openssl x509 -inform DER -in cert0 -pubkey -noout &gt; pub_key.pem
+</span><span class='line'><span class="c"># 使用公钥对签名数据进行解密，并对解密出的数据按照asn.1格式进行解析</span>
+</span><span class='line'><span class="nv">$ </span>openssl rsautl -in signature -verify -asn1parse -inkey pub_key.pem -pubin
+</span><span class='line'>    0:d<span class="o">=</span>0  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>  49 cons: SEQUENCE
+</span><span class='line'>    2:d<span class="o">=</span>1  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>  13 cons:  SEQUENCE
+</span><span class='line'>    4:d<span class="o">=</span>2  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>   9 prim:   OBJECT            :sha256
+</span><span class='line'>   15:d<span class="o">=</span>2  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>   0 prim:   NULL
+</span><span class='line'>   17:d<span class="o">=</span>1  <span class="nv">hl</span><span class="o">=</span>2 <span class="nv">l</span><span class="o">=</span>  32 prim:  OCTET STRING
+</span><span class='line'>      0000 - 8e a2 96 4f 63 f4 06 6b-31 09 2c 08 da e2 df <span class="nb">cd</span>   ...Oc..k1.,.....
+</span><span class='line'>      0010 - b4 2b 10 e7 b4 65 8c 69-67 9e ae 01 5d 7f 03 66   .+...e.ig...<span class="o">]</span>..f
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>解密后的数据， 可以看出跟我们自己计算的signedAttrs的hash值是相同的，如此一来也就完成了整个代码签名的校验。</p>
 
 <p>至此，我们已经从头到尾剖析了iOS代码签名的生成方式及数据结构，在这个过程中，至少存在4次计算哈希的行为，并且是环环相扣的</p>
 
