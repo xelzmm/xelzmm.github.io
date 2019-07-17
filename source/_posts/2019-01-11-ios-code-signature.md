@@ -758,6 +758,58 @@ $ dd bs=1 skip=0xD334 count=0x1ED if=TestCodeSign 2>/dev/null | shasum -a 1
 
 这个值叫做CDHash(Code Directory's Hash)，对比前面从cms_signature中解析出的 signedAttrs，会发现这两个值是一样的，也就是说CodeDirectory的哈希值被放在了signerInfos->signedAttrs中，作为最终真正被`签名`(计算哈希并加密)的内容。
 
+根据[RFC5652 - Cryptographic Message Syntax (CMS)](https://tools.ietf.org/html/rfc5652#section-5.4)中的规定，整个signedAttrs的内容会作为最终被签名的对象，我们可以按照RFC的规则来手动验证签名的计算过程。结合在线ASN.1解析工具的解析结果，定位到signedAttrs的偏移量为4016，先将这部分内容通过dd或者openssl命令提取出来，由于dd命令需要知道偏移和长度，而openssl可以直接将指定起始位置的整个节点dump出来，使用openssl会更为方便一些
+
+```bash
+$ openssl asn1parse -in cms_signature -inform DER -strparse 4016 -noout -out signedAttrs
+$ hexdump signedAttrs | head -n 1
+0000000 a0 82 02 25 30 18 06 09 2a 86 48 86 f7 0d 01 09
+```
+
+这是一段ASN.1编码的数据，使用BER(BasicEncoding Rules)规则编码，在编码时，表示`SET OF`的tag(编码为0x31)会被替换为`IMPLICIT [0]`(编码为0xA0)，因此，在计算时需要将数据还原，即将首字节`a0`替换回`31`。
+
+```bash
+$ dd bs=1 skip=1 count=1000 if=signedAttrs of=signedAttrs_1
+$ (echo -en '\x31'; cat signedAttrs_1) > signedAttrs_2
+$ hexdump signedAttrs_2 | head -n 1
+0000000 31 82 02 25 30 18 06 09 2a 86 48 86 f7 0d 01 09
+```
+
+计算其哈希值，由于singerInfos->digestAlgorithm指明了使用sha256，所以我们计算这个文件的sha256值
+
+```bash
+$ shasum -a 256 signedAttrs_2
+8ea2964f63f4066b31092c08dae2dfcdb42b10e7b4658c69679eae015d7f0366  signedAttrs_2
+```
+
+这个hash值最终会使用开发者证书对应的私钥进行加密，得到签名数据，并保存在signerInfos->signature中。如果要验证签名，则需要使用公钥对签名数据进行解密， 再将解密后的数据与上述hash值进行对比。
+
+首先先从文件中分别提取签名的开发者证书和最终的签名数据，然后再从开发者证书中提取公钥对其进行解密
+
+```bash
+# 提取证书链，cert0即为签名证书，和前文申请到的开发者证书是完全一样的
+$ codesign -d --extract-certificates=cert TestCodeSign
+$ shasum cert0 ios_development.cer
+11447116f2c5521b057b9b67290f0fdadeadfa0a  cert0
+11447116f2c5521b057b9b67290f0fdadeadfa0a  ios_development.cer
+# 从cms_signature文件中偏移4584处提取最终的签名数据，保存为signature
+# 这部分内容是使用开发者的私钥对signedAttrs的hash值进行加密而来的
+$ openssl asn1parse -in cms_signature -inform DER -strparse 4584 -noout -out signature
+# 提取签名证书中的公钥，保存为pub_key.pem
+$ openssl x509 -inform DER -in cert0 -pubkey -noout > pub_key.pem
+# 使用公钥对签名数据进行解密，并对解密出的数据按照asn.1格式进行解析
+$ openssl rsautl -in signature -verify -asn1parse -inkey pub_key.pem -pubin
+    0:d=0  hl=2 l=  49 cons: SEQUENCE
+    2:d=1  hl=2 l=  13 cons:  SEQUENCE
+    4:d=2  hl=2 l=   9 prim:   OBJECT            :sha256
+   15:d=2  hl=2 l=   0 prim:   NULL
+   17:d=1  hl=2 l=  32 prim:  OCTET STRING
+      0000 - 8e a2 96 4f 63 f4 06 6b-31 09 2c 08 da e2 df cd   ...Oc..k1.,.....
+      0010 - b4 2b 10 e7 b4 65 8c 69-67 9e ae 01 5d 7f 03 66   .+...e.ig...]..f
+```
+
+解密后的数据， 可以看出跟我们自己计算的signedAttrs的hash值是相同的，如此一来也就完成了整个代码签名的校验。
+
 至此，我们已经从头到尾剖析了iOS代码签名的生成方式及数据结构，在这个过程中，至少存在4次计算哈希的行为，并且是环环相扣的
 
 1. _CodeSignature/CodeResources中对每个资源文件计算哈希

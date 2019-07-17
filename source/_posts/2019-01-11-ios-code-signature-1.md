@@ -138,3 +138,8 @@ $ for i in 0 1 2; do openssl x509 -inform DER -text -noout -in cert$i | grep Sub
         Subject: C=US, O=Apple Inc., OU=Apple Certification Authority, CN=Apple Root CA
 ```
 
+本篇完。
+
+---
+
+下一篇： [细说iOS代码签名(二)](/blog/2019/01/11/ios-code-signature-2/)：开发者证书、Entitlements、Provisioning Profile

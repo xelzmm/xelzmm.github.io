@@ -299,3 +299,9 @@ $ for i in `seq 3`; do /usr/libexec/PlistBuddy -x -c 'Print:DeveloperCertificate
 Provisioning Profile会被内置在App中，置于App根目录下的`embedded.mobileprovision`。安装App时如果签名校验通过，这个文件会自动被拷贝到iOS设备的`/Library/MobileDevice/Provisioning\ Profiles/`路径下。由于该文件已被Apple官方签名，系统可以无条件信任它，并用它来校验App的签名、权限，以及本机的UUID等是否满足来自官方的授权。通过这种方式，间接信任了使用开发者证书签名的App，让iOS设备可以运行非苹果官方签名的App。
 
 假如你有一台越狱的设备，查看任意一个从AppStore上下载下来的App，里面都不会有embedded.mobileprovision这个文件，因为经过Apple重新签名以后，设备就不再需要它了。
+
+本篇完。
+
+------
+
+下一篇：[细说iOS代码签名(三)](/blog/2019/01/11/ios-code-signature-3/)：签名的过程及代码签名的数据结构
