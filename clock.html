@@ -55,11 +55,11 @@
           <div class="date" id="week">星期三</div>
       </div>
     </div>
-
-
     <script>
       function update() {
         var date = new Date()
+	var utc8DiffMinutes = date.getTimezoneOffset() + 240 // +4
+        date.setMinutes(date.getMinutes() + utc8DiffMinutes)
 
         var timeString = date.getHours() + ':' + ('0' + date.getMinutes()).slice(-2)
         var dateString = (date.getMonth() + 1) + '月' + date.getDate() + '日'
